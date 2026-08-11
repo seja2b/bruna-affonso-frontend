@@ -80,3 +80,30 @@ export default function AdminQuestions({ user, token }) {
                       rows="4"
                       required
                     />
+                    <div className="form-actions">
+                      <button type="submit" className="btn-submit">✅ Enviar Resposta</button>
+                      <button 
+                        type="button" 
+                        className="btn-cancel-answer"
+                        onClick={() => setAnswerData({ questionId: null, text: '' })}
+                      >
+                        ❌ Cancelar
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <button
+                    className="btn-answer"
+                    onClick={() => setAnswerData({ questionId: question.id, text: '' })}
+                  >
+                    💬 Responder
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </AdminLayout>
+  )
+}
