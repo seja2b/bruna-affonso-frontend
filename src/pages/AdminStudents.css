@@ -1,0 +1,163 @@
+.admin-students {
+  background: white;
+  border-radius: 12px;
+  padding: 30px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.admin-students h1 {
+  color: #E91E63;
+  margin-top: 0;
+  margin-bottom: 30px;
+  font-size: 28px;
+}
+
+.students-table {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+thead {
+  background: #f5f5f5;
+  border-bottom: 2px solid #E91E63;
+}
+
+th {
+  padding: 16px;
+  text-align: left;
+  font-weight: 600;
+  color: #333;
+}
+
+tbody tr {
+  border-bottom: 1px solid #eee;
+  transition: all 0.3s ease;
+}
+
+tbody tr:hover {
+  background: #f9f9f9;
+}
+
+td {
+  padding: 16px;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.status-badge.pending {
+  background: #FFF3E0;
+  color: #E65100;
+}
+
+.status-badge.approved {
+  background: #E8F5E9;
+  color: #2E7D32;
+}
+
+.status-badge.rejected {
+  background: #FFEBEE;
+  color: #C62828;
+}
+
+.status-badge.inactive {
+  background: #f0f0f0;
+  color: #666;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.actions button {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.btn-approve {
+  background: #E8F5E9;
+  color: #2E7D32;
+  border: 2px solid #2E7D32;
+}
+
+.btn-approve:hover {
+  background: #2E7D32;
+  color: white;
+}
+
+.btn-reject {
+  background: #FFEBEE;
+  color: #C62828;
+  border: 2px solid #C62828;
+}
+
+.btn-reject:hover {
+  background: #C62828;
+  color: white;
+}
+
+.btn-deactivate {
+  background: #FFF3E0;
+  color: #E65100;
+  border: 2px solid #E65100;
+}
+
+.btn-deactivate:hover {
+  background: #E65100;
+  color: white;
+}
+
+.btn-reactivate {
+  background: #E3F2FD;
+  color: #1565C0;
+  border: 2px solid #1565C0;
+}
+
+.btn-reactivate:hover {
+  background: #1565C0;
+  color: white;
+}
+
+.loading, .no-data {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+  font-size: 16px;
+}
+
+@media (max-width: 768px) {
+  .students-table {
+    font-size: 12px;
+  }
+
+  th, td {
+    padding: 12px 8px;
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+
+  .actions button {
+    width: 100%;
+  }
+}
