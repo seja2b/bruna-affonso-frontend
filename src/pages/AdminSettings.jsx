@@ -3,7 +3,7 @@ import { api } from '../services/api'
 import AdminLayout from '../components/AdminLayout'
 import './AdminSettings.css'
 
-export default function AdminSettings({ user, token }) {
+export default function AdminSettings({ user, token, onNavigate }) {
   const [settings, setSettings] = useState({
     phone: '',
     whatsappUrl: '',
@@ -46,23 +46,29 @@ export default function AdminSettings({ user, token }) {
 
   if (loading) {
     return (
-      <AdminLayout user={user} token={token}>
+      <AdminLayout user={user} token={token} onNavigate={onNavigate} currentPage="settings">
         <div className="loading">Carregando configurações...</div>
       </AdminLayout>
     )
   }
 
   return (
-    <AdminLayout user={user} token={token}>
-      <div className="admin-settings">
-        <h1>⚙️ Configurações</h1>
+    <AdminLayout user={user} token={token} onNavigate={onNavigate} currentPage="settings">
+      <div className="page">
+        <div className="page-header">
+          <div>
+            <h1>Configurações</h1>
+            <p className="page-subtitle">Gerencie seus dados e informações</p>
+          </div>
+        </div>
 
-        <form className="settings-form" onSubmit={handleSaveSettings}>
-          <div className="form-section">
-            <h2>Informações Pessoais</h2>
+        <form onSubmit={handleSaveSettings} className="settings-form">
+          <div className="settings-section">
+            <h2>Informações de Contato</h2>
+            <p className="section-description">Atualize seus dados de contato</p>
 
             <div className="form-group">
-              <label>📞 Telefone</label>
+              <label>Telefone</label>
               <input
                 type="tel"
                 placeholder="(11) 99999-9999"
@@ -72,64 +78,63 @@ export default function AdminSettings({ user, token }) {
             </div>
 
             <div className="form-group">
-              <label>💬 Link WhatsApp</label>
+              <label>Link WhatsApp</label>
               <input
                 type="url"
                 placeholder="https://wa.me/5511999999999"
                 value={settings.whatsappUrl || ''}
                 onChange={(e) => setSettings({...settings, whatsappUrl: e.target.value})}
               />
-              <small>Formato: https://wa.me/SEU_TELEFONE</small>
+              <small>Formato: https://wa.me/SEU_NUMERO</small>
             </div>
+          </div>
+
+          <div className="settings-section">
+            <h2>Perfil Público</h2>
+            <p className="section-description">Customize sua presença na plataforma</p>
 
             <div className="form-group">
-              <label>🎯 Frase Motivacional</label>
-              <textarea
-                placeholder="Digite uma mensagem motivacional para seus alunos..."
-                value={settings.motivationalPhrase || ''}
-                onChange={(e) => setSettings({...settings, motivationalPhrase: e.target.value})}
-                rows="3"
-              />
-            </div>
-
-            <div className="form-group">
-              <label>📸 URL da Foto de Perfil</label>
+              <label>Foto de Perfil</label>
               <input
                 type="url"
                 placeholder="https://..."
                 value={settings.profileImage || ''}
                 onChange={(e) => setSettings({...settings, profileImage: e.target.value})}
               />
+              {settings.profileImage && (
+                <div className="profile-preview">
+                  <img src={settings.profileImage} alt="Perfil" />
+                </div>
+              )}
             </div>
 
-            {settings.profileImage && (
-              <div className="profile-preview">
-                <p>Preview:</p>
-                <img src={settings.profileImage} alt="Perfil" />
-              </div>
-            )}
+            <div className="form-group">
+              <label>Frase Motivacional</label>
+              <textarea
+                placeholder="Digite uma mensagem inspiradora para seus alunos..."
+                value={settings.motivationalPhrase || ''}
+                onChange={(e) => setSettings({...settings, motivationalPhrase: e.target.value})}
+                rows="4"
+              />
+              <small>Esta frase aparecerá no dashboard dos seus alunos</small>
+            </div>
           </div>
 
           <div className="form-actions">
-            <button type="submit" className="btn-save-settings">
-              ✅ Salvar Configurações
+            <button type="submit" className="btn-save">
+              Salvar Configurações
             </button>
+            {saved && <div className="success-message">Configurações salvas com sucesso!</div>}
           </div>
-
-          {saved && (
-            <div className="success-message">
-              ✅ Configurações salvas com sucesso!
-            </div>
-          )}
         </form>
 
-        <div className="info-box">
-          <h3>💡 Dicas</h3>
+        <div className="info-card">
+          <h3>Dicas</h3>
           <ul>
-            <li><strong>Telefone:</strong> Seu número de contato para os alunos</li>
+            <li><strong>Telefone:</strong> Seu número para contato com alunos</li>
             <li><strong>WhatsApp:</strong> Link direto para iniciar conversa no WhatsApp</li>
-            <li><strong>Frase Motivacional:</strong> Aparecerá no dashboard dos alunos</li>
-            <li><strong>Foto de Perfil:</strong> URL de uma imagem (use imgur, etc)</li>
+            <li><strong>Foto:</strong> Recomenda-se uma imagem quadrada (200x200px)</li>
+            <li><strong>Frase:</strong> Algo motivador para inspirar seus alunos diariamente</li>
           </ul>
         </div>
       </div>

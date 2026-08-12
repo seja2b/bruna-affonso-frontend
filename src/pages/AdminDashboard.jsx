@@ -3,7 +3,7 @@ import { api } from '../services/api'
 import AdminLayout from '../components/AdminLayout'
 import './AdminDashboard.css'
 
-export default function AdminDashboard({ user, token }) {
+export default function AdminDashboard({ user, token, onNavigate }) {
   const [stats, setStats] = useState({
     totalStudents: 0,
     pendingStudents: 0,
@@ -30,65 +30,110 @@ export default function AdminDashboard({ user, token }) {
   }
 
   return (
-    <AdminLayout user={user} token={token}>
-      <div className="admin-dashboard">
-        <h1>📊 Dashboard Administrativo</h1>
+    <AdminLayout user={user} token={token} onNavigate={onNavigate} currentPage="dashboard">
+      <div className="dashboard">
+        <div className="dashboard-header">
+          <h1>Dashboard</h1>
+          <p className="dashboard-subtitle">Bem-vindo ao painel de controle</p>
+        </div>
 
         {loading ? (
-          <div className="loading">Carregando...</div>
+          <div className="loading">Carregando dados...</div>
         ) : (
-          <div className="stats-grid">
-            <div className="stat-card">
-              <div className="stat-icon">👥</div>
-              <div className="stat-content">
-                <h3>Total de Alunos</h3>
-                <p className="stat-number">{stats.totalStudents}</p>
+          <>
+            <div className="stats-grid">
+              <div className="stat-card">
+                <div className="stat-icon students">👥</div>
+                <div className="stat-content">
+                  <h3>Total de Alunos</h3>
+                  <p className="stat-number">{stats.totalStudents}</p>
+                </div>
+                <button 
+                  className="stat-action"
+                  onClick={() => onNavigate('students')}
+                >
+                  Ver →
+                </button>
+              </div>
+
+              <div className="stat-card">
+                <div className="stat-icon pending">⏳</div>
+                <div className="stat-content">
+                  <h3>Aguardando Aprovação</h3>
+                  <p className="stat-number">{stats.pendingStudents}</p>
+                </div>
+                <button 
+                  className="stat-action"
+                  onClick={() => onNavigate('students')}
+                >
+                  Aprovar →
+                </button>
+              </div>
+
+              <div className="stat-card">
+                <div className="stat-icon workouts">💪</div>
+                <div className="stat-content">
+                  <h3>Total de Treinos</h3>
+                  <p className="stat-number">{stats.totalWorkouts}</p>
+                </div>
+                <button 
+                  className="stat-action"
+                  onClick={() => onNavigate('workouts')}
+                >
+                  Gerenciar →
+                </button>
+              </div>
+
+              <div className="stat-card">
+                <div className="stat-icon questions">💬</div>
+                <div className="stat-content">
+                  <h3>Perguntas Pendentes</h3>
+                  <p className="stat-number">{stats.pendingQuestions}</p>
+                </div>
+                <button 
+                  className="stat-action"
+                  onClick={() => onNavigate('questions')}
+                >
+                  Responder →
+                </button>
               </div>
             </div>
 
-            <div className="stat-card pending">
-              <div className="stat-icon">⏳</div>
-              <div className="stat-content">
-                <h3>Alunos Pendentes</h3>
-                <p className="stat-number">{stats.pendingStudents}</p>
+            <div className="quick-actions">
+              <h2>Ações Rápidas</h2>
+              <div className="actions-grid">
+                <button 
+                  className="action-btn"
+                  onClick={() => onNavigate('students')}
+                >
+                  <span className="action-icon">👥</span>
+                  <span>Gerenciar Alunos</span>
+                </button>
+                <button 
+                  className="action-btn"
+                  onClick={() => onNavigate('workouts')}
+                >
+                  <span className="action-icon">💪</span>
+                  <span>Adicionar Treino</span>
+                </button>
+                <button 
+                  className="action-btn"
+                  onClick={() => onNavigate('questions')}
+                >
+                  <span className="action-icon">💬</span>
+                  <span>Ver Perguntas</span>
+                </button>
+                <button 
+                  className="action-btn"
+                  onClick={() => onNavigate('settings')}
+                >
+                  <span className="action-icon">⚙️</span>
+                  <span>Configurações</span>
+                </button>
               </div>
             </div>
-
-            <div className="stat-card">
-              <div className="stat-icon">💪</div>
-              <div className="stat-content">
-                <h3>Total de Treinos</h3>
-                <p className="stat-number">{stats.totalWorkouts}</p>
-              </div>
-            </div>
-
-            <div className="stat-card">
-              <div className="stat-icon">❓</div>
-              <div className="stat-content">
-                <h3>Perguntas Pendentes</h3>
-                <p className="stat-number">{stats.pendingQuestions}</p>
-              </div>
-            </div>
-          </div>
+          </>
         )}
-
-        <div className="quick-actions">
-          <h2>Ações Rápidas</h2>
-          <div className="actions-grid">
-            <a href="/admin/students" className="action-button">
-              👥 Gerenciar Alunos
-            </a>
-            <a href="/admin/workouts" className="action-button">
-              💪 Gerenciar Treinos
-            </a>
-            <a href="/admin/questions" className="action-button">
-              ❓ Responder Perguntas
-            </a>
-            <a href="/admin/settings" className="action-button">
-              ⚙️ Configurações
-            </a>
-          </div>
-        </div>
       </div>
     </AdminLayout>
   )

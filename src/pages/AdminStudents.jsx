@@ -3,9 +3,10 @@ import { api } from '../services/api'
 import AdminLayout from '../components/AdminLayout'
 import './AdminStudents.css'
 
-export default function AdminStudents({ user, token }) {
+export default function AdminStudents({ user, token, onNavigate }) {
   const [students, setStudents] = useState([])
   const [loading, setLoading] = useState(true)
+  const [filter, setFilter] = useState('all')
 
   useEffect(() => {
     fetchStudents()
@@ -68,15 +69,59 @@ export default function AdminStudents({ user, token }) {
     }
   }
 
+  const filteredStudents = students.filter(s => {
+    if (filter === 'pending') return s.status === 'PENDING'
+    if (filter === 'approved') return s.status === 'APPROVED'
+    if (filter === 'inactive') return s.status === 'INACTIVE'
+    return true
+  })
+
   return (
-    <AdminLayout user={user} token={token}>
-      <div className="admin-students">
-        <h1>👥 Gerenciar Alunos</h1>
+    <AdminLayout user={user} token={token} onNavigate={onNavigate} currentPage="students">
+      <div className="page">
+        <div className="page-header">
+          <div>
+            <h1>Gerenciar Alunos</h1>
+            <p className="page-subtitle">Aprove, rejeite ou gerencie os alunos</p>
+          </div>
+          <div className="page-stats">
+            <span className="stat-badge">{students.length} alunos</span>
+          </div>
+        </div>
+
+        <div className="filter-bar">
+          <button
+            className={`filter-btn ${filter === 'all' ? 'active' : ''}`}
+            onClick={() => setFilter('all')}
+          >
+            Todos ({students.length})
+          </button>
+          <button
+            className={`filter-btn ${filter === 'pending' ? 'active' : ''}`}
+            onClick={() => setFilter('pending')}
+          >
+            Pendentes ({students.filter(s => s.status === 'PENDING').length})
+          </button>
+          <button
+            className={`filter-btn ${filter === 'approved' ? 'active' : ''}`}
+            onClick={() => setFilter('approved')}
+          >
+            Aprovados ({students.filter(s => s.status === 'APPROVED').length})
+          </button>
+          <button
+            className={`filter-btn ${filter === 'inactive' ? 'active' : ''}`}
+            onClick={() => setFilter('inactive')}
+          >
+            Inativos ({students.filter(s => s.status === 'INACTIVE').length})
+          </button>
+        </div>
 
         {loading ? (
           <div className="loading">Carregando alunos...</div>
-        ) : students.length === 0 ? (
-          <div className="no-data">Nenhum aluno registrado</div>
+        ) : filteredStudents.length === 0 ? (
+          <div className="empty-state">
+            <p>Nenhum aluno encontrado</p>
+          </div>
         ) : (
           <div className="students-table">
             <table>
@@ -91,41 +136,62 @@ export default function AdminStudents({ user, token }) {
                 </tr>
               </thead>
               <tbody>
-                {students.map(student => (
-                  <tr key={student.id} className={`status-${student.status}`}>
-                    <td>{student.name}</td>
+                {filteredStudents.map(student => (
+                  <tr key={student.id} className={`status-${student.status.toLowerCase()}`}>
+                    <td className="name-cell">
+                      <div className="avatar">{student.name.charAt(0)}</div>
+                      {student.name}
+                    </td>
                     <td>{student.email}</td>
                     <td>{student.phone || '-'}</td>
                     <td>
                       <span className={`status-badge ${student.status.toLowerCase()}`}>
-                        {student.status === 'PENDING' && '⏳ Pendente'}
-                        {student.status === 'APPROVED' && '✅ Aprovado'}
-                        {student.status === 'REJECTED' && '❌ Rejeitado'}
-                        {student.status === 'INACTIVE' && '🚫 Inativo'}
+                        {student.status === 'PENDING' && 'Pendente'}
+                        {student.status === 'APPROVED' && 'Aprovado'}
+                        {student.status === 'REJECTED' && 'Rejeitado'}
+                        {student.status === 'INACTIVE' && 'Inativo'}
                       </span>
                     </td>
                     <td>{new Date(student.createdAt).toLocaleDateString('pt-BR')}</td>
-                    <td className="actions">
-                      {student.status === 'PENDING' && (
-                        <>
-                          <button className="btn-approve" onClick={() => approveStudent(student.id)}>
-                            ✅ Aprovar
+                    <td>
+                      <div className="actions-cell">
+                        {student.status === 'PENDING' && (
+                          <>
+                            <button
+                              className="action-btn approve"
+                              onClick={() => approveStudent(student.id)}
+                              title="Aprovar"
+                            >
+                              Aprovar
+                            </button>
+                            <button
+                              className="action-btn reject"
+                              onClick={() => rejectStudent(student.id)}
+                              title="Rejeitar"
+                            >
+                              Rejeitar
+                            </button>
+                          </>
+                        )}
+                        {student.status === 'APPROVED' && (
+                          <button
+                            className="action-btn deactivate"
+                            onClick={() => deactivateStudent(student.id)}
+                            title="Inativar"
+                          >
+                            Inativar
                           </button>
-                          <button className="btn-reject" onClick={() => rejectStudent(student.id)}>
-                            ❌ Rejeitar
+                        )}
+                        {student.status === 'INACTIVE' && (
+                          <button
+                            className="action-btn reactivate"
+                            onClick={() => reactivateStudent(student.id)}
+                            title="Reativar"
+                          >
+                            Reativar
                           </button>
-                        </>
-                      )}
-                      {student.status === 'APPROVED' && (
-                        <button className="btn-deactivate" onClick={() => deactivateStudent(student.id)}>
-                          🚫 Inativar
-                        </button>
-                      )}
-                      {student.status === 'INACTIVE' && (
-                        <button className="btn-reactivate" onClick={() => reactivateStudent(student.id)}>
-                          🔄 Reativar
-                        </button>
-                      )}
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}

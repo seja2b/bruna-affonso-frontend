@@ -3,13 +3,11 @@ import { api } from '../services/api'
 import AdminLayout from '../components/AdminLayout'
 import './AdminQuestions.css'
 
-export default function AdminQuestions({ user, token }) {
+export default function AdminQuestions({ user, token, onNavigate }) {
   const [questions, setQuestions] = useState([])
   const [loading, setLoading] = useState(true)
-  const [answerData, setAnswerData] = useState({
-    questionId: null,
-    text: ''
-  })
+  const [answeringId, setAnsweringId] = useState(null)
+  const [answerText, setAnswerText] = useState('')
 
   useEffect(() => {
     fetchQuestions()
@@ -28,17 +26,20 @@ export default function AdminQuestions({ user, token }) {
     }
   }
 
-  async function handleAnswerQuestion(e) {
-    e.preventDefault()
-    if (!answerData.questionId || !answerData.text.trim()) return
+  async function handleAnswerQuestion(questionId) {
+    if (!answerText.trim()) {
+      alert('Digite uma resposta')
+      return
+    }
 
     try {
       await api.post(
-        `/admin/questions/${answerData.questionId}/answer`,
-        { text: answerData.text },
+        `/admin/questions/${questionId}/answer`,
+        { text: answerText },
         { headers: { Authorization: `Bearer ${token}` } }
       )
-      setAnswerData({ questionId: null, text: '' })
+      setAnsweringId(null)
+      setAnswerText('')
       fetchQuestions()
     } catch (error) {
       alert('Erro ao responder pergunta')
@@ -46,57 +47,79 @@ export default function AdminQuestions({ user, token }) {
   }
 
   return (
-    <AdminLayout user={user} token={token}>
-      <div className="admin-questions">
-        <h1>❓ Responder Perguntas dos Alunos</h1>
+    <AdminLayout user={user} token={token} onNavigate={onNavigate} currentPage="questions">
+      <div className="page">
+        <div className="page-header">
+          <div>
+            <h1>Perguntas dos Alunos</h1>
+            <p className="page-subtitle">Responda às dúvidas de seus alunos</p>
+          </div>
+          <div className="page-stats">
+            <span className="stat-badge">{questions.length} pendentes</span>
+          </div>
+        </div>
 
         {loading ? (
           <div className="loading">Carregando perguntas...</div>
         ) : questions.length === 0 ? (
-          <div className="no-data">Nenhuma pergunta pendente 🎉</div>
+          <div className="empty-state">
+            <p>Nenhuma pergunta pendente</p>
+            <p className="empty-text">Parabéns! Todos as dúvidas foram respondidas.</p>
+          </div>
         ) : (
-          <div className="questions-container">
+          <div className="questions-list">
             {questions.map(question => (
-              <div key={question.id} className="question-card">
+              <div key={question.id} className="question-item">
                 <div className="question-header">
-                  <h3>{question.title}</h3>
-                  <span className="student-name">👤 {question.user.name}</span>
+                  <div className="student-info">
+                    <div className="student-avatar">{question.user.name.charAt(0)}</div>
+                    <div>
+                      <h3>{question.user.name}</h3>
+                      <p className="student-email">{question.user.email}</p>
+                    </div>
+                  </div>
+                  <span className="question-date">
+                    {new Date(question.createdAt).toLocaleDateString('pt-BR')}
+                  </span>
                 </div>
 
-                <p className="question-text">{question.text}</p>
-
-                <div className="question-meta">
-                  <span>📧 {question.user.email}</span>
-                  <span>📅 {new Date(question.createdAt).toLocaleDateString('pt-BR')}</span>
+                <div className="question-content">
+                  <h4>{question.title}</h4>
+                  <p>{question.text}</p>
                 </div>
 
-                {answerData.questionId === question.id ? (
-                  <form className="answer-form" onSubmit={handleAnswerQuestion}>
-                    <h4>Sua Resposta</h4>
+                {answeringId === question.id ? (
+                  <div className="answer-form">
                     <textarea
                       placeholder="Digite sua resposta aqui..."
-                      value={answerData.text}
-                      onChange={(e) => setAnswerData({...answerData, text: e.target.value})}
+                      value={answerText}
+                      onChange={(e) => setAnswerText(e.target.value)}
                       rows="4"
-                      required
                     />
-                    <div className="form-actions">
-                      <button type="submit" className="btn-submit">✅ Enviar Resposta</button>
-                      <button 
-                        type="button" 
-                        className="btn-cancel-answer"
-                        onClick={() => setAnswerData({ questionId: null, text: '' })}
+                    <div className="answer-actions">
+                      <button
+                        className="btn-submit"
+                        onClick={() => handleAnswerQuestion(question.id)}
                       >
-                        ❌ Cancelar
+                        Enviar Resposta
+                      </button>
+                      <button
+                        className="btn-cancel"
+                        onClick={() => {
+                          setAnsweringId(null)
+                          setAnswerText('')
+                        }}
+                      >
+                        Cancelar
                       </button>
                     </div>
-                  </form>
+                  </div>
                 ) : (
                   <button
                     className="btn-answer"
-                    onClick={() => setAnswerData({ questionId: question.id, text: '' })}
+                    onClick={() => setAnsweringId(question.id)}
                   >
-                    💬 Responder
+                    Responder
                   </button>
                 )}
               </div>

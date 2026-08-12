@@ -1,123 +1,116 @@
-.admin-settings {
-  background: white;
-  border-radius: 12px;
-  padding: 30px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  max-width: 600px;
-  margin: 0 auto;
-}
-
-.admin-settings h1 {
-  color: #E91E63;
-  margin-top: 0;
-  margin-bottom: 30px;
-  font-size: 28px;
-}
-
 .settings-form {
+  max-width: 600px;
   display: flex;
   flex-direction: column;
-  gap: 30px;
+  gap: 32px;
 }
 
-.form-section {
-  border: 2px solid #E91E63;
+.settings-section {
+  background: white;
   border-radius: 12px;
-  padding: 20px;
-  background: #fafafa;
+  border: 1px solid #e5e7eb;
+  padding: 24px;
 }
 
-.form-section h2 {
-  color: #E91E63;
-  margin-top: 0;
-  margin-bottom: 20px;
+.settings-section h2 {
+  margin: 0 0 8px 0;
   font-size: 18px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.section-description {
+  margin: 0 0 20px 0;
+  font-size: 14px;
+  color: #6b7280;
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
+}
+
+.form-group:last-child {
+  margin-bottom: 0;
 }
 
 .form-group label {
+  font-size: 13px;
   font-weight: 600;
-  color: #333;
-  font-size: 14px;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .form-group input,
 .form-group textarea {
   padding: 12px;
-  border: 2px solid #E91E63;
+  border: 1px solid #d1d5db;
   border-radius: 8px;
-  font-family: inherit;
   font-size: 14px;
+  font-family: inherit;
+  background: white;
+  transition: all 0.3s ease;
 }
 
 .form-group input:focus,
 .form-group textarea:focus {
   outline: none;
-  border-color: #7C4DFF;
-  box-shadow: 0 0 8px rgba(124, 77, 255, 0.2);
+  border-color: #1e40af;
+  box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
 }
 
 .form-group small {
-  color: #999;
   font-size: 12px;
+  color: #9ca3af;
 }
 
 .profile-preview {
   margin-top: 16px;
   padding: 16px;
-  background: white;
+  background: #f9fafb;
   border-radius: 8px;
   text-align: center;
-}
-
-.profile-preview p {
-  color: #666;
-  font-size: 14px;
-  margin: 0 0 12px 0;
 }
 
 .profile-preview img {
   max-width: 200px;
   max-height: 200px;
   border-radius: 8px;
-  border: 2px solid #E91E63;
+  border: 2px solid #e5e7eb;
 }
 
 .form-actions {
   display: flex;
-  gap: 12px;
+  gap: 16px;
+  align-items: center;
 }
 
-.btn-save-settings {
-  flex: 1;
-  background: linear-gradient(135deg, #E91E63 0%, #7C4DFF 100%);
+.btn-save {
+  background: linear-gradient(135deg, #1e40af 0%, #7c3aed 100%);
   color: white;
   border: none;
-  padding: 14px;
+  padding: 12px 24px;
   border-radius: 8px;
   cursor: pointer;
   font-weight: 600;
-  font-size: 16px;
+  font-size: 14px;
   transition: all 0.3s ease;
 }
 
-.btn-save-settings:hover {
+.btn-save:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 16px rgba(233, 30, 99, 0.2);
+  box-shadow: 0 8px 16px rgba(30, 64, 175, 0.2);
 }
 
 .success-message {
-  background: #E8F5E9;
-  color: #2E7D32;
-  padding: 12px;
+  background: #dcfce7;
+  color: #166534;
+  padding: 12px 16px;
   border-radius: 8px;
-  text-align: center;
+  font-size: 14px;
   font-weight: 600;
   animation: slideIn 0.3s ease-out;
 }
@@ -133,39 +126,60 @@
   }
 }
 
-.info-box {
-  background: #E3F2FD;
-  border-left: 4px solid #1565C0;
-  border-radius: 8px;
+.info-card {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 12px;
   padding: 20px;
+  max-width: 600px;
 }
 
-.info-box h3 {
-  color: #1565C0;
-  margin-top: 0;
-  margin-bottom: 12px;
+.info-card h3 {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #1e40af;
 }
 
-.info-box ul {
+.info-card ul {
   margin: 0;
   padding-left: 20px;
   list-style: none;
 }
 
-.info-box li {
-  color: #333;
+.info-card li {
+  margin-bottom: 10px;
   font-size: 14px;
-  margin-bottom: 8px;
+  color: #1f2937;
   line-height: 1.6;
 }
 
-.info-box li strong {
-  color: #1565C0;
+.info-card li strong {
+  color: #1e40af;
+}
+
+.info-card li:last-child {
+  margin-bottom: 0;
 }
 
 .loading {
   text-align: center;
-  padding: 40px;
-  color: #666;
-  font-size: 16px;
+  padding: 60px 20px;
+  background: white;
+  border-radius: 12px;
+  color: #6b7280;
+}
+
+@media (max-width: 768px) {
+  .settings-form {
+    gap: 20px;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .btn-save {
+    width: 100%;
+  }
 }

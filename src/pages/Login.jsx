@@ -24,70 +24,93 @@ export default function Login({ onLoginSuccess }) {
       const response = await api.post(endpoint, data)
       onLoginSuccess(response.data.token)
     } catch (err) {
-      setError(err.response?.data?.error || 'Erro ao fazer login')
+      setError(err.response?.data?.error || 'Erro ao processar solicitação')
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="login-container">
-      <div className="login-card">
-        <div className="login-header">
-          <h1>💪 BRUNA AFFONSO</h1>
-          <p>Treinos Exclusivos</p>
-        </div>
+    <div className="login-page">
+      <div className="login-container">
+        <div className="login-card">
+          <div className="login-header">
+            <div className="logo-area">
+              <img src="https://via.placeholder.com/80" alt="Bruna Affonso" className="logo" />
+            </div>
+            <h1>Bruna Affonso</h1>
+            <p className="tagline">Sua assistente de Treino</p>
+          </div>
 
-        <form onSubmit={handleSubmit}>
-          {isRegister && (
-            <input
-              type="text"
-              placeholder="Seu Nome"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-            />
-          )}
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-          <input
-            type="password"
-            placeholder="Senha"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
+          <form onSubmit={handleSubmit} className="login-form">
+            {isRegister && (
+              <div className="form-group">
+                <label>Nome Completo</label>
+                <input
+                  type="text"
+                  placeholder="Digite seu nome"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                  className="input-field"
+                />
+              </div>
+            )}
 
-          {error && <div className="error-message">{error}</div>}
+            <div className="form-group">
+              <label>Email</label>
+              <input
+                type="email"
+                placeholder="seu@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="input-field"
+              />
+            </div>
 
-          <button 
-            type="submit" 
-            className="login-button"
-            disabled={loading}
-          >
-            {loading ? 'Carregando...' : isRegister ? 'Criar Conta' : 'Entrar'}
-          </button>
-        </form>
+            <div className="form-group">
+              <label>Senha</label>
+              <input
+                type="password"
+                placeholder="Sua senha"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="input-field"
+              />
+            </div>
 
-        <div className="toggle-register">
-          <p>
-            {isRegister ? 'Já tem conta?' : 'Não tem conta?'}
+            {error && <div className="error-message">{error}</div>}
+
             <button 
-              type="button"
-              className="link-button"
-              onClick={() => {
-                setIsRegister(!isRegister)
-                setError('')
-              }}
+              type="submit" 
+              className="submit-button"
+              disabled={loading}
             >
-              {isRegister ? 'Fazer Login' : 'Criar Conta'}
+              {loading ? 'Processando...' : isRegister ? 'Criar Conta' : 'Entrar'}
             </button>
-          </p>
+          </form>
+
+          <div className="auth-toggle">
+            <p>
+              {isRegister ? 'Já tem uma conta? ' : 'Não tem uma conta? '}
+              <button
+                type="button"
+                className="toggle-button"
+                onClick={() => {
+                  setIsRegister(!isRegister)
+                  setError('')
+                }}
+              >
+                {isRegister ? 'Faça login' : 'Crie uma conta'}
+              </button>
+            </p>
+          </div>
+
+          <div className="login-footer">
+            <p>&copy; 2026 Bruna Affonso. Todos os direitos reservados.</p>
+          </div>
         </div>
       </div>
     </div>
