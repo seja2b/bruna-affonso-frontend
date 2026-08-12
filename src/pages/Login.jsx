@@ -37,11 +37,12 @@ export default function Login({ onLoginSuccess }) {
       <div className="login-container">
         <div className="login-card">
           <div className="login-header">
-            <div className="logo-container">
-              <img 
-                src="https://i.imgur.com/RU6wtlH.jpg" 
-                alt="Bruna Affonso" 
+            <div className="logo-box">
+              <div 
                 className="logo" 
+                style={{
+                  backgroundImage: 'url(https://i.imgur.com/RU6wtlH.jpg)'
+                }}
               />
             </div>
             <h1>Bruna Affonso</h1>
