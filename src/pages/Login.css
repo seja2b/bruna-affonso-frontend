@@ -3,21 +3,49 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+  position: relative;
+  overflow: hidden;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+}
+
+.login-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url('https://i.imgur.com/9U4wdOc.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  filter: brightness(0.5);
+  z-index: 0;
+}
+
+.login-background::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(31, 41, 55, 0.7) 0%, rgba(17, 24, 39, 0.7) 100%);
 }
 
 .login-container {
   width: 100%;
   max-width: 420px;
   padding: 20px;
+  position: relative;
+  z-index: 10;
 }
 
 .login-card {
   background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   padding: 48px 32px;
+  backdrop-filter: blur(10px);
 }
 
 .login-header {
@@ -25,20 +53,24 @@
   margin-bottom: 40px;
 }
 
-.logo-area {
+.logo-container {
   margin-bottom: 24px;
+  display: flex;
+  justify-content: center;
 }
 
 .logo {
-  width: 80px;
-  height: 80px;
-  border-radius: 8px;
+  width: 100px;
+  height: 100px;
+  border-radius: 16px;
   object-fit: cover;
+  box-shadow: 0 8px 24px rgba(30, 64, 175, 0.2);
+  border: 3px solid white;
 }
 
 .login-header h1 {
   margin: 20px 0 8px 0;
-  font-size: 28px;
+  font-size: 32px;
   font-weight: 700;
   color: #1f2937;
   letter-spacing: -0.5px;
@@ -105,7 +137,7 @@
 
 .submit-button {
   padding: 12px 16px;
-  background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+  background: linear-gradient(135deg, #1e40af 0%, #7c3aed 100%);
   color: white;
   border: none;
   border-radius: 8px;
@@ -115,11 +147,12 @@
   transition: all 0.3s ease;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  box-shadow: 0 4px 15px rgba(30, 64, 175, 0.2);
 }
 
 .submit-button:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 8px 16px rgba(30, 64, 175, 0.2);
+  box-shadow: 0 8px 24px rgba(30, 64, 175, 0.3);
 }
 
 .submit-button:disabled {
@@ -171,7 +204,12 @@
   }
 
   .login-header h1 {
-    font-size: 24px;
+    font-size: 28px;
+  }
+
+  .logo {
+    width: 80px;
+    height: 80px;
   }
 
   .login-form {

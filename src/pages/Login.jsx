@@ -32,11 +32,17 @@ export default function Login({ onLoginSuccess }) {
 
   return (
     <div className="login-page">
+      <div className="login-background" />
+      
       <div className="login-container">
         <div className="login-card">
           <div className="login-header">
-            <div className="logo-area">
-              <img src="https://via.placeholder.com/80" alt="Bruna Affonso" className="logo" />
+            <div className="logo-container">
+              <img 
+                src="https://i.imgur.com/RU6wtlH.jpg" 
+                alt="Bruna Affonso" 
+                className="logo" 
+              />
             </div>
             <h1>Bruna Affonso</h1>
             <p className="tagline">Sua assistente de Treino</p>
