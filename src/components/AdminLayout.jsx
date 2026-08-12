@@ -6,6 +6,7 @@ export default function AdminLayout({ user, token, children, onNavigate, current
 
   const menuItems = [
     { id: 'dashboard', icon: '📊', label: 'Dashboard' },
+    { id: 'add-user', icon: '➕', label: 'Adicionar Usuário' },
     { id: 'students', icon: '👥', label: 'Alunos' },
     { id: 'workouts', icon: '💪', label: 'Treinos' },
     { id: 'questions', icon: '💬', label: 'Perguntas' },

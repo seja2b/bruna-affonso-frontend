@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import './App.css'
 import Login from './pages/Login'
 import AdminDashboard from './pages/AdminDashboard'
+import AddUser from './pages/AddUser'
 import AdminStudents from './pages/AdminStudents'
 import AdminWorkouts from './pages/AdminWorkouts'
 import AdminQuestions from './pages/AdminQuestions'
@@ -66,6 +67,7 @@ export default function App() {
     return (
       <>
         {currentPage === 'dashboard' && <AdminDashboard user={user} token={token} onNavigate={handleNavigate} />}
+        {currentPage === 'add-user' && <AddUser user={user} token={token} onNavigate={handleNavigate} />}
         {currentPage === 'students' && <AdminStudents user={user} token={token} onNavigate={handleNavigate} />}
         {currentPage === 'workouts' && <AdminWorkouts user={user} token={token} onNavigate={handleNavigate} />}
         {currentPage === 'questions' && <AdminQuestions user={user} token={token} onNavigate={handleNavigate} />}
