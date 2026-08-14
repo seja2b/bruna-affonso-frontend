@@ -1,312 +1,177 @@
 import React, { useState, useEffect } from 'react'
-import { api } from '../services/api'
+import { useNavigate } from 'react-router-dom'
+import StudentWeeklyTracking from '../components/StudentWeeklyTracking'
+import StudentRanking from '../components/StudentRanking'
 import './StudentDashboard.css'
 
-export default function StudentDashboard({ user, token, onLogout }) {
-  const [workouts, setWorkouts] = useState([])
-  const [settings, setSettings] = useState(null)
+export default function StudentDashboard() {
+  const navigate = useNavigate()
+  const [user, setUser] = useState(null)
+  const [activeTab, setActiveTab] = useState('dashboard')
   const [loading, setLoading] = useState(true)
-  const [selectedWorkout, setSelectedWorkout] = useState(null)
-  const [completedWorkouts, setCompletedWorkouts] = useState(0)
-  const [showQuestionModal, setShowQuestionModal] = useState(false)
-  const [questionData, setQuestionData] = useState({ title: '', text: '' })
-  const [questionLoading, setQuestionLoading] = useState(false)
-  const [questionMessage, setQuestionMessage] = useState('')
+  const token = localStorage.getItem('token')
 
   useEffect(() => {
-    fetchData()
-  }, [])
+    if (!token) {
+      navigate('/login')
+      return
+    }
+    fetchUserData()
+  }, [token, navigate])
 
-  async function fetchData() {
+  const fetchUserData = async () => {
     try {
-      const [workoutsRes, settingsRes] = await Promise.all([
-        api.get('/workouts', { headers: { Authorization: `Bearer ${token}` } }),
-        api.get('/admin/settings', { headers: { Authorization: `Bearer ${token}` } })
-      ])
-      setWorkouts(workoutsRes.data)
-      setSettings(settingsRes.data)
-      setCompletedWorkouts(Math.floor(workoutsRes.data.length * 0.3))
+      setLoading(true)
+      const response = await fetch('https://bruna-affonso-backend-production.up.railway.app/api/auth/me', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      if (!response.ok) throw new Error('Não autorizado')
+      
+      const data = await response.json()
+      setUser(data)
+      
+      if (data.status !== 'APPROVED') {
+        setActiveTab('awaiting')
+      }
     } catch (error) {
-      console.error('Erro ao buscar dados', error)
+      console.error('Erro ao buscar usuário:', error)
+      localStorage.removeItem('token')
+      navigate('/login')
     } finally {
       setLoading(false)
     }
   }
 
-  async function handleSendQuestion(e) {
-    e.preventDefault()
-    
-    if (!questionData.title.trim() || !questionData.text.trim()) {
-      setQuestionMessage('Preencha todos os campos')
-      return
-    }
-
-    setQuestionLoading(true)
-    setQuestionMessage('')
-
-    try {
-      await api.post(
-        '/questions',
-        {
-          title: questionData.title,
-          text: questionData.text
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      )
-      setQuestionMessage('Pergunta enviada com sucesso!')
-      setQuestionData({ title: '', text: '' })
-      setTimeout(() => {
-        setShowQuestionModal(false)
-        setQuestionMessage('')
-      }, 2000)
-    } catch (error) {
-      setQuestionMessage('Erro ao enviar pergunta. Tente novamente.')
-    } finally {
-      setQuestionLoading(false)
-    }
+  const handleLogout = () => {
+    localStorage.removeItem('token')
+    navigate('/login')
   }
 
-  const totalProgress = Math.round((completedWorkouts / (workouts.length || 1)) * 100)
+  if (loading) {
+    return <div className="student-dashboard-loading">Carregando...</div>
+  }
+
+  if (!user) {
+    return <div className="student-dashboard-error">Erro ao carregar usuário</div>
+  }
+
+  if (user.status !== 'APPROVED') {
+    return (
+      <div className="student-dashboard">
+        <div className="dashboard-header">
+          <h1>Painel do Aluno</h1>
+          <button onClick={handleLogout} className="logout-btn">Logout</button>
+        </div>
+        <div className="awaiting-approval">
+          <div className="awaiting-icon">⏳</div>
+          <h2>Aguardando Aprovação</h2>
+          <p>Sua conta está em análise. Em breve você terá acesso completo!</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="student-dashboard">
-      <header className="student-header">
-        <div className="header-content">
-          <div className="header-left">
-            <div className="logo-section">
-              <img 
-                src="https://i.imgur.com/RU6wtlH.jpg" 
-                alt="Bruna Affonso" 
-                className="header-logo"
-              />
-              <div className="logo-text">
-                <h1>Bruna Affonso</h1>
-                <p>Plataforma de Treinos</p>
-              </div>
-            </div>
-          </div>
-          <div className="header-right">
-            <span className="user-name">{user.name}</span>
-            <button className="logout-btn" onClick={onLogout}>Sair</button>
-          </div>
+      {/* HEADER */}
+      <div className="dashboard-header">
+        <div className="header-left">
+          <h1>👋 Bem-vindo, {user.name}!</h1>
+          <p className="user-email">{user.email}</p>
         </div>
-      </header>
+        <button onClick={handleLogout} className="logout-btn">🚪 Logout</button>
+      </div>
 
-      {selectedWorkout ? (
-        <div className="workout-player-page">
-          <div className="player-wrapper">
-            <button className="back-button" onClick={() => setSelectedWorkout(null)}>
-              ← Voltar
-            </button>
-            
-            <div className="player-container">
-              <div className="video-section">
-                <div className="video-wrapper">
-                  {selectedWorkout.videoUrl.includes('youtube') ? (
-                    <iframe
-                      width="100%"
-                      height="100%"
-                      src={`https://www.youtube.com/embed/${selectedWorkout.videoUrl.split('v=')[1]}`}
-                      title={selectedWorkout.title}
-                      frameBorder="0"
-                      allowFullScreen
-                    />
-                  ) : (
-                    <a href={selectedWorkout.videoUrl} target="_blank" rel="noopener noreferrer" className="video-link">
-                      Abrir Vídeo
-                    </a>
-                  )}
+      {/* TABS */}
+      <div className="dashboard-tabs">
+        <button
+          className={`tab-btn ${activeTab === 'dashboard' ? 'active' : ''}`}
+          onClick={() => setActiveTab('dashboard')}
+        >
+          📊 Dashboard
+        </button>
+        <button
+          className={`tab-btn ${activeTab === 'tracking' ? 'active' : ''}`}
+          onClick={() => setActiveTab('tracking')}
+        >
+          📝 Acompanhamento Semanal
+        </button>
+        <button
+          className={`tab-btn ${activeTab === 'ranking' ? 'active' : ''}`}
+          onClick={() => setActiveTab('ranking')}
+        >
+          🏆 Ranking
+        </button>
+      </div>
+
+      {/* CONTEÚDO DAS ABAS */}
+      <div className="dashboard-content">
+        {/* ABA 1: DASHBOARD */}
+        {activeTab === 'dashboard' && (
+          <div className="dashboard-tab">
+            <div className="welcome-card">
+              <div className="welcome-icon">💪</div>
+              <h2>Bem-vindo ao Acompanhamento de Treinos!</h2>
+              <p>Aqui você pode registrar o progresso das suas semanas de treino, deixar observações e acompanhar seu desempenho.</p>
+              
+              <div className="features-grid">
+                <div className="feature-box">
+                  <span className="feature-icon">📝</span>
+                  <h3>Registre seus Treinos</h3>
+                  <p>Preencha as cargas e repetições de cada exercício</p>
                 </div>
-
-                <div className="video-info">
-                  <h2>{selectedWorkout.title}</h2>
-                  <p>{selectedWorkout.description}</p>
-                  
-                  {selectedWorkout.week && (
-                    <div className="workout-meta">
-                      <span>Semana {selectedWorkout.week}</span>
-                      {selectedWorkout.module && <span>•</span>}
-                      {selectedWorkout.module && <span>{selectedWorkout.module}</span>}
-                    </div>
-                  )}
-
-                  <div className="video-actions">
-                    <button className="btn-complete" onClick={() => setSelectedWorkout(null)}>
-                      Marcar como Concluído
-                    </button>
-                    <button className="btn-question" onClick={() => setShowQuestionModal(true)}>
-                      Enviar Dúvida
-                    </button>
-                  </div>
+                
+                <div className="feature-box">
+                  <span className="feature-icon">💬</span>
+                  <h3>Deixe Observações</h3>
+                  <p>Compartilhe como você se sentiu em cada semana</p>
+                </div>
+                
+                <div className="feature-box">
+                  <span className="feature-icon">📸</span>
+                  <h3>Adicione sua Foto</h3>
+                  <p>Personalize seu perfil com uma foto</p>
+                </div>
+                
+                <div className="feature-box">
+                  <span className="feature-icon">🏆</span>
+                  <h3>Ganhe Pontos</h3>
+                  <p>Complete semanas e suba no ranking!</p>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-      ) : (
-        <main className="student-main">
-          {loading ? (
-            <div className="loading">Carregando treinos...</div>
-          ) : (
-            <>
-              {/* HERO SECTION */}
-              <section className="hero-section">
-                <div className="hero-content">
-                  <h2>Olá, {user.name.split(' ')[0]}</h2>
-                  {settings?.motivationalPhrase && (
-                    <p className="hero-quote">{settings.motivationalPhrase}</p>
-                  )}
-                </div>
-              </section>
 
-              {/* PROGRESS SECTION */}
-              <section className="progress-section">
-                <div className="progress-info">
-                  <h3>Progresso</h3>
-                  <span className="progress-value">{totalProgress}%</span>
-                </div>
-                <div className="progress-bar-container">
-                  <div className="progress-bar" style={{ width: `${totalProgress}%` }} />
-                </div>
-                <p className="progress-text">{completedWorkouts} de {workouts.length} treinos completados</p>
-              </section>
+              <div className="getting-started">
+                <h3>Como Começar?</h3>
+                <ol>
+                  <li>Clique em "Acompanhamento Semanal"</li>
+                  <li>Selecione a semana liberada</li>
+                  <li>Preencha as cargas e repetições de cada exercício</li>
+                  <li>Deixe suas observações (opcional)</li>
+                  <li>Quando completar tudo, ganhe 100 pontos! 🎉</li>
+                </ol>
+              </div>
 
-              {/* STATS SECTION */}
-              <section className="stats-section">
-                <div className="stat-item">
-                  <span className="stat-label">Disponíveis</span>
-                  <span className="stat-number">{workouts.length}</span>
-                </div>
-                <div className="divider" />
-                <div className="stat-item">
-                  <span className="stat-label">Concluídos</span>
-                  <span className="stat-number">{completedWorkouts}</span>
-                </div>
-                <div className="divider" />
-                <div className="stat-item">
-                  <span className="stat-label">Faltam</span>
-                  <span className="stat-number">{workouts.length - completedWorkouts}</span>
-                </div>
-              </section>
-
-              {/* WORKOUTS SECTION */}
-              <section className="workouts-section">
-                <div className="section-title">
-                  <h3>Meus Treinos</h3>
-                  <span className="count">{workouts.length}</span>
-                </div>
-
-                {workouts.length === 0 ? (
-                  <div className="empty-state">
-                    <p>Nenhum treino disponível no momento</p>
-                  </div>
-                ) : (
-                  <div className="workouts-list">
-                    {workouts.map((workout, index) => (
-                      <div
-                        key={workout.id}
-                        className="workout-item"
-                        onClick={() => setSelectedWorkout(workout)}
-                      >
-                        <div className="workout-number">{index + 1}</div>
-                        <div className="workout-content">
-                          <h4>{workout.title}</h4>
-                          <p>{workout.description}</p>
-                        </div>
-                        <div className="workout-meta-inline">
-                          {workout.week && <span className="meta-tag">S{workout.week}</span>}
-                          {workout.module && <span className="meta-tag">{workout.module}</span>}
-                        </div>
-                        <div className="arrow">→</div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </section>
-
-              {/* CONTACT SECTION */}
-              {settings?.phone || settings?.whatsappUrl ? (
-                <section className="contact-section">
-                  <h3>Entre em Contato</h3>
-                  <div className="contact-links">
-                    {settings?.phone && (
-                      <a href={`tel:${settings.phone}`} className="contact-link">
-                        <span className="contact-icon">📞</span>
-                        <span>{settings.phone}</span>
-                      </a>
-                    )}
-                    {settings?.whatsappUrl && (
-                      <a href={settings.whatsappUrl} target="_blank" rel="noopener noreferrer" className="contact-link">
-                        <span className="contact-icon">💬</span>
-                        <span>WhatsApp</span>
-                      </a>
-                    )}
-                  </div>
-                </section>
-              ) : null}
-
-              {/* QUESTION BUTTON */}
-              <button 
-                className="floating-question-btn"
-                onClick={() => setShowQuestionModal(true)}
-              >
-                Enviar Dúvida
+              <button className="cta-button" onClick={() => setActiveTab('tracking')}>
+                ➡️ Ir para Acompanhamento Semanal
               </button>
-            </>
-          )}
-        </main>
-      )}
-
-      {/* QUESTION MODAL */}
-      {showQuestionModal && (
-        <div className="modal-overlay" onClick={() => setShowQuestionModal(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>Enviar Dúvida</h2>
-              <button className="modal-close" onClick={() => setShowQuestionModal(false)}>×</button>
             </div>
-
-            <form onSubmit={handleSendQuestion} className="question-form">
-              <div className="form-group">
-                <label>Assunto</label>
-                <input
-                  type="text"
-                  placeholder="Qual é sua dúvida?"
-                  value={questionData.title}
-                  onChange={(e) => setQuestionData({...questionData, title: e.target.value})}
-                  disabled={questionLoading}
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Mensagem</label>
-                <textarea
-                  placeholder="Descreva sua dúvida com detalhes..."
-                  value={questionData.text}
-                  onChange={(e) => setQuestionData({...questionData, text: e.target.value})}
-                  rows="5"
-                  disabled={questionLoading}
-                />
-              </div>
-
-              {questionMessage && (
-                <div className={`message ${questionMessage.includes('sucesso') ? 'success' : 'error'}`}>
-                  {questionMessage}
-                </div>
-              )}
-
-              <div className="modal-actions">
-                <button type="submit" className="btn-send" disabled={questionLoading}>
-                  {questionLoading ? 'Enviando...' : 'Enviar'}
-                </button>
-                <button type="button" className="btn-cancel" onClick={() => setShowQuestionModal(false)}>
-                  Cancelar
-                </button>
-              </div>
-            </form>
           </div>
-        </div>
-      )}
+        )}
+
+        {/* ABA 2: ACOMPANHAMENTO SEMANAL */}
+        {activeTab === 'tracking' && (
+          <div className="tracking-tab">
+            <StudentWeeklyTracking studentId={user.id} token={token} />
+          </div>
+        )}
+
+        {/* ABA 3: RANKING */}
+        {activeTab === 'ranking' && (
+          <div className="ranking-tab">
+            <StudentRanking token={token} />
+          </div>
+        )}
+      </div>
     </div>
   )
 }

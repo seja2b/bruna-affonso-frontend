@@ -1,140 +1,153 @@
 import React, { useState, useEffect } from 'react'
-import { api } from '../services/api'
-import AdminLayout from '../components/AdminLayout'
+import { useNavigate } from 'react-router-dom'
+import AdminTracking from '../components/AdminTracking'
 import './AdminDashboard.css'
 
-export default function AdminDashboard({ user, token, onNavigate }) {
-  const [stats, setStats] = useState({
-    totalStudents: 0,
-    pendingStudents: 0,
-    totalWorkouts: 0,
-    pendingQuestions: 0
-  })
+export default function AdminDashboard() {
+  const navigate = useNavigate()
+  const [user, setUser] = useState(null)
+  const [activeTab, setActiveTab] = useState('dashboard')
   const [loading, setLoading] = useState(true)
+  const token = localStorage.getItem('token')
 
   useEffect(() => {
-    fetchStats()
-  }, [])
+    if (!token) {
+      navigate('/login')
+      return
+    }
+    fetchUserData()
+  }, [token, navigate])
 
-  async function fetchStats() {
+  const fetchUserData = async () => {
     try {
-      const response = await api.get('/admin/dashboard', {
+      setLoading(true)
+      const response = await fetch('https://bruna-affonso-backend-production.up.railway.app/api/auth/me', {
         headers: { Authorization: `Bearer ${token}` }
       })
-      setStats(response.data)
+      if (!response.ok) throw new Error('Não autorizado')
+      
+      const data = await response.json()
+      
+      if (data.role !== 'ADMIN') {
+        navigate('/student-dashboard')
+        return
+      }
+      
+      setUser(data)
     } catch (error) {
-      console.error('Erro ao buscar stats', error)
+      console.error('Erro ao buscar usuário:', error)
+      localStorage.removeItem('token')
+      navigate('/login')
     } finally {
       setLoading(false)
     }
   }
 
+  const handleLogout = () => {
+    localStorage.removeItem('token')
+    navigate('/login')
+  }
+
+  if (loading) {
+    return <div className="admin-dashboard-loading">Carregando...</div>
+  }
+
+  if (!user) {
+    return <div className="admin-dashboard-error">Erro ao carregar usuário</div>
+  }
+
   return (
-    <AdminLayout user={user} token={token} onNavigate={onNavigate} currentPage="dashboard">
-      <div className="dashboard">
-        <div className="dashboard-header">
-          <h1>Dashboard</h1>
-          <p className="dashboard-subtitle">Bem-vindo ao painel de controle</p>
+    <div className="admin-dashboard">
+      {/* HEADER */}
+      <div className="admin-dashboard-header">
+        <div className="header-left">
+          <h1>👨‍💼 Painel de Administrador</h1>
+          <p className="admin-email">{user.email}</p>
         </div>
+        <button onClick={handleLogout} className="logout-btn">🚪 Logout</button>
+      </div>
 
-        {loading ? (
-          <div className="loading">Carregando dados...</div>
-        ) : (
-          <>
-            <div className="stats-grid">
-              <div className="stat-card">
-                <div className="stat-icon students">👥</div>
-                <div className="stat-content">
-                  <h3>Total de Alunos</h3>
-                  <p className="stat-number">{stats.totalStudents}</p>
+      {/* TABS */}
+      <div className="admin-tabs">
+        <button
+          className={`tab-btn ${activeTab === 'dashboard' ? 'active' : ''}`}
+          onClick={() => setActiveTab('dashboard')}
+        >
+          📊 Dashboard
+        </button>
+        <button
+          className={`tab-btn ${activeTab === 'tracking' ? 'active' : ''}`}
+          onClick={() => setActiveTab('tracking')}
+        >
+          👨‍🏫 Acompanhamento dos Alunos
+        </button>
+      </div>
+
+      {/* CONTEÚDO DAS ABAS */}
+      <div className="admin-content">
+        {/* ABA 1: DASHBOARD */}
+        {activeTab === 'dashboard' && (
+          <div className="admin-dashboard-tab">
+            <div className="welcome-card-admin">
+              <div className="welcome-icon-admin">⚙️</div>
+              <h2>Bem-vindo ao Painel Administrativo!</h2>
+              <p>Gerencie o programa de treino de Bruna Affonso e acompanhe o progresso dos seus alunos.</p>
+              
+              <div className="features-grid-admin">
+                <div className="feature-box-admin">
+                  <span className="feature-icon-admin">👥</span>
+                  <h3>Gerenciar Alunos</h3>
+                  <p>Visualize e aprove novos alunos</p>
                 </div>
+                
+                <div className="feature-box-admin">
+                  <span className="feature-icon-admin">📋</span>
+                  <h3>Acompanhar Progresso</h3>
+                  <p>Veja o desempenho semanal de cada aluno</p>
+                </div>
+                
+                <div className="feature-box-admin">
+                  <span className="feature-icon-admin">💬</span>
+                  <h3>Deixar Feedback</h3>
+                  <p>Envie observações e sugestões</p>
+                </div>
+                
+                <div className="feature-box-admin">
+                  <span className="feature-icon-admin">🏆</span>
+                  <h3>Acompanhar Ranking</h3>
+                  <p>Veja o ranking de alunos por pontuação</p>
+                </div>
+              </div>
+
+              <div className="quick-links-admin">
+                <h3>Atalhos Rápidos</h3>
                 <button 
-                  className="stat-action"
-                  onClick={() => onNavigate('students')}
+                  className="quick-link-btn"
+                  onClick={() => setActiveTab('tracking')}
                 >
-                  Ver →
+                  ➡️ Ir para Acompanhamento dos Alunos
                 </button>
               </div>
 
-              <div className="stat-card">
-                <div className="stat-icon pending">⏳</div>
-                <div className="stat-content">
-                  <h3>Aguardando Aprovação</h3>
-                  <p className="stat-number">{stats.pendingStudents}</p>
+              <div className="admin-stats">
+                <h3>Sistema de Pontuação</h3>
+                <div className="stats-box">
+                  <p><strong>100 pontos</strong> por semana completa</p>
+                  <p><strong>+1 semana</strong> contabilizada no ranking</p>
+                  <p>Alunos ganham pontos automaticamente ao completar todas as atividades</p>
                 </div>
-                <button 
-                  className="stat-action"
-                  onClick={() => onNavigate('students')}
-                >
-                  Aprovar →
-                </button>
-              </div>
-
-              <div className="stat-card">
-                <div className="stat-icon workouts">💪</div>
-                <div className="stat-content">
-                  <h3>Total de Treinos</h3>
-                  <p className="stat-number">{stats.totalWorkouts}</p>
-                </div>
-                <button 
-                  className="stat-action"
-                  onClick={() => onNavigate('workouts')}
-                >
-                  Gerenciar →
-                </button>
-              </div>
-
-              <div className="stat-card">
-                <div className="stat-icon questions">💬</div>
-                <div className="stat-content">
-                  <h3>Perguntas Pendentes</h3>
-                  <p className="stat-number">{stats.pendingQuestions}</p>
-                </div>
-                <button 
-                  className="stat-action"
-                  onClick={() => onNavigate('questions')}
-                >
-                  Responder →
-                </button>
               </div>
             </div>
+          </div>
+        )}
 
-            <div className="quick-actions">
-              <h2>Ações Rápidas</h2>
-              <div className="actions-grid">
-                <button 
-                  className="action-btn"
-                  onClick={() => onNavigate('students')}
-                >
-                  <span className="action-icon">👥</span>
-                  <span>Gerenciar Alunos</span>
-                </button>
-                <button 
-                  className="action-btn"
-                  onClick={() => onNavigate('workouts')}
-                >
-                  <span className="action-icon">💪</span>
-                  <span>Adicionar Treino</span>
-                </button>
-                <button 
-                  className="action-btn"
-                  onClick={() => onNavigate('questions')}
-                >
-                  <span className="action-icon">💬</span>
-                  <span>Ver Perguntas</span>
-                </button>
-                <button 
-                  className="action-btn"
-                  onClick={() => onNavigate('settings')}
-                >
-                  <span className="action-icon">⚙️</span>
-                  <span>Configurações</span>
-                </button>
-              </div>
-            </div>
-          </>
+        {/* ABA 2: ACOMPANHAMENTO DOS ALUNOS */}
+        {activeTab === 'tracking' && (
+          <div className="admin-tracking-tab">
+            <AdminTracking token={token} />
+          </div>
         )}
       </div>
-    </AdminLayout>
+    </div>
   )
 }
