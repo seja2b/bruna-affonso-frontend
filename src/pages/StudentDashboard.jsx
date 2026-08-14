@@ -119,7 +119,7 @@ export default function StudentDashboard({ user, token, onLogout }) {
         {/* ABA 2: ACOMPANHAMENTO SEMANAL */}
         {activeTab === 'tracking' && (
           <div className="tracking-tab">
-            <StudentWeeklyTracking studentId={userData.id} token={token} />
+            <StudentWeeklyTracking studentId={userData.studentId} token={token} />
           </div>
         )}
 
