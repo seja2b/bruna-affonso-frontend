@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import AdminTracking from '../components/AdminTracking'
+import StudentRanking from '../components/StudentRanking'
+import AddUser from './AddUser'
+import AdminStudents from './AdminStudents'
+import AdminWorkouts from './AdminWorkouts'
+import AdminQuestions from './AdminQuestions'
+import AdminSettings from './AdminSettings'
 import './AdminDashboard.css'
 
 export default function AdminDashboard({ user, token, onLogout, onNavigate }) {
@@ -35,7 +41,43 @@ export default function AdminDashboard({ user, token, onLogout, onNavigate }) {
           className={`tab-btn ${activeTab === 'tracking' ? 'active' : ''}`}
           onClick={() => setActiveTab('tracking')}
         >
-          👨‍🏫 Acompanhamento dos Alunos
+          👨‍🏫 Acompanhamento
+        </button>
+        <button
+          className={`tab-btn ${activeTab === 'ranking' ? 'active' : ''}`}
+          onClick={() => setActiveTab('ranking')}
+        >
+          🏆 Ranking
+        </button>
+        <button
+          className={`tab-btn ${activeTab === 'add-user' ? 'active' : ''}`}
+          onClick={() => setActiveTab('add-user')}
+        >
+          ➕ Adicionar Aluno
+        </button>
+        <button
+          className={`tab-btn ${activeTab === 'students' ? 'active' : ''}`}
+          onClick={() => setActiveTab('students')}
+        >
+          👥 Alunos
+        </button>
+        <button
+          className={`tab-btn ${activeTab === 'workouts' ? 'active' : ''}`}
+          onClick={() => setActiveTab('workouts')}
+        >
+          🎥 Vídeos
+        </button>
+        <button
+          className={`tab-btn ${activeTab === 'questions' ? 'active' : ''}`}
+          onClick={() => setActiveTab('questions')}
+        >
+          ❓ Perguntas
+        </button>
+        <button
+          className={`tab-btn ${activeTab === 'settings' ? 'active' : ''}`}
+          onClick={() => setActiveTab('settings')}
+        >
+          ⚙️ Configurações
         </button>
       </div>
 
@@ -81,7 +123,7 @@ export default function AdminDashboard({ user, token, onLogout, onNavigate }) {
                   className="quick-link-btn"
                   onClick={() => setActiveTab('tracking')}
                 >
-                  ➡️ Ir para Acompanhamento dos Alunos
+                  ➡️ Ir para Acompanhamento
                 </button>
               </div>
 
@@ -97,11 +139,43 @@ export default function AdminDashboard({ user, token, onLogout, onNavigate }) {
           </div>
         )}
 
-        {/* ABA 2: ACOMPANHAMENTO DOS ALUNOS */}
+        {/* ABA 2: ACOMPANHAMENTO */}
         {activeTab === 'tracking' && (
           <div className="admin-tracking-tab">
             <AdminTracking token={token} />
           </div>
+        )}
+
+        {/* ABA 3: RANKING */}
+        {activeTab === 'ranking' && (
+          <div className="ranking-tab">
+            <StudentRanking token={token} />
+          </div>
+        )}
+
+        {/* ABA 4: ADICIONAR ALUNO */}
+        {activeTab === 'add-user' && (
+          <AddUser user={user} token={token} onNavigate={onNavigate} />
+        )}
+
+        {/* ABA 5: GERENCIAR ALUNOS */}
+        {activeTab === 'students' && (
+          <AdminStudents user={user} token={token} onNavigate={onNavigate} />
+        )}
+
+        {/* ABA 6: VÍDEOS */}
+        {activeTab === 'workouts' && (
+          <AdminWorkouts user={user} token={token} onNavigate={onNavigate} />
+        )}
+
+        {/* ABA 7: PERGUNTAS */}
+        {activeTab === 'questions' && (
+          <AdminQuestions user={user} token={token} onNavigate={onNavigate} />
+        )}
+
+        {/* ABA 8: CONFIGURAÇÕES */}
+        {activeTab === 'settings' && (
+          <AdminSettings user={user} token={token} onNavigate={onNavigate} />
         )}
       </div>
     </div>
