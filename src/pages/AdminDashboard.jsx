@@ -1,60 +1,16 @@
 import React, { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
 import AdminTracking from '../components/AdminTracking'
 import './AdminDashboard.css'
 
-export default function AdminDashboard() {
-  const navigate = useNavigate()
-  const [user, setUser] = useState(null)
+export default function AdminDashboard({ user, token, onLogout, onNavigate }) {
   const [activeTab, setActiveTab] = useState('dashboard')
-  const [loading, setLoading] = useState(true)
-  const token = localStorage.getItem('token')
+  const [userData, setUserData] = useState(user)
 
   useEffect(() => {
-    if (!token) {
-      navigate('/login')
-      return
+    if (user) {
+      setUserData(user)
     }
-    fetchUserData()
-  }, [token, navigate])
-
-  const fetchUserData = async () => {
-    try {
-      setLoading(true)
-      const response = await fetch('https://bruna-affonso-backend-production.up.railway.app/api/auth/me', {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      if (!response.ok) throw new Error('Não autorizado')
-      
-      const data = await response.json()
-      
-      if (data.role !== 'ADMIN') {
-        navigate('/student-dashboard')
-        return
-      }
-      
-      setUser(data)
-    } catch (error) {
-      console.error('Erro ao buscar usuário:', error)
-      localStorage.removeItem('token')
-      navigate('/login')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleLogout = () => {
-    localStorage.removeItem('token')
-    navigate('/login')
-  }
-
-  if (loading) {
-    return <div className="admin-dashboard-loading">Carregando...</div>
-  }
-
-  if (!user) {
-    return <div className="admin-dashboard-error">Erro ao carregar usuário</div>
-  }
+  }, [user])
 
   return (
     <div className="admin-dashboard">
@@ -62,9 +18,9 @@ export default function AdminDashboard() {
       <div className="admin-dashboard-header">
         <div className="header-left">
           <h1>👨‍💼 Painel de Administrador</h1>
-          <p className="admin-email">{user.email}</p>
+          <p className="admin-email">{userData.email}</p>
         </div>
-        <button onClick={handleLogout} className="logout-btn">🚪 Logout</button>
+        <button onClick={onLogout} className="logout-btn">🚪 Logout</button>
       </div>
 
       {/* TABS */}
