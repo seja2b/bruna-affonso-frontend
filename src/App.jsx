@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import Login from './pages/login'
+import Login from './pages/Login'
 import StudentDashboard from './pages/StudentDashboard'
 import AdminDashboard from './pages/AdminDashboard'
 import './App.css'
