@@ -1,93 +1,71 @@
 import React, { useState, useEffect } from 'react'
-import './App.css'
-import Login from './pages/Login'
-import AdminDashboard from './pages/AdminDashboard'
-import AddUser from './pages/AddUser'
-import AdminStudents from './pages/AdminStudents'
-import AdminWorkouts from './pages/AdminWorkouts'
-import AdminQuestions from './pages/AdminQuestions'
-import AdminSettings from './pages/AdminSettings'
+import LoginPage from './pages/LoginPage'
 import StudentDashboard from './pages/StudentDashboard'
-import { api } from './services/api'
+import AdminDashboard from './pages/AdminDashboard'
+import './App.css'
 
-export default function App() {
-  const [token, setToken] = useState(localStorage.getItem('token'))
+function App() {
   const [user, setUser] = useState(null)
+  const [token, setToken] = useState(localStorage.getItem('token'))
   const [loading, setLoading] = useState(true)
-  const [currentPage, setCurrentPage] = useState('dashboard')
 
   useEffect(() => {
     if (token) {
-      fetchUser()
+      fetchUserData()
     } else {
       setLoading(false)
     }
   }, [token])
 
-  async function fetchUser() {
+  const fetchUserData = async () => {
     try {
-      const response = await api.get('/auth/me', {
+      setLoading(true)
+      const response = await fetch('https://bruna-affonso-backend-production.up.railway.app/api/auth/me', {
         headers: { Authorization: `Bearer ${token}` }
       })
-      setUser(response.data)
+
+      if (!response.ok) throw new Error('Não autorizado')
+
+      const userData = await response.json()
+      setUser(userData)
     } catch (error) {
-      setToken(null)
+      console.error('Erro ao buscar usuário:', error)
       localStorage.removeItem('token')
+      setToken(null)
+      setUser(null)
     } finally {
       setLoading(false)
     }
   }
 
-  function handleLogout() {
-    setToken(null)
-    setUser(null)
-    localStorage.removeItem('token')
-    setCurrentPage('dashboard')
+  const handleLoginSuccess = (newToken) => {
+    localStorage.setItem('token', newToken)
+    setToken(newToken)
   }
 
-  function handleNavigate(page) {
-    setCurrentPage(page)
+  const handleLogout = () => {
+    localStorage.removeItem('token')
+    setToken(null)
+    setUser(null)
   }
 
   if (loading) {
-    return (
-      <div className="loading-screen">
-        <div className="loading-spinner"></div>
-        <p>Carregando...</p>
-      </div>
-    )
+    return <div className="app-loading">Carregando...</div>
   }
 
   if (!token || !user) {
-    return <Login onLoginSuccess={(newToken) => { setToken(newToken); localStorage.setItem('token', newToken) }} />
+    return <LoginPage onLoginSuccess={handleLoginSuccess} />
   }
 
-  // ADMIN
+  if (user.role === 'STUDENT') {
+    return <StudentDashboard user={user} token={token} onLogout={handleLogout} />
+  }
+
   if (user.role === 'ADMIN') {
-    return (
-      <>
-        {currentPage === 'dashboard' && <AdminDashboard user={user} token={token} onNavigate={handleNavigate} />}
-        {currentPage === 'add-user' && <AddUser user={user} token={token} onNavigate={handleNavigate} />}
-        {currentPage === 'students' && <AdminStudents user={user} token={token} onNavigate={handleNavigate} />}
-        {currentPage === 'workouts' && <AdminWorkouts user={user} token={token} onNavigate={handleNavigate} />}
-        {currentPage === 'questions' && <AdminQuestions user={user} token={token} onNavigate={handleNavigate} />}
-        {currentPage === 'settings' && <AdminSettings user={user} token={token} onNavigate={handleNavigate} />}
-      </>
-    )
+    return <AdminDashboard user={user} token={token} onLogout={handleLogout} />
   }
 
-  // STUDENT
-  if (user.status !== 'APPROVED') {
-    return (
-      <div className="approval-screen">
-        <div className="approval-card">
-          <h2>Aguardando Aprovação</h2>
-          <p>Seu cadastro está sendo analisado por Bruna. Você receberá um email quando for aprovado!</p>
-          <button onClick={handleLogout} className="logout-btn">Sair</button>
-        </div>
-      </div>
-    )
-  }
-
-  return <StudentDashboard user={user} token={token} onLogout={handleLogout} />
+  return <LoginPage onLoginSuccess={handleLoginSuccess} />
 }
+
+export default App
