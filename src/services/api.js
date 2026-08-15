@@ -1,23 +1,36 @@
 import axios from 'axios'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
-
-export const api = axios.create({
-  baseURL: `${API_URL}/api`,
-  headers: {
-    'Content-Type': 'application/json'
-  }
+const api = axios.create({
+  baseURL: 'https://bruna-affonso-backend-production.up.railway.app/api'
 })
 
+// Interceptor para adicionar token em TODAS as requisições
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token')
+    
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
+    
+    return config
+  },
+  (error) => {
+    return Promise.reject(error)
+  }
+)
+
+// Interceptor para tratar erros de autenticação
 api.interceptors.response.use(
-  response => response,
-  error => {
+  (response) => response,
+  (error) => {
     if (error.response?.status === 401) {
+      // Token expirou ou inválido
       localStorage.removeItem('token')
-      window.location.href = '/'
+      window.location.href = '/login'
     }
     return Promise.reject(error)
   }
 )
 
-export default api
+export { api }
