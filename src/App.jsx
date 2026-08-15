@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import LoginPage from './pages/login'
+import login from './pages/login'
 import StudentDashboard from './pages/StudentDashboard'
 import AdminDashboard from './pages/AdminDashboard'
 import './App.css'
@@ -54,7 +54,7 @@ function App() {
   }
 
   if (!token || !user) {
-    return <LoginPage onLoginSuccess={handleLoginSuccess} />
+    return login({ onLoginSuccess: handleLoginSuccess })
   }
 
   if (user.role === 'STUDENT') {
@@ -65,7 +65,7 @@ function App() {
     return <AdminDashboard user={user} token={token} onLogout={handleLogout} />
   }
 
-  return <LoginPage onLoginSuccess={handleLoginSuccess} />
+  return login({ onLoginSuccess: handleLoginSuccess })
 }
 
 export default App
