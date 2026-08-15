@@ -12,21 +12,30 @@ export default function StudentWeeklyTracking({ studentId, token }) {
   const [profilePhoto, setProfilePhoto] = useState(null)
 
   useEffect(() => {
+    if (!studentId) {
+      console.error('studentId não foi passado!')
+      return
+    }
     loadWeeks()
-  }, [studentId])
+  }, [studentId, token])
 
   const loadWeeks = async () => {
     try {
       setLoading(true)
+      console.log('Carregando semanas para studentId:', studentId)
+      
       const response = await api.get(`/tracking/student/${studentId}/weeks`, {
         headers: { Authorization: `Bearer ${token}` }
       })
+      
+      console.log('Semanas carregadas:', response.data)
       setWeeks(response.data)
+      
       if (response.data.length > 0) {
         selectWeek(response.data[0])
       }
     } catch (error) {
-      console.error('Erro ao carregar semanas:', error)
+      console.error('Erro ao carregar semanas:', error.response?.data || error.message)
       alert('Erro ao carregar dados')
     } finally {
       setLoading(false)
@@ -100,11 +109,13 @@ export default function StudentWeeklyTracking({ studentId, token }) {
       try {
         setSaving(true)
         const base64 = event.target.result
+        
         await api.put(
           `/tracking/profile-photo/${studentId}`,
           { profilePhoto: base64 },
           { headers: { Authorization: `Bearer ${token}` } }
         )
+        
         setProfilePhoto(base64)
         alert('✅ Foto atualizada!')
       } catch (error) {
@@ -119,6 +130,10 @@ export default function StudentWeeklyTracking({ studentId, token }) {
 
   if (loading) {
     return <div className="tracking-loading">Carregando semanas...</div>
+  }
+
+  if (weeks.length === 0) {
+    return <div className="tracking-loading">Nenhuma semana disponível</div>
   }
 
   return (
