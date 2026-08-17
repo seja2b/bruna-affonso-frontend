@@ -1,11 +1,19 @@
 import React, { useState, useEffect } from 'react'
 import StudentWeeklyTracking from '../components/StudentWeeklyTracking'
 import StudentRanking from '../components/StudentRanking'
+import RegistrarTreinos from '../components/RegistrarTreinos'
+import DeixarObservacoes from '../components/DeixarObservacoes'
+import AdicionarFoto from '../components/AdicionarFoto'
 import './StudentDashboard.css'
 
 export default function StudentDashboard({ user, token, onLogout }) {
   const [activeTab, setActiveTab] = useState('dashboard')
   const [userData, setUserData] = useState(user)
+
+  // Estados dos modais
+  const [showRegistrarTreinos, setShowRegistrarTreinos] = useState(false)
+  const [showDeixarObservacoes, setShowDeixarObservacoes] = useState(false)
+  const [showAdicionarFoto, setShowAdicionarFoto] = useState(false)
 
   useEffect(() => {
     if (user) {
@@ -73,25 +81,41 @@ export default function StudentDashboard({ user, token, onLogout }) {
               <p>Aqui você pode registrar o progresso das suas semanas de treino, deixar observações e acompanhar seu desempenho.</p>
               
               <div className="features-grid">
-                <div className="feature-box" onClick={() => setActiveTab('tracking')} style={{ cursor: 'pointer' }}>
+                <div 
+                  className="feature-box" 
+                  onClick={() => setShowRegistrarTreinos(true)} 
+                  style={{ cursor: 'pointer' }}
+                >
                   <span className="feature-icon">📝</span>
                   <h3>Registre seus Treinos</h3>
                   <p>Preencha as cargas e repetições de cada exercício</p>
                 </div>
                 
-                <div className="feature-box" onClick={() => setActiveTab('tracking')} style={{ cursor: 'pointer' }}>
+                <div 
+                  className="feature-box" 
+                  onClick={() => setShowDeixarObservacoes(true)} 
+                  style={{ cursor: 'pointer' }}
+                >
                   <span className="feature-icon">💬</span>
                   <h3>Deixe Observações</h3>
                   <p>Compartilhe como você se sentiu em cada semana</p>
                 </div>
                 
-                <div className="feature-box" onClick={() => setActiveTab('tracking')} style={{ cursor: 'pointer' }}>
+                <div 
+                  className="feature-box" 
+                  onClick={() => setShowAdicionarFoto(true)} 
+                  style={{ cursor: 'pointer' }}
+                >
                   <span className="feature-icon">📸</span>
                   <h3>Adicione sua Foto</h3>
                   <p>Personalize seu perfil com uma foto</p>
                 </div>
                 
-                <div className="feature-box" onClick={() => setActiveTab('ranking')} style={{ cursor: 'pointer' }}>
+                <div 
+                  className="feature-box" 
+                  onClick={() => setActiveTab('ranking')} 
+                  style={{ cursor: 'pointer' }}
+                >
                   <span className="feature-icon">🏆</span>
                   <h3>Ganhe Pontos</h3>
                   <p>Complete semanas e suba no ranking!</p>
@@ -109,8 +133,8 @@ export default function StudentDashboard({ user, token, onLogout }) {
                 </ol>
               </div>
 
-              <button className="cta-button" onClick={() => setActiveTab('tracking')}>
-                ➡️ Ir para Acompanhamento Semanal
+              <button className="cta-button" onClick={() => setShowRegistrarTreinos(true)}>
+                ➡️ Começar a Registrar Treinos
               </button>
             </div>
           </div>
@@ -130,6 +154,28 @@ export default function StudentDashboard({ user, token, onLogout }) {
           </div>
         )}
       </div>
+
+      {/* MODAIS */}
+      <RegistrarTreinos 
+        isOpen={showRegistrarTreinos}
+        onClose={() => setShowRegistrarTreinos(false)}
+        studentId={userData.studentId}
+        token={token}
+      />
+
+      <DeixarObservacoes 
+        isOpen={showDeixarObservacoes}
+        onClose={() => setShowDeixarObservacoes(false)}
+        studentId={userData.studentId}
+        token={token}
+      />
+
+      <AdicionarFoto 
+        isOpen={showAdicionarFoto}
+        onClose={() => setShowAdicionarFoto(false)}
+        studentId={userData.studentId}
+        token={token}
+      />
     </div>
   )
 }

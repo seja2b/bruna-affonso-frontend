@@ -1,100 +1,136 @@
 import React, { useState, useEffect } from 'react'
-import { api } from '../services/api'
+import api from '../services/api'
 import './StudentRanking.css'
 
 export default function StudentRanking({ token }) {
   const [ranking, setRanking] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [userPosition, setUserPosition] = useState(null)
 
   useEffect(() => {
-    loadRanking()
+    fetchRanking()
   }, [])
 
-  const loadRanking = async () => {
+  const fetchRanking = async () => {
     try {
       setLoading(true)
+      setError('')
       const response = await api.get('/tracking/ranking', {
         headers: { Authorization: `Bearer ${token}` }
       })
-      setRanking(response.data)
-    } catch (error) {
-      console.error('Erro ao carregar ranking:', error)
-      alert('Erro ao carregar ranking')
+      setRanking(response.data.ranking || [])
+      setUserPosition(response.data.userPosition || null)
+    } catch (err) {
+      console.error('Erro ao carregar ranking:', err)
+      setError('Erro ao carregar ranking')
     } finally {
       setLoading(false)
     }
   }
 
   if (loading) {
-    return <div className="ranking-loading">Carregando ranking...</div>
+    return (
+      <div className="ranking-loading">
+        <div className="spinner"></div>
+        <p>Carregando ranking...</p>
+      </div>
+    )
   }
 
-  const getMedalEmoji = (position) => {
-    switch (position) {
-      case 1:
-        return '🥇'
-      case 2:
-        return '🥈'
-      case 3:
-        return '🥉'
-      default:
-        return `${position}º`
-    }
+  if (error) {
+    return (
+      <div className="ranking-error">
+        <p>❌ {error}</p>
+        <button onClick={fetchRanking} className="retry-btn">
+          Tentar Novamente
+        </button>
+      </div>
+    )
   }
 
   return (
-    <div className="ranking-container">
-      <div className="ranking-header">
-        <h2>🏆 Ranking de Alunos</h2>
-        <p className="ranking-subtitle">Pontuação por semanas completas</p>
-      </div>
+    <div className="student-ranking">
+      <h2>🏆 Ranking de Alunos</h2>
 
-      {ranking.length === 0 ? (
-        <div className="no-ranking">
-          <p>Nenhum aluno com pontuação ainda</p>
-        </div>
-      ) : (
-        <div className="ranking-list">
-          {ranking.map((item, index) => (
-            <div
-              key={item.id}
-              className={`ranking-card ${index === 0 ? 'first' : index === 1 ? 'second' : index === 2 ? 'third' : ''}`}
-            >
-              <div className="ranking-position">
-                <span className="medal">{getMedalEmoji(item.position)}</span>
-              </div>
-
-              <div className="ranking-student-info">
-                {item.student.profilePhoto ? (
-                  <img
-                    src={item.student.profilePhoto}
-                    alt={item.student.name}
-                    className="ranking-photo"
-                  />
-                ) : (
-                  <div className="ranking-photo-placeholder">👤</div>
-                )}
-
-                <div className="student-details">
-                  <h3 className="student-name">{item.student.name}</h3>
-                  <p className="student-email">{item.student.email}</p>
-                </div>
-              </div>
-
-              <div className="ranking-stats">
-                <div className="stat">
-                  <span className="stat-label">Semanas</span>
-                  <span className="stat-value">{item.weeksCompleted}</span>
-                </div>
-                <div className="stat">
-                  <span className="stat-label">Pontos</span>
-                  <span className="stat-value points">{item.totalPoints}</span>
-                </div>
-              </div>
+      {userPosition && (
+        <div className="user-position">
+          <div className="position-card">
+            <div className="position-number">#{userPosition.position}</div>
+            <div className="position-info">
+              <p className="position-label">Sua Posição</p>
+              <p className="position-points">{userPosition.points} pontos</p>
             </div>
-          ))}
+          </div>
         </div>
       )}
+
+      <div className="ranking-table-wrapper">
+        <table className="ranking-table">
+          <thead>
+            <tr>
+              <th className="rank-col">Posição</th>
+              <th className="name-col">Nome</th>
+              <th className="weeks-col">Semanas</th>
+              <th className="points-col">Pontos</th>
+            </tr>
+          </thead>
+          <tbody>
+            {ranking.length > 0 ? (
+              ranking.map((entry, index) => (
+                <tr key={index} className={entry.isCurrentUser ? 'current-user' : ''}>
+                  <td className="rank-col">
+                    <div className="rank-badge">
+                      {index === 0 && '🥇'}
+                      {index === 1 && '🥈'}
+                      {index === 2 && '🥉'}
+                      {index > 2 && `#${index + 1}`}
+                    </div>
+                  </td>
+                  <td className="name-col">
+                    <div className="name-info">
+                      <span className="student-name">{entry.studentName}</span>
+                      {entry.isCurrentUser && <span className="badge-current">Você</span>}
+                    </div>
+                  </td>
+                  <td className="weeks-col">
+                    <div className="weeks-info">
+                      {entry.weeksCompleted} de {entry.totalWeeks}
+                    </div>
+                  </td>
+                  <td className="points-col">
+                    <div className="points-info">
+                      <span className="points-value">{entry.totalPoints}</span>
+                      <span className="points-label">pts</span>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="4" className="no-ranking-message">
+                  Nenhum aluno no ranking ainda.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="ranking-info">
+        <div className="info-box">
+          <span className="info-icon">ℹ️</span>
+          <div>
+            <p><strong>Como o Ranking Funciona:</strong></p>
+            <ul>
+              <li>Cada semana completa = 100 pontos</li>
+              <li>Suba de posição conforme completa as semanas</li>
+              <li>Compita com seus colegas de treino</li>
+              <li>Ranking atualiza em tempo real</li>
+            </ul>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

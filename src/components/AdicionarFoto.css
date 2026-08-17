@@ -1,0 +1,51 @@
+/* AdicionarFoto.css */
+@import './modals.css';
+
+.adicionar-foto-modal {
+  /* Estilos adicionais específicos se necessário */
+}
+
+.adicionar-foto-modal .photo-upload {
+  animation: fadeIn 0.4s ease;
+}
+
+/* Animação do preview quando foto é selecionada */
+.adicionar-foto-modal .photo-preview img {
+  animation: zoomIn 0.3s ease;
+}
+
+@keyframes zoomIn {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Efeito hover no botão de arquivo */
+.adicionar-foto-modal .file-label {
+  display: inline-block;
+  position: relative;
+  overflow: hidden;
+}
+
+.adicionar-foto-modal .file-label::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.adicionar-foto-modal .file-label:active::after {
+  width: 300px;
+  height: 300px;
+}

@@ -1,0 +1,26 @@
+/* RegistrarTreinos.css */
+@import './modals.css';
+
+.registrar-treinos-modal {
+  /* Estilos adicionais específicos se necessário */
+}
+
+.registrar-treinos-modal .exercises-table {
+  margin-top: 20px;
+}
+
+/* Animação ao abrir */
+.registrar-treinos-modal .exercises-table table {
+  animation: tableSlideIn 0.4s ease;
+}
+
+@keyframes tableSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

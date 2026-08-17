@@ -1,0 +1,26 @@
+/* DeixarObservacoes.css */
+@import './modals.css';
+
+.deixar-observacoes-modal {
+  /* Estilos adicionais específicos se necessário */
+}
+
+.deixar-observacoes-modal .observation-input {
+  animation: fadeInUp 0.4s ease;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Destaque na textarea quando focada */
+.deixar-observacoes-modal textarea:focus {
+  background-color: rgba(156, 39, 176, 0.02);
+}

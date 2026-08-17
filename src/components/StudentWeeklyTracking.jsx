@@ -1,309 +1,169 @@
 import React, { useState, useEffect } from 'react'
-import { api } from '../services/api'
+import api from '../services/api'
 import './StudentWeeklyTracking.css'
 
 export default function StudentWeeklyTracking({ studentId, token }) {
   const [weeks, setWeeks] = useState([])
-  const [selectedWeek, setSelectedWeek] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [exercises, setExercises] = useState([])
-  const [studentNote, setStudentNote] = useState('')
-  const [profilePhoto, setProfilePhoto] = useState(null)
+  const [exercises, setExercises] = useState({})
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   useEffect(() => {
-    if (!studentId) {
-      console.error('studentId não foi passado!')
-      return
+    if (studentId) {
+      fetchWeeks()
     }
-    loadWeeks()
-  }, [studentId, token])
+  }, [studentId])
 
-  const loadWeeks = async () => {
+  const fetchWeeks = async () => {
     try {
       setLoading(true)
-      console.log('Carregando semanas para studentId:', studentId)
-      
-      const response = await api.get(`/tracking/student/${studentId}/weeks`, {
+      setError('')
+      const response = await api.get(`/tracking/weeks/${studentId}`, {
         headers: { Authorization: `Bearer ${token}` }
       })
-      
-      console.log('Semanas carregadas:', response.data)
       setWeeks(response.data)
       
-      if (response.data.length > 0) {
-        selectWeek(response.data[0])
-      }
-    } catch (error) {
-      console.error('Erro ao carregar semanas:', error.response?.data || error.message)
-      alert('Erro ao carregar dados')
+      // Carregar exercícios de cada semana
+      response.data.forEach(week => {
+        fetchExercisesForWeek(week.id)
+      })
+    } catch (err) {
+      console.error('Erro ao carregar semanas:', err)
+      setError('Erro ao carregar semanas de treino')
     } finally {
       setLoading(false)
     }
   }
 
-  const selectWeek = (week) => {
-    setSelectedWeek(week)
-    setExercises(week.exercises || [])
-    setStudentNote(week.observation?.studentNote || '')
-  }
-
-  const handleExerciseChange = (index, field, value) => {
-    const newExercises = [...exercises]
-    newExercises[index] = { ...newExercises[index], [field]: value }
-    setExercises(newExercises)
-  }
-
-  const handleSaveExercise = async (exercise, index) => {
+  const fetchExercisesForWeek = async (weekId) => {
     try {
-      setSaving(true)
-      await api.post(
-        '/tracking/exercise/save',
-        {
-          weeklyTrackingId: selectedWeek.id,
-          exerciseName: exercise.exerciseName,
-          trainingType: exercise.trainingType,
-          weight: exercise.weight,
-          reps: exercise.reps,
-          notes: exercise.notes
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      )
-      alert('✅ Exercício salvo com sucesso!')
-      loadWeeks()
-    } catch (error) {
-      console.error('Erro ao salvar exercício:', error)
-      alert('❌ Erro ao salvar')
-    } finally {
-      setSaving(false)
+      const response = await api.get(`/tracking/exercises/${weekId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      setExercises(prev => ({
+        ...prev,
+        [weekId]: response.data
+      }))
+    } catch (err) {
+      console.error(`Erro ao carregar exercícios da semana ${weekId}:`, err)
     }
-  }
-
-  const handleSaveNote = async () => {
-    try {
-      setSaving(true)
-      await api.put(
-        '/tracking/note/student',
-        {
-          weeklyTrackingId: selectedWeek.id,
-          studentNote
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      )
-      alert('✅ Observação salva!')
-      loadWeeks()
-    } catch (error) {
-      console.error('Erro ao salvar nota:', error)
-      alert('❌ Erro ao salvar')
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  const handlePhotoUpload = async (e) => {
-    const file = e.target.files[0]
-    if (!file) return
-
-    const reader = new FileReader()
-    reader.onload = async (event) => {
-      try {
-        setSaving(true)
-        const base64 = event.target.result
-        
-        await api.put(
-          `/tracking/profile-photo/${studentId}`,
-          { profilePhoto: base64 },
-          { headers: { Authorization: `Bearer ${token}` } }
-        )
-        
-        setProfilePhoto(base64)
-        alert('✅ Foto atualizada!')
-      } catch (error) {
-        console.error('Erro ao fazer upload:', error)
-        alert('❌ Erro ao fazer upload')
-      } finally {
-        setSaving(false)
-      }
-    }
-    reader.readAsDataURL(file)
   }
 
   if (loading) {
-    return <div className="tracking-loading">Carregando semanas...</div>
+    return (
+      <div className="tracking-loading">
+        <div className="spinner"></div>
+        <p>Carregando semanas de treino...</p>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="tracking-error">
+        <p>❌ {error}</p>
+        <button onClick={fetchWeeks} className="retry-btn">
+          Tentar Novamente
+        </button>
+      </div>
+    )
   }
 
   if (weeks.length === 0) {
-    return <div className="tracking-loading">Nenhuma semana disponível</div>
+    return (
+      <div className="tracking-empty">
+        <p>📋 Nenhuma semana de treino disponível ainda.</p>
+      </div>
+    )
   }
 
+  // Pegar todos os nomes de exercícios únicos
+  const allExerciseNames = Array.from(
+    new Set(
+      Object.values(exercises)
+        .flat()
+        .map(ex => ex.exerciseName)
+    )
+  )
+
   return (
-    <div className="weekly-tracking-container">
-      {/* PERFIL DO ALUNO */}
-      <div className="student-profile-section">
-        <div className="profile-photo-wrapper">
-          {profilePhoto ? (
-            <img src={profilePhoto} alt="Foto do perfil" className="profile-photo" />
-          ) : (
-            <div className="profile-photo-placeholder">📷</div>
-          )}
-          <label className="photo-upload-label">
-            Adicionar Foto
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handlePhotoUpload}
-              style={{ display: 'none' }}
-            />
-          </label>
-        </div>
-      </div>
-
-      {/* SELETOR DE SEMANAS */}
-      <div className="weeks-selector">
-        {weeks.map((week) => (
-          <button
-            key={week.id}
-            className={`week-btn ${selectedWeek?.id === week.id ? 'active' : ''} ${
-              week.isReleased ? '' : 'blocked'
-            }`}
-            onClick={() => selectWeek(week)}
-            disabled={!week.isReleased}
-            title={!week.isReleased ? 'Semana não liberada' : ''}
-          >
-            <span className="week-number">Semana {week.weekNumber}</span>
-            <span className="week-status">
-              {!week.isReleased && '🔒'}
-              {week.isCompleted && '✅'}
-            </span>
-          </button>
-        ))}
-      </div>
-
-      {/* PROGRESSO DA SEMANA */}
-      {selectedWeek && (
-        <div className="week-progress">
-          <h3>Progresso da Semana {selectedWeek.weekNumber}</h3>
-          <div className="progress-info">
-            <p>
-              {selectedWeek.exercises.filter((e) => e.weight && e.reps).length} de{' '}
-              {selectedWeek.exercises.length} exercícios completos
-            </p>
-            <div className="progress-bar">
-              <div
-                className="progress-fill"
-                style={{
-                  width: `${
-                    selectedWeek.exercises.length > 0
-                      ? (selectedWeek.exercises.filter((e) => e.weight && e.reps).length /
-                          selectedWeek.exercises.length) *
-                        100
-                      : 0
-                  }%`
-                }}
-              />
-            </div>
-            {selectedWeek.isCompleted && (
-              <p className="completed-badge">✅ Semana Completa! +100 pontos ganhos</p>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* EXERCÍCIOS */}
-      {selectedWeek && (
-        <div className="exercises-section">
-          <h3>Exercícios da Semana {selectedWeek.weekNumber}</h3>
-          {exercises.length === 0 ? (
-            <p className="no-exercises">Nenhum exercício para esta semana</p>
-          ) : (
-            <div className="exercises-list">
-              {exercises.map((exercise, index) => (
-                <div key={index} className="exercise-card">
-                  <div className="exercise-header">
-                    <h4>{exercise.exerciseName}</h4>
-                    <span className="training-type">{exercise.trainingType}</span>
+    <div className="weekly-tracking">
+      <h2>📊 Acompanhamento Semanal de Treinos</h2>
+      
+      <div className="tracking-table-wrapper">
+        <table className="tracking-table">
+          <thead>
+            <tr>
+              <th>Exercício</th>
+              {weeks.map(week => (
+                <th key={week.id} className="week-header">
+                  <div className="week-title">Semana {week.weekNumber}</div>
+                  <div className="week-status">
+                    {week.isReleased ? '🔓 Liberada' : '🔒 Bloqueada'}
                   </div>
-
-                  <div className="exercise-inputs">
-                    <div className="input-group">
-                      <label>Cargas / Repetições</label>
-                      <input
-                        type="text"
-                        placeholder="Ex: 3x8"
-                        value={exercise.reps || ''}
-                        onChange={(e) =>
-                          handleExerciseChange(index, 'reps', e.target.value)
-                        }
-                      />
-                    </div>
-
-                    <div className="input-group">
-                      <label>Peso</label>
-                      <input
-                        type="text"
-                        placeholder="Ex: 10kg"
-                        value={exercise.weight || ''}
-                        onChange={(e) =>
-                          handleExerciseChange(index, 'weight', e.target.value)
-                        }
-                      />
-                    </div>
-
-                    <div className="input-group full-width">
-                      <label>Observações</label>
-                      <textarea
-                        placeholder="Como foi o exercício?"
-                        value={exercise.notes || ''}
-                        onChange={(e) =>
-                          handleExerciseChange(index, 'notes', e.target.value)
-                        }
-                      />
-                    </div>
+                  <div className="week-completion">
+                    {week.isCompleted ? '✅ Completa' : '⏳ Pendente'}
                   </div>
-
-                  <button
-                    className="save-exercise-btn"
-                    onClick={() => handleSaveExercise(exercise, index)}
-                    disabled={saving}
-                  >
-                    {saving ? 'Salvando...' : '💾 Salvar'}
-                  </button>
-                </div>
+                </th>
               ))}
-            </div>
-          )}
-        </div>
-      )}
+            </tr>
+          </thead>
+          <tbody>
+            {allExerciseNames.length > 0 ? (
+              allExerciseNames.map((exerciseName, index) => (
+                <tr key={index}>
+                  <td className="exercise-name">{exerciseName}</td>
+                  {weeks.map(week => {
+                    const weekExercises = exercises[week.id] || []
+                    const exercise = weekExercises.find(
+                      ex => ex.exerciseName === exerciseName
+                    )
+                    return (
+                      <td key={`${week.id}-${exerciseName}`} className="exercise-data">
+                        {exercise ? (
+                          <div className="exercise-info">
+                            <div className="exercise-detail">
+                              <span className="label">Carga:</span>
+                              <span className="value">{exercise.weight || '-'} kg</span>
+                            </div>
+                            <div className="exercise-detail">
+                              <span className="label">Reps:</span>
+                              <span className="value">{exercise.reps || '-'}</span>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="no-data">-</div>
+                        )}
+                      </td>
+                    )
+                  })}
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={weeks.length + 1} className="no-exercises-message">
+                  Nenhum exercício registrado ainda.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
 
-      {/* OBSERVAÇÃO DO ALUNO */}
-      {selectedWeek && (
-        <div className="student-note-section">
-          <h3>Minhas Observações</h3>
-          <textarea
-            placeholder="Como você se sentiu nesta semana?"
-            value={studentNote}
-            onChange={(e) => setStudentNote(e.target.value)}
-            className="student-note-input"
-          />
-          <button
-            className="save-note-btn"
-            onClick={handleSaveNote}
-            disabled={saving}
-          >
-            {saving ? 'Salvando...' : '📝 Salvar Observação'}
-          </button>
-        </div>
-      )}
-
-      {/* OBSERVAÇÃO DO PROFESSOR */}
-      {selectedWeek?.observation?.teacherNote && (
-        <div className="teacher-note-section">
-          <h3>Observação da Professora</h3>
-          <div className="teacher-note-display">
-            {selectedWeek.observation.teacherNote}
+      <div className="tracking-info">
+        <div className="info-box">
+          <span className="info-icon">📌</span>
+          <div>
+            <p><strong>Como funciona:</strong></p>
+            <ul>
+              <li>Semana 1 está sempre liberada no primeiro acesso</li>
+              <li>As próximas semanas são liberadas 7 dias após completar a anterior</li>
+              <li>Complete uma semana preenchendo todos os exercícios</li>
+              <li>Você ganha 100 pontos a cada semana completa!</li>
+            </ul>
           </div>
         </div>
-      )}
+      </div>
     </div>
   )
 }
