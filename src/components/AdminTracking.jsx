@@ -20,7 +20,7 @@ export default function AdminTracking({ token }) {
     try {
       setLoading(true)
       setError('')
-      const response = await api.get('/tracking/students', {
+      const response = await api.get('/tracking/admin/students', {
         headers: { Authorization: `Bearer ${token}` }
       })
       setStudents(response.data)
@@ -36,7 +36,7 @@ export default function AdminTracking({ token }) {
     try {
       setLoading(true)
       setError('')
-      const response = await api.get(`/tracking/weeks/${studentId}`, {
+      const response = await api.get(`/tracking/student/${studentId}/weeks`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       setWeeks(response.data)

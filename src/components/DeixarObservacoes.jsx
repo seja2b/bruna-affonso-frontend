@@ -19,7 +19,7 @@ export default function DeixarObservacoes({ isOpen, onClose, studentId, token })
   const fetchWeeks = async () => {
     try {
       setLoading(true)
-      const response = await api.get(`/tracking/weeks/${studentId}`, {
+      const response = await api.get(`/tracking/student/${studentId}/weeks`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       setWeeks(response.data)

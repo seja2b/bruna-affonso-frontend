@@ -18,7 +18,7 @@ export default function StudentWeeklyTracking({ studentId, token }) {
     try {
       setLoading(true)
       setError('')
-      const response = await api.get(`/tracking/weeks/${studentId}`, {
+      const response = await api.get(`/tracking/student/${studentId}/weeks`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       setWeeks(response.data)
