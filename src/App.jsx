@@ -1,71 +1,46 @@
-import React, { useState, useEffect } from 'react'
+import React from 'react'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import Login from './pages/Login'
 import StudentDashboard from './pages/StudentDashboard'
 import AdminDashboard from './pages/AdminDashboard'
+import { ProtectedRoute, RoleRoute } from './components/RouteGuards'
+import { useAuth } from './context/AuthContext'
 import './App.css'
 
-function App() {
-  const [user, setUser] = useState(null)
-  const [token, setToken] = useState(localStorage.getItem('token'))
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    if (token) {
-      fetchUserData()
-    } else {
-      setLoading(false)
-    }
-  }, [token])
-
-  const fetchUserData = async () => {
-    try {
-      setLoading(true)
-      const response = await fetch('https://bruna-affonso-backend-production.up.railway.app/api/auth/me', {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-
-      if (!response.ok) throw new Error('Não autorizado')
-
-      const userData = await response.json()
-      setUser(userData)
-    } catch (error) {
-      console.error('Erro ao buscar usuário:', error)
-      localStorage.removeItem('token')
-      setToken(null)
-      setUser(null)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleLoginSuccess = (newToken) => {
-    localStorage.setItem('token', newToken)
-    setToken(newToken)
-  }
-
-  const handleLogout = () => {
-    localStorage.removeItem('token')
-    setToken(null)
-    setUser(null)
-  }
-
-  if (loading) {
-    return <div className="app-loading">Carregando...</div>
-  }
-
-  if (!token || !user) {
-    return <Login onLoginSuccess={handleLoginSuccess} />
-  }
-
-  if (user.role === 'STUDENT') {
-    return <StudentDashboard user={user} token={token} onLogout={handleLogout} />
-  }
-
-  if (user.role === 'ADMIN') {
-    return <AdminDashboard user={user} token={token} onLogout={handleLogout} />
-  }
-
-  return <Login onLoginSuccess={handleLoginSuccess} />
+function HomeRedirect() {
+  const { loading, user } = useAuth()
+  if (loading) return <div className="app-loading">Carregando sua experiência...</div>
+  if (!user) return <Navigate to="/login" replace />
+  return <Navigate to={user.role === 'ADMIN' ? '/admin' : '/aluno'} replace />
 }
 
-export default App
+function StudentArea() {
+  const { user, logout } = useAuth()
+  return <StudentDashboard user={user} token={localStorage.getItem('token')} onLogout={logout} />
+}
+
+function AdminArea() {
+  const { user, logout } = useAuth()
+  return <AdminDashboard user={user} token={localStorage.getItem('token')} onLogout={logout} />
+}
+
+export default function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<HomeRedirect />} />
+      <Route path="/login" element={<Login />} />
+
+      <Route element={<ProtectedRoute />}>
+        <Route element={<RoleRoute role="STUDENT" />}>
+          <Route path="/aluno/*" element={<StudentArea />} />
+        </Route>
+
+        <Route element={<RoleRoute role="ADMIN" />}>
+          <Route path="/admin/*" element={<AdminArea />} />
+        </Route>
+      </Route>
+
+      <Route path="*" element={<HomeRedirect />} />
+    </Routes>
+  )
+}
