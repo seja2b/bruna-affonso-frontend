@@ -4,6 +4,7 @@ import AdminShell from '../components/admin/AdminShell'
 import '../components/admin/AdminShell.css'
 import AdminHome from './admin/AdminHome'
 import AdminStudentDetail from './admin/AdminStudentDetail'
+import AdminVideoClasses from './admin/AdminVideoClasses'
 import AdminStudents from './AdminStudents'
 import AdminWorkouts from './AdminWorkouts'
 import AdminQuestions from './AdminQuestions'
@@ -22,7 +23,7 @@ export default function AdminDashboard({ user, token, onLogout }) {
         <Route path="semanas" element={<Navigate to="../acompanhamentos" replace />} />
         <Route path="acompanhamentos" element={<AdminTracking token={token} />} />
         <Route path="perguntas" element={<AdminQuestions user={user} token={token} />} />
-        <Route path="videos" element={<Navigate to="../treinos" replace />} />
+        <Route path="videos" element={<AdminVideoClasses />} />
         <Route path="ranking" element={<AdminRanking token={token} />} />
         <Route path="notificacoes" element={<Navigate to="../" replace />} />
         <Route path="configuracoes" element={<AdminSettings user={user} token={token} />} />
