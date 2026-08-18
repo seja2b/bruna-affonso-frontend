@@ -7,6 +7,7 @@ const items = [
   ['treinos','Treinos','activity'],
   ['acompanhamentos','Acompanhamentos','chart'],
   ['perguntas','Perguntas','message'],
+  ['videos','VideoAulas','video'],
   ['ranking','Ranking','trophy'],
   ['configuracoes','Configurações','settings']
 ]
@@ -18,6 +19,7 @@ function Icon({ name }) {
     activity:<><path d="M3 12h4l2-5 4 10 2-5h6"/></>,
     chart:<><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></>,
     message:<><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z"/></>,
+    video:<><rect x="3" y="5" width="14" height="14" rx="2"/><path d="m10 9 4 3-4 3Z"/><path d="m17 10 4-2v8l-4-2"/></>,
     trophy:<><path d="M8 4h8v5a4 4 0 0 1-8 0Z"/><path d="M6 6H3a3 3 0 0 0 3 4M18 6h3a3 3 0 0 1-3 4M12 13v4M8 21h8M9 17h6"/></>,
     settings:<><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1.1V21h-4v-.1A1.7 1.7 0 0 0 8.6 19.4a1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1.1-.4H3v-4h.1A1.7 1.7 0 0 0 4.6 8.6a1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.83-2.83.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.6 1.7 1.7 0 0 0 .4-1.1V3h4v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.88-.34l.06-.06 2.83 2.83-.06.06A1.7 1.7 0 0 0 19.4 9c.1.37.3.72.6 1 .3.27.68.4 1.1.4h.1v4h-.1c-.42 0-.8.13-1.1.4-.3.28-.5.63-.6 1Z"/></>,
     logout:<><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5M21 12H9"/></>,
