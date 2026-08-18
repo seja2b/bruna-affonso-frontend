@@ -29,3 +29,8 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Validate SPA fallback
+        run: |
+          test -f dist/_redirects
+          grep -qx '/\* /index.html 200' dist/_redirects
