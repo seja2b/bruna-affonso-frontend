@@ -84,8 +84,9 @@ export default function StudentWeeks({ studentId }) {
       setFeedback('')
       await api.post('/tracking/exercise/save', { weekId: selectedWeek.id, exercises })
       const response = await api.post(`/tracking/week/${selectedWeek.id}/complete`)
-      setFeedback(response.data.awardedPoints === 100 ? 'Semana concluída. Você ganhou 100 pontos!' : response.data.message)
+      const message = response.data.awardedPoints === 100 ? 'Semana concluída. Você ganhou 100 pontos!' : response.data.message
       await fetchWeeks(selectedWeek.id)
+      setFeedback(message)
     } catch (err) {
       setFeedback(err.response?.data?.error || 'Não foi possível concluir a semana.')
     } finally {
