@@ -3,7 +3,7 @@ import { NavLink, Outlet, useLocation } from 'react-router-dom'
 
 const items = [
   ['','Início','home'],
-  ['semanas','Semanas','calendar'],
+  ['treinos','Meus treinos','calendar'],
   ['acompanhamento','Acompanhamento','chart'],
   ['videos','Vídeos','play'],
   ['perguntas','Perguntas','message'],
