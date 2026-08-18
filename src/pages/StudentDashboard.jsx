@@ -8,6 +8,7 @@ import StudentWeeks from '../components/StudentWeeks'
 import RegistrarTreinos from '../components/RegistrarTreinos'
 import DeixarObservacoes from '../components/DeixarObservacoes'
 import AdicionarFoto from '../components/AdicionarFoto'
+import ContactCard from '../components/ContactCard'
 import './StudentDashboard.css'
 
 export default function StudentDashboard({ user, token, onLogout }) {
@@ -175,20 +176,12 @@ export default function StudentDashboard({ user, token, onLogout }) {
                 </div>
               </div>
 
-              {/* FALE COM SEU PERSONAL */}
+              {/* FALE COM SEU PERSONAL - NOVO DESIGN */}
               {settings.whatsappUrl && (
-                <div className="contact-card">
-                  <h3>💬 Fale com Sua Personal</h3>
-                  <p>Tem dúvidas? Entre em contato pelo WhatsApp!</p>
-                  <a 
-                    href={settings.whatsappUrl} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="btn-whatsapp"
-                  >
-                    💬 Abrir WhatsApp
-                  </a>
-                </div>
+                <ContactCard 
+                  whatsappUrl={settings.whatsappUrl}
+                  phone={settings.phone}
+                />
               )}
 
               <div className="getting-started">
