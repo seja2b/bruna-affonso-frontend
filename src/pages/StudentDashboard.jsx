@@ -1,264 +1,67 @@
-import React, { useState, useEffect } from 'react'
-import api from '../services/api'
+import React from 'react'
+import { Navigate, Route, Routes } from 'react-router-dom'
+import StudentShell from '../components/student/StudentShell'
+import '../components/student/StudentShell.css'
+import StudentHome from './student/StudentHome'
+import StudentWeeks from '../components/StudentWeeks'
 import StudentWeeklyTracking from '../components/StudentWeeklyTracking'
-import StudentRanking from '../components/StudentRanking'
 import StudentVideos from '../components/StudentVideos'
 import StudentQuestions from '../components/StudentQuestions'
-import StudentWeeks from '../components/StudentWeeks'
-import RegistrarTreinos from '../components/RegistrarTreinos'
-import DeixarObservacoes from '../components/DeixarObservacoes'
-import AdicionarFoto from '../components/AdicionarFoto'
-import ContactCard from '../components/ContactCard'
+import StudentRanking from '../components/StudentRanking'
 import './StudentDashboard.css'
 
-export default function StudentDashboard({ user, token, onLogout }) {
-  const [activeTab, setActiveTab] = useState('dashboard')
-  const [userData, setUserData] = useState(user)
-  const [settings, setSettings] = useState({
-    phone: '',
-    whatsappUrl: '',
-    motivationalPhrase: ''
-  })
-  const [loading, setLoading] = useState(true)
-
-  // Estados dos modais
-  const [showRegistrarTreinos, setShowRegistrarTreinos] = useState(false)
-  const [showDeixarObservacoes, setShowDeixarObservacoes] = useState(false)
-  const [showAdicionarFoto, setShowAdicionarFoto] = useState(false)
-
-  useEffect(() => {
-    if (user) {
-      setUserData(user)
-    }
-    fetchSettings()
-  }, [user])
-
-  async function fetchSettings() {
-    try {
-      const response = await api.get('/admin/settings', {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      setSettings(response.data)
-    } catch (error) {
-      console.error('Erro ao buscar frase motivacional', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  if (userData.status !== 'APPROVED') {
-    return (
-      <div className="student-dashboard">
-        <div className="dashboard-header">
-          <h1>Painel do Aluno</h1>
-          <button onClick={onLogout} className="logout-btn">Logout</button>
-        </div>
-        <div className="awaiting-approval">
-          <div className="awaiting-icon">⏳</div>
-          <h2>Aguardando Aprovação</h2>
-          <p>Sua conta está em análise. Em breve você terá acesso completo!</p>
-        </div>
+function PendingApproval({ user, onLogout }) {
+  return (
+    <div className="student-pending-page">
+      <div className="student-pending-card">
+        <div className="student-pending-mark">BA</div>
+        <span>Cadastro recebido</span>
+        <h1>Olá, {user?.name?.split(' ')[0] || 'aluno'}.</h1>
+        <p>Sua conta está aguardando aprovação. Assim que o acesso for liberado, seu painel completo aparecerá aqui.</p>
+        <button onClick={onLogout}>Sair da conta</button>
       </div>
-    )
-  }
+    </div>
+  )
+}
+
+function StudentProfile({ user }) {
+  return (
+    <div className="student-profile-page">
+      <section className="student-profile-card">
+        <div className="student-profile-avatar">
+          {user?.profilePhoto ? <img src={user.profilePhoto} alt="Foto de perfil" /> : user?.name?.[0] || 'A'}
+        </div>
+        <div>
+          <span className="student-profile-label">Perfil do aluno</span>
+          <h2>{user?.name}</h2>
+          <p>{user?.email}</p>
+        </div>
+      </section>
+      <section className="student-profile-details">
+        <div><span>Status</span><strong>{user?.status === 'APPROVED' ? 'Ativo' : user?.status}</strong></div>
+        <div><span>Telefone</span><strong>{user?.phone || 'Não informado'}</strong></div>
+        <div><span>ID do aluno</span><strong>{user?.studentId || '—'}</strong></div>
+      </section>
+    </div>
+  )
+}
+
+export default function StudentDashboard({ user, token, onLogout }) {
+  if (user?.status !== 'APPROVED') return <PendingApproval user={user} onLogout={onLogout} />
 
   return (
-    <div className="student-dashboard">
-      {/* HEADER */}
-      <div className="dashboard-header">
-        <div className="header-left">
-          <h1>👋 Bem-vindo, {userData.name}!</h1>
-          <p className="user-email">{userData.email}</p>
-        </div>
-        <button onClick={onLogout} className="logout-btn">🚪 Logout</button>
-      </div>
-
-      {/* TABS */}
-      <div className="dashboard-tabs">
-        <button
-          className={`tab-btn ${activeTab === 'dashboard' ? 'active' : ''}`}
-          onClick={() => setActiveTab('dashboard')}
-        >
-          📊 Dashboard
-        </button>
-        <button
-          className={`tab-btn ${activeTab === 'weeks' ? 'active' : ''}`}
-          onClick={() => setActiveTab('weeks')}
-        >
-          📅 Semanas
-        </button>
-        <button
-          className={`tab-btn ${activeTab === 'tracking' ? 'active' : ''}`}
-          onClick={() => setActiveTab('tracking')}
-        >
-          📝 Acompanhamento
-        </button>
-        <button
-          className={`tab-btn ${activeTab === 'videos' ? 'active' : ''}`}
-          onClick={() => setActiveTab('videos')}
-        >
-          🎥 Vídeos
-        </button>
-        <button
-          className={`tab-btn ${activeTab === 'questions' ? 'active' : ''}`}
-          onClick={() => setActiveTab('questions')}
-        >
-          ❓ Perguntas
-        </button>
-        <button
-          className={`tab-btn ${activeTab === 'ranking' ? 'active' : ''}`}
-          onClick={() => setActiveTab('ranking')}
-        >
-          🏆 Ranking
-        </button>
-      </div>
-
-      {/* CONTEÚDO DAS ABAS */}
-      <div className="dashboard-content">
-        {/* ABA 1: DASHBOARD */}
-        {activeTab === 'dashboard' && (
-          <div className="dashboard-tab">
-            {/* MENSAGEM DO DIA */}
-            {settings.motivationalPhrase && !loading && (
-              <div className="motivational-banner">
-                <div className="motivational-icon">✨</div>
-                <div className="motivational-content">
-                  <div className="motivational-label">Mensagem do Dia</div>
-                  <div className="motivational-text">{settings.motivationalPhrase}</div>
-                </div>
-              </div>
-            )}
-
-            <div className="welcome-card">
-              <div className="welcome-icon">💪</div>
-              <h2>Bem-vindo ao Acompanhamento de Treinos!</h2>
-              <p>Aqui você pode registrar o progresso das suas semanas de treino, deixar observações e acompanhar seu desempenho.</p>
-              
-              <div className="features-grid">
-                <div 
-                  className="feature-box" 
-                  onClick={() => setShowRegistrarTreinos(true)} 
-                  style={{ cursor: 'pointer' }}
-                >
-                  <span className="feature-icon">📝</span>
-                  <h3>Registre seus Treinos</h3>
-                  <p>Preencha as cargas e repetições de cada exercício</p>
-                </div>
-                
-                <div 
-                  className="feature-box" 
-                  onClick={() => setShowDeixarObservacoes(true)} 
-                  style={{ cursor: 'pointer' }}
-                >
-                  <span className="feature-icon">💬</span>
-                  <h3>Deixe Observações</h3>
-                  <p>Compartilhe como você se sentiu em cada semana</p>
-                </div>
-                
-                <div 
-                  className="feature-box" 
-                  onClick={() => setShowAdicionarFoto(true)} 
-                  style={{ cursor: 'pointer' }}
-                >
-                  <span className="feature-icon">📸</span>
-                  <h3>Adicione sua Foto</h3>
-                  <p>Personalize seu perfil com uma foto</p>
-                </div>
-
-                <div 
-                  className="feature-box" 
-                  onClick={() => setActiveTab('ranking')} 
-                  style={{ cursor: 'pointer' }}
-                >
-                  <span className="feature-icon">🏆</span>
-                  <h3>Ganhe Pontos</h3>
-                  <p>Complete semanas e suba no ranking!</p>
-                </div>
-              </div>
-
-              {/* FALE COM SEU PERSONAL - NOVO DESIGN */}
-              {settings.whatsappUrl && (
-                <ContactCard 
-                  whatsappUrl={settings.whatsappUrl}
-                  phone={settings.phone}
-                />
-              )}
-
-              <div className="getting-started">
-                <h3>Como Começar?</h3>
-                <ol>
-                  <li>Clique em "Registre seus Treinos"</li>
-                  <li>Selecione a semana liberada</li>
-                  <li>Preencha as cargas e repetições de cada exercício</li>
-                  <li>Deixe suas observações (opcional)</li>
-                  <li>Quando completar tudo, ganhe 100 pontos! 🎉</li>
-                </ol>
-              </div>
-
-              <button className="cta-button" onClick={() => setShowRegistrarTreinos(true)}>
-                ➡️ Começar a Registrar Treinos
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* ABA 2: SEMANAS */}
-        {activeTab === 'weeks' && (
-          <div className="weeks-tab">
-            <StudentWeeks studentId={userData.studentId} token={token} />
-          </div>
-        )}
-
-        {/* ABA 3: ACOMPANHAMENTO */}
-        {activeTab === 'tracking' && (
-          <div className="tracking-tab">
-            <StudentWeeklyTracking studentId={userData.studentId} token={token} />
-          </div>
-        )}
-
-        {/* ABA 4: VÍDEOS */}
-        {activeTab === 'videos' && (
-          <div className="videos-tab">
-            <StudentVideos token={token} />
-          </div>
-        )}
-
-        {/* ABA 5: PERGUNTAS */}
-        {activeTab === 'questions' && (
-          <div className="questions-tab">
-            <StudentQuestions studentId={userData.studentId} token={token} />
-          </div>
-        )}
-
-        {/* ABA 6: RANKING */}
-        {activeTab === 'ranking' && (
-          <div className="ranking-tab">
-            <StudentRanking token={token} />
-          </div>
-        )}
-      </div>
-
-      {/* MODAIS */}
-      <RegistrarTreinos 
-        isOpen={showRegistrarTreinos}
-        onClose={() => setShowRegistrarTreinos(false)}
-        studentId={userData.studentId}
-        token={token}
-      />
-
-      <DeixarObservacoes 
-        isOpen={showDeixarObservacoes}
-        onClose={() => setShowDeixarObservacoes(false)}
-        studentId={userData.studentId}
-        token={token}
-      />
-
-      <AdicionarFoto 
-        isOpen={showAdicionarFoto}
-        onClose={() => setShowAdicionarFoto(false)}
-        studentId={userData.studentId}
-        token={token}
-      />
-    </div>
+    <Routes>
+      <Route element={<StudentShell user={user} onLogout={onLogout} />}>
+        <Route index element={<StudentHome user={user} />} />
+        <Route path="treinos" element={<Navigate to="../semanas" replace />} />
+        <Route path="semanas" element={<StudentWeeks studentId={user.studentId} token={token} />} />
+        <Route path="acompanhamento" element={<StudentWeeklyTracking studentId={user.studentId} token={token} />} />
+        <Route path="videos" element={<StudentVideos token={token} />} />
+        <Route path="perguntas" element={<StudentQuestions studentId={user.studentId} token={token} />} />
+        <Route path="ranking" element={<StudentRanking token={token} />} />
+        <Route path="perfil" element={<StudentProfile user={user} />} />
+        <Route path="*" element={<Navigate to="." replace />} />
+      </Route>
+    </Routes>
   )
 }
