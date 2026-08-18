@@ -102,7 +102,7 @@ export default function AdminStudentDetail() {
           <div className="detail-workout-list">
             {student.workouts.map((item) => (
               <div key={item.id} className="detail-workout-row">
-                <div><strong>{item.workout.title}</strong><small>{item.workout.module || item.workout.categoryId}</small></div>
+                <div><strong>{item.workout.title}</strong><small>{item.workout.module || (item.workout.week ? `Semana ${item.workout.week}` : 'Treino')}</small></div>
                 <span>{item.completed ? 'Concluído' : `${item.progress || 0}%`}</span>
               </div>
             ))}
