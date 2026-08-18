@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import NotificationBell from './NotificationBell'
 
 const items = [
   ['','Início','home'],
@@ -52,9 +53,12 @@ export default function StudentShell({ user, onLogout }) {
         <header className="student-topbar">
           <button className="student-menu-btn" onClick={() => setOpen(true)} aria-label="Abrir menu"><Icon name="menu"/></button>
           <div><span className="student-eyebrow">Área do aluno</span><h1>{title}</h1></div>
-          <div className="student-user-chip">
-            <div className="student-avatar">{user?.profilePhoto ? <img src={user.profilePhoto} alt=""/> : (user?.name?.[0] || 'A')}</div>
-            <div><strong>{user?.name}</strong><span>{user?.email}</span></div>
+          <div className="student-topbar-actions">
+            <NotificationBell />
+            <div className="student-user-chip">
+              <div className="student-avatar">{user?.profilePhoto ? <img src={user.profilePhoto} alt=""/> : (user?.name?.[0] || 'A')}</div>
+              <div><strong>{user?.name}</strong><span>{user?.email}</span></div>
+            </div>
           </div>
         </header>
         <main className="student-page"><Outlet /></main>
