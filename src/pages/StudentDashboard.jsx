@@ -53,8 +53,8 @@ export default function StudentDashboard({ user, token, onLogout }) {
     <Routes>
       <Route element={<StudentShell user={user} onLogout={onLogout} />}>
         <Route index element={<StudentHome user={user} />} />
-        <Route path="treinos" element={<Navigate to="../semanas" replace />} />
-        <Route path="semanas" element={<StudentWeeks studentId={user.studentId} token={token} />} />
+        <Route path="treinos" element={<StudentWeeks studentId={user.studentId} token={token} />} />
+        <Route path="semanas" element={<Navigate to="../treinos" replace />} />
         <Route path="acompanhamento" element={<StudentWeeklyTracking studentId={user.studentId} token={token} />} />
         <Route path="videos" element={<StudentVideos token={token} />} />
         <Route path="perguntas" element={<StudentQuestions studentId={user.studentId} token={token} />} />
