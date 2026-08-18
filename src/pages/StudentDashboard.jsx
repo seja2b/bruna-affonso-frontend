@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import StudentShell from '../components/student/StudentShell'
 import '../components/student/StudentShell.css'
 import StudentHome from './student/StudentHome'
+import StudentProfile from './student/StudentProfile'
 import StudentWeeks from '../components/StudentWeeks'
 import StudentWeeklyTracking from '../components/StudentWeeklyTracking'
 import StudentVideos from '../components/StudentVideos'
@@ -24,28 +25,6 @@ function PendingApproval({ user, onLogout }) {
   )
 }
 
-function StudentProfile({ user }) {
-  return (
-    <div className="student-profile-page">
-      <section className="student-profile-card">
-        <div className="student-profile-avatar">
-          {user?.profilePhoto ? <img src={user.profilePhoto} alt="Foto de perfil" /> : user?.name?.[0] || 'A'}
-        </div>
-        <div>
-          <span className="student-profile-label">Perfil do aluno</span>
-          <h2>{user?.name}</h2>
-          <p>{user?.email}</p>
-        </div>
-      </section>
-      <section className="student-profile-details">
-        <div><span>Status</span><strong>{user?.status === 'APPROVED' ? 'Ativo' : user?.status}</strong></div>
-        <div><span>Telefone</span><strong>{user?.phone || 'Não informado'}</strong></div>
-        <div><span>ID do aluno</span><strong>{user?.studentId || '—'}</strong></div>
-      </section>
-    </div>
-  )
-}
-
 export default function StudentDashboard({ user, token, onLogout }) {
   if (user?.status !== 'APPROVED') return <PendingApproval user={user} onLogout={onLogout} />
 
@@ -59,7 +38,7 @@ export default function StudentDashboard({ user, token, onLogout }) {
         <Route path="videos" element={<StudentVideos token={token} />} />
         <Route path="perguntas" element={<StudentQuestions studentId={user.studentId} token={token} />} />
         <Route path="ranking" element={<StudentRanking token={token} />} />
-        <Route path="perfil" element={<StudentProfile user={user} />} />
+        <Route path="perfil" element={<StudentProfile />} />
         <Route path="*" element={<Navigate to="." replace />} />
       </Route>
     </Routes>
