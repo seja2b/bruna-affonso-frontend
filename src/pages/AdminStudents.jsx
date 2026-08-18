@@ -1,219 +1,131 @@
-import React, { useState, useEffect } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import api from '../services/api'
 import './AdminStudents.css'
 
-export default function AdminStudents({ user, token, onNavigate }) {
+const statusLabels = {
+  APPROVED: 'Aprovado',
+  PENDING: 'Pendente',
+  REJECTED: 'Rejeitado',
+  INACTIVE: 'Inativo'
+}
+
+export default function AdminStudents() {
+  const navigate = useNavigate()
   const [students, setStudents] = useState([])
   const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('all')
-  const [selectedStudent, setSelectedStudent] = useState(null)
-  const [isAdmin, setIsAdmin] = useState({})
+  const [feedback, setFeedback] = useState(null)
+  const [busyId, setBusyId] = useState(null)
 
-  useEffect(() => {
-    fetchStudents()
-  }, [])
+  useEffect(() => { fetchStudents() }, [])
 
   async function fetchStudents() {
     try {
-      const response = await api.get('/admin/students', {
-        headers: { Authorization: `Bearer ${token}` }
-      })
+      setLoading(true)
+      const response = await api.get('/admin/students')
       setStudents(response.data)
-      
-      // Criar objeto com status de admin para cada aluno
-      const adminStatus = {}
-      response.data.forEach(student => {
-        adminStatus[student.id] = student.isAdmin || false
-      })
-      setIsAdmin(adminStatus)
     } catch (error) {
-      console.error('Erro ao buscar alunos', error)
+      setFeedback({ type: 'error', message: 'Não foi possível carregar os alunos.' })
     } finally {
       setLoading(false)
     }
   }
 
-  async function approveStudent(studentId) {
+  function openStudentWeeks(student) {
+    if (!student.studentId || student.status !== 'APPROVED') {
+      navigate(`/admin/alunos/${student.id}`)
+      return
+    }
+    navigate(`/admin/acompanhamentos?student=${encodeURIComponent(student.studentId)}`)
+  }
+
+  async function runAction(studentId, action, successMessage) {
     try {
-      await api.put(`/admin/students/${studentId}/approve`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      fetchStudents()
+      setBusyId(studentId)
+      setFeedback(null)
+      await api.put(`/admin/students/${studentId}/${action}`)
+      setFeedback({ type: 'success', message: successMessage })
+      await fetchStudents()
     } catch (error) {
-      alert('Erro ao aprovar aluno')
+      setFeedback({ type: 'error', message: error.response?.data?.error || 'Não foi possível concluir a ação.' })
+    } finally {
+      setBusyId(null)
     }
   }
 
-  async function rejectStudent(studentId) {
-    try {
-      await api.put(`/admin/students/${studentId}/reject`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      fetchStudents()
-    } catch (error) {
-      alert('Erro ao rejeitar aluno')
-    }
-  }
+  const filteredStudents = useMemo(() => {
+    const term = search.trim().toLowerCase()
+    return students.filter((student) => {
+      const matchesTerm = !term || [student.name, student.email, student.phone]
+        .filter(Boolean)
+        .some((value) => value.toLowerCase().includes(term))
+      const matchesStatus = filter === 'all' || student.status === filter
+      return matchesTerm && matchesStatus
+    })
+  }, [students, search, filter])
 
-  async function toggleAdminStatus(studentId) {
-    try {
-      const newStatus = !isAdmin[studentId]
-      await api.put(`/admin/students/${studentId}/admin`, 
-        { isAdmin: newStatus }, 
-        { headers: { Authorization: `Bearer ${token}` } }
-      )
-      setIsAdmin({...isAdmin, [studentId]: newStatus})
-      fetchStudents()
-    } catch (error) {
-      alert('Erro ao alterar status de admin')
-    }
-  }
-
-  async function handlePhotoUpload(studentId) {
-    const fileInput = document.createElement('input')
-    fileInput.type = 'file'
-    fileInput.accept = 'image/*'
-    fileInput.onchange = async (e) => {
-      const file = e.target.files[0]
-      if (!file) return
-
-      const formData = new FormData()
-      formData.append('photo', file)
-
-      try {
-        await api.put(`/admin/students/${studentId}/photo`, formData, {
-          headers: { 
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'multipart/form-data'
-          }
-        })
-        fetchStudents()
-        alert('✅ Foto do aluno atualizada!')
-      } catch (error) {
-        alert('Erro ao fazer upload da foto')
-      }
-    }
-    fileInput.click()
-  }
-
-  const filteredStudents = students.filter(s => {
-    if (filter === 'pending') return s.status === 'PENDING'
-    if (filter === 'approved') return s.status === 'APPROVED'
-    if (filter === 'canceled') return s.status === 'REJECTED' || s.status === 'INACTIVE'
-    return true
-  })
+  if (loading) return <div className="admin-students-state">Carregando alunos...</div>
 
   return (
-    <div className="admin-students">
-      <div className="students-header">
+    <section className="admin-students-v2">
+      <div className="admin-students-heading">
         <div>
-          <h2>👥 Gerenciar Alunos</h2>
-          <p>Aprove, rejeite ou gerencie os alunos</p>
+          <span className="admin-eyebrow">Gestão de alunos</span>
+          <h2>Alunos</h2>
+          <p>Clique em um aluno aprovado para abrir diretamente suas semanas e acompanhar o preenchimento.</p>
         </div>
-        <div className="header-stats">
-          <span className="stat-badge">{students.length} alunos</span>
-        </div>
+        <div className="students-count-card"><strong>{students.length}</strong><span>cadastrados</span></div>
       </div>
 
-      {/* ABAS DE FILTRO */}
-      <div className="students-tabs">
-        <button
-          className={`filter-btn ${filter === 'all' ? 'active' : ''}`}
-          onClick={() => setFilter('all')}
-        >
-          ✅ Aprovados ({students.filter(s => s.status === 'APPROVED').length})
-        </button>
-        <button
-          className={`filter-btn ${filter === 'pending' ? 'active' : ''}`}
-          onClick={() => setFilter('pending')}
-        >
-          📩 Pendentes ({students.filter(s => s.status === 'PENDING').length})
-        </button>
-        <button
-          className={`filter-btn ${filter === 'canceled' ? 'active' : ''}`}
-          onClick={() => setFilter('canceled')}
-        >
-          ❌ Cancelados ({students.filter(s => s.status === 'REJECTED' || s.status === 'INACTIVE').length})
-        </button>
+      {feedback && <div className={`admin-inline-feedback ${feedback.type}`}>{feedback.message}</div>}
+
+      <div className="students-toolbar">
+        <input type="search" placeholder="Buscar por nome, email ou telefone" value={search} onChange={(event) => setSearch(event.target.value)} aria-label="Buscar alunos" />
+        <select value={filter} onChange={(event) => setFilter(event.target.value)} aria-label="Filtrar por status">
+          <option value="all">Todos os status</option>
+          <option value="APPROVED">Aprovados</option>
+          <option value="PENDING">Pendentes</option>
+          <option value="REJECTED">Rejeitados</option>
+          <option value="INACTIVE">Inativos</option>
+        </select>
       </div>
 
-      {loading ? (
-        <div className="loading">Carregando alunos...</div>
-      ) : filteredStudents.length === 0 ? (
-        <div className="empty-state">
-          <p>Nenhum aluno encontrado nesta categoria</p>
-        </div>
+      {filteredStudents.length === 0 ? (
+        <div className="admin-students-state">Nenhum aluno encontrado com esses filtros.</div>
       ) : (
-        <div className="students-grid">
-          {filteredStudents.map(student => (
-            <div key={student.id} className="student-card">
-              {/* FOTO DO ALUNO */}
-              <div className="student-photo-container">
-                <div 
-                  className="student-photo"
-                  onClick={() => handlePhotoUpload(student.id)}
-                  style={{cursor: 'pointer'}}
-                  title="Clique para alterar foto"
-                >
-                  {student.photoUrl ? (
-                    <img src={student.photoUrl} alt={student.name} />
-                  ) : (
-                    <div className="photo-placeholder">
-                      {student.name?.charAt(0).toUpperCase()}
+        <div className="students-table-wrap">
+          <table className="students-table-v2">
+            <thead><tr><th>Aluno</th><th>Status</th><th>Contato</th><th>Cadastro</th><th>Ações</th></tr></thead>
+            <tbody>
+              {filteredStudents.map((student) => (
+                <tr key={student.id} className={student.status === 'APPROVED' ? 'student-row-clickable' : ''}>
+                  <td>
+                    <button className="student-identity" onClick={() => openStudentWeeks(student)}>
+                      <span className="student-avatar">{student.profilePhoto ? <img src={student.profilePhoto} alt={`Foto de ${student.name}`} /> : student.name?.charAt(0)?.toUpperCase()}</span>
+                      <span><strong>{student.name}</strong><small>{student.email}</small></span>
+                    </button>
+                  </td>
+                  <td><span className={`status-pill ${student.status.toLowerCase()}`}>{statusLabels[student.status] || student.status}</span></td>
+                  <td>{student.phone || 'Não informado'}</td>
+                  <td>{new Date(student.createdAt).toLocaleDateString('pt-BR')}</td>
+                  <td>
+                    <div className="student-row-actions">
+                      {student.status === 'APPROVED' && <button onClick={() => openStudentWeeks(student)}>Ver semanas</button>}
+                      <button onClick={() => navigate(`/admin/alunos/${student.id}`)}>Ver perfil</button>
+                      {student.status === 'PENDING' && <button disabled={busyId === student.id} onClick={() => runAction(student.id, 'approve', 'Aluno aprovado com sucesso.')}>Aprovar</button>}
+                      {student.status === 'PENDING' && <button className="danger" disabled={busyId === student.id} onClick={() => runAction(student.id, 'reject', 'Cadastro rejeitado.')}>Rejeitar</button>}
+                      {student.status === 'APPROVED' && <button className="danger" disabled={busyId === student.id} onClick={() => runAction(student.id, 'deactivate', 'Aluno inativado.')}>Inativar</button>}
+                      {student.status === 'INACTIVE' && <button disabled={busyId === student.id} onClick={() => runAction(student.id, 'reactivate', 'Aluno reativado.')}>Reativar</button>}
                     </div>
-                  )}
-                </div>
-              </div>
-
-              {/* INFORMAÇÕES */}
-              <div className="student-info">
-                <h3>{student.name}</h3>
-                <p className="email">{student.email}</p>
-                {student.phone && <p className="phone">📱 {student.phone}</p>}
-              </div>
-
-              {/* STATUS */}
-              <div className="student-status">
-                <span className={`status-badge ${student.status.toLowerCase()}`}>
-                  {student.status === 'PENDING' && '📩 Pendente'}
-                  {student.status === 'APPROVED' && '✅ Aprovado'}
-                  {student.status === 'REJECTED' && '❌ Rejeitado'}
-                  {student.status === 'INACTIVE' && '⛔ Inativo'}
-                </span>
-              </div>
-
-              {/* BOTÕES DE AÇÃO */}
-              <div className="student-actions">
-                {student.status === 'PENDING' && (
-                  <>
-                    <button 
-                      className="btn-approve"
-                      onClick={() => approveStudent(student.id)}
-                    >
-                      ✅ Aprovar
-                    </button>
-                    <button 
-                      className="btn-reject"
-                      onClick={() => rejectStudent(student.id)}
-                    >
-                      ❌ Rejeitar
-                    </button>
-                  </>
-                )}
-
-                {student.status === 'APPROVED' && (
-                  <button 
-                    className={`btn-admin ${isAdmin[student.id] ? 'active' : ''}`}
-                    onClick={() => toggleAdminStatus(student.id)}
-                  >
-                    {isAdmin[student.id] ? '⚙️ Remover ADM' : '⚙️ Tornar ADM'}
-                  </button>
-                )}
-              </div>
-            </div>
-          ))}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
-    </div>
+    </section>
   )
 }
