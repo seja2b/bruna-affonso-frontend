@@ -1,119 +1,72 @@
-import React, { useState, useEffect } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import api from '../services/api'
 import './AdminRanking.css'
 
-export default function AdminRanking({ token }) {
+export default function AdminRanking() {
   const [students, setStudents] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
-  useEffect(() => {
-    fetchRanking()
-  }, [])
+  useEffect(() => { fetchRanking() }, [])
 
   async function fetchRanking() {
     try {
-      const response = await api.get('/ranking', {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      setStudents(response.data)
-    } catch (error) {
-      console.error('Erro ao buscar ranking', error)
+      setLoading(true)
+      setError('')
+      const response = await api.get('/tracking/ranking')
+      const data = Array.isArray(response.data) ? response.data : response.data?.ranking || []
+      setStudents(data)
+    } catch (err) {
+      console.error('Erro ao buscar ranking', err)
+      setError('Não foi possível carregar o ranking.')
     } finally {
       setLoading(false)
     }
   }
 
-  function fazerSorteio() {
-    if (students.length === 0) {
-      alert('❌ Nenhum aluno cadastrado para sorteio!')
-      return
-    }
+  const rows = useMemo(() => students.map((entry, index) => ({
+    id: entry.id || entry.studentId || index,
+    position: entry.position || index + 1,
+    name: entry.name || entry.student?.user?.name || 'Aluno',
+    email: entry.email || entry.student?.user?.email || '',
+    photo: entry.profilePhoto || entry.student?.user?.profilePhoto || null,
+    weeks: entry.weeksCompleted || 0,
+    points: entry.totalPoints || 0
+  })), [students])
 
-    const indice = Math.floor(Math.random() * students.length)
-    const alunoSorteado = students[indice]
-    
-    document.getElementById('nome-sorteado').textContent = alunoSorteado.name || alunoSorteado.user?.name || 'Aluno'
-    document.getElementById('resultado-sorteio').classList.remove('hidden')
-    
-    alert(`🎲 Sorteio Realizado!\n\n🏆 Aluno Sorteado: ${alunoSorteado.name || alunoSorteado.user?.name}`)
-  }
-
-  if (loading) {
-    return <div className="loading">Carregando ranking...</div>
-  }
+  if (loading) return <div className="loading">Carregando ranking...</div>
+  if (error) return <div className="admin-ranking-state">{error}</div>
 
   return (
     <div className="admin-ranking">
       <div className="ranking-header">
-        <h2>🏆 Ranking de Alunos</h2>
-        <p>Veja o desempenho dos alunos e faça sorteios entre os cadastrados</p>
+        <span className="admin-eyebrow">Ranking oficial</span>
+        <h2>Desempenho dos alunos</h2>
+        <p>Cada semana concluída vale 100 pontos. A pontuação é gerada automaticamente pelo backend.</p>
       </div>
 
-      <table className="ranking-table">
-        <thead>
-          <tr>
-            <th style={{width: '80px'}}>Posição</th>
-            <th>Nome do Aluno</th>
-            <th style={{width: '150px', textAlign: 'center'}}>Semanas Completas</th>
-            <th style={{width: '120px', textAlign: 'right'}}>Pontos</th>
-          </tr>
-        </thead>
-        <tbody>
-          {students.length === 0 ? (
-            <tr>
-              <td colSpan="4" style={{textAlign: 'center', padding: '40px', color: '#999'}}>
-                Nenhum aluno no ranking ainda
-              </td>
-            </tr>
-          ) : (
-            students.map((student, index) => {
-              let medal = ''
-              if (index === 0) medal = '🥇'
-              else if (index === 1) medal = '🥈'
-              else if (index === 2) medal = '🥉'
-              else medal = `${index + 1}º`
+      <div className="admin-ranking-summary">
+        <div><strong>{rows.length}</strong><span>participantes</span></div>
+        <div><strong>{rows.reduce((sum, row) => sum + row.weeks, 0)}</strong><span>semanas concluídas</span></div>
+        <div><strong>{rows.reduce((sum, row) => sum + row.points, 0)}</strong><span>pontos distribuídos</span></div>
+      </div>
 
-              return (
-                <tr key={student.id}>
-                  <td className="ranking-medal" style={{textAlign: 'center', fontSize: '24px'}}>
-                    {medal}
-                  </td>
-                  <td className="ranking-nome">
-                    {student.name || student.user?.name || 'Aluno'}
-                  </td>
-                  <td className="ranking-stats" style={{textAlign: 'center'}}>
-                    {student.weeksCompleted || 0}/52
-                  </td>
-                  <td className="ranking-pontos" style={{textAlign: 'right'}}>
-                    {(student.totalPoints || 0)} pts
-                  </td>
-                </tr>
-              )
-            })
-          )}
-        </tbody>
-      </table>
-
-      <button 
-        className="btn-sorteio" 
-        onClick={fazerSorteio}
-        style={{marginTop: '25px'}}
-      >
-        🎲 Fazer Sorteio Entre Alunos
-      </button>
-
-      <div id="resultado-sorteio" className="hidden" style={{
-        background: 'linear-gradient(135deg, #ff9800, #f57c00)',
-        color: 'white',
-        padding: '40px',
-        borderRadius: '12px',
-        textAlign: 'center',
-        marginTop: '30px',
-        boxShadow: '0 8px 30px rgba(255, 152, 0, 0.2)'
-      }}>
-        <div style={{fontSize: '14px', opacity: 0.9, marginBottom: '15px'}}>ALUNO SORTEADO:</div>
-        <div style={{fontSize: '42px', fontWeight: 700, marginBottom: '20px'}} id="nome-sorteado">-</div>
-        <div style={{fontSize: '14px', opacity: 0.9}}>✨ Parabéns ao vencedor! ✨</div>
+      <div className="admin-ranking-table-wrap">
+        <table className="ranking-table">
+          <thead><tr><th>Posição</th><th>Aluno</th><th>Semanas completas</th><th>Pontos</th></tr></thead>
+          <tbody>
+            {rows.length === 0 ? (
+              <tr><td colSpan="4" className="admin-ranking-empty">Nenhum aluno pontuou ainda.</td></tr>
+            ) : rows.map((row) => (
+              <tr key={row.id} className={row.position <= 3 ? `rank-top rank-${row.position}` : ''}>
+                <td><span className="admin-rank-position">#{row.position}</span></td>
+                <td><div className="admin-rank-person"><span className="admin-rank-avatar">{row.photo ? <img src={row.photo} alt="" /> : row.name[0]}</span><span><strong>{row.name}</strong><small>{row.email}</small></span></div></td>
+                <td><strong>{row.weeks}</strong> / 52</td>
+                <td><strong>{row.points}</strong> pts</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   )
