@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import AdminShell from '../components/admin/AdminShell'
 import '../components/admin/AdminShell.css'
 import AdminHome from './admin/AdminHome'
+import AdminStudentDetail from './admin/AdminStudentDetail'
 import AdminStudents from './AdminStudents'
 import AdminWorkouts from './AdminWorkouts'
 import AdminQuestions from './AdminQuestions'
@@ -16,6 +17,7 @@ export default function AdminDashboard({ user, token, onLogout }) {
       <Route element={<AdminShell user={user} onLogout={onLogout} />}>
         <Route index element={<AdminHome />} />
         <Route path="alunos" element={<AdminStudents user={user} token={token} />} />
+        <Route path="alunos/:id" element={<AdminStudentDetail />} />
         <Route path="treinos" element={<AdminWorkouts user={user} token={token} />} />
         <Route path="semanas" element={<Navigate to="../acompanhamentos" replace />} />
         <Route path="acompanhamentos" element={<AdminTracking token={token} />} />
