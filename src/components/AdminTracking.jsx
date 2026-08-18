@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import api from '../services/api'
 import './AdminTracking.css'
 import './AdminTrackingCalendar.css'
@@ -11,6 +12,7 @@ const dateFormatter = new Intl.DateTimeFormat('pt-BR', {
 })
 
 export default function AdminTracking() {
+  const [searchParams, setSearchParams] = useSearchParams()
   const [students, setStudents] = useState([])
   const [selectedStudent, setSelectedStudent] = useState(null)
   const [weeks, setWeeks] = useState([])
@@ -23,6 +25,13 @@ export default function AdminTracking() {
   const [feedback, setFeedback] = useState('')
 
   useEffect(() => { fetchStudents() }, [])
+
+  useEffect(() => {
+    const requestedStudent = searchParams.get('student')
+    if (requestedStudent && students.some((student) => student.id === requestedStudent) && requestedStudent !== selectedStudent) {
+      handleStudentSelect(requestedStudent, false)
+    }
+  }, [students, searchParams])
 
   async function fetchStudents() {
     try {
@@ -37,12 +46,13 @@ export default function AdminTracking() {
     }
   }
 
-  async function handleStudentSelect(studentId) {
+  async function handleStudentSelect(studentId, updateUrl = true) {
     setSelectedStudent(studentId)
     setSelectedWeek(null)
     setWeekData(null)
     setAdminNote('')
     setFeedback('')
+    if (updateUrl) setSearchParams({ student: studentId })
 
     try {
       const response = await api.get(`/tracking/admin/student/${studentId}/weeks`)
@@ -119,7 +129,7 @@ export default function AdminTracking() {
           <div className="students-list">
             {students.map((item) => (
               <button key={item.id} className={`student-item ${selectedStudent === item.id ? 'active' : ''}`} onClick={() => handleStudentSelect(item.id)}>
-                <span className="student-avatar">{item.profilePhoto ? <img src={item.profilePhoto} alt="" /> : item.name?.charAt(0)?.toUpperCase()}</span>
+                <span className="student-avatar">{item.profilePhoto ? <img src={item.profilePhoto} alt={`Foto de ${item.name}`} /> : item.name?.charAt(0)?.toUpperCase()}</span>
                 <div className="student-info"><div className="student-name">{item.name}</div><div className="student-email">{item.email}</div></div>
               </button>
             ))}
@@ -139,7 +149,7 @@ export default function AdminTracking() {
                     <div className="week-label">Semana {week.weekNumber}</div>
                     <small>{dateFormatter.format(new Date(week.startDate))} a {dateFormatter.format(new Date(week.endDate))}</small>
                     <small>Semana {week.calendarWeek} de {week.calendarYear}</small>
-                    <div className="week-badge">{week.isCompleted ? 'Concluída' : week.isReleased ? 'Liberada' : 'Bloqueada'}</div>
+                    <div className="week-badge">{week.isCompleted ? 'Concluída · 100 pts' : week.isReleased ? 'Liberada' : 'Bloqueada'}</div>
                   </button>
                 ))}
               </div>
@@ -153,7 +163,7 @@ export default function AdminTracking() {
                   <h3>Semana {selectedWeekSummary?.weekNumber} · {student?.name}</h3>
                   <p>{dateFormatter.format(new Date(selectedWeekSummary.startDate))} a {dateFormatter.format(new Date(selectedWeekSummary.endDate))} · segunda a sexta</p>
                 </div>
-                <span className={`admin-week-status ${selectedWeekSummary?.isReleased ? 'released' : 'locked'}`}>{selectedWeekSummary?.isReleased ? 'Liberada' : 'Bloqueada'}</span>
+                <span className={`admin-week-status ${selectedWeekSummary?.isReleased ? 'released' : 'locked'}`}>{selectedWeekSummary?.isCompleted ? 'Concluída · 100 pts' : selectedWeekSummary?.isReleased ? 'Liberada' : 'Bloqueada'}</span>
               </div>
 
               {!selectedWeekSummary?.isReleased && (
@@ -164,12 +174,12 @@ export default function AdminTracking() {
               )}
 
               <div className="week-exercises-card">
-                <h4>Preenchimento do aluno</h4>
+                <h4>Preenchimento manual do aluno</h4>
                 {!weekData || weekData.exercises.length === 0 ? (
                   <div className="empty-exercises"><p>Nenhum exercício registrado ainda.</p></div>
                 ) : (
                   <div className="exercises-table">
-                    <div className="table-header"><div>Exercício</div><div>Tipo</div><div>Peso</div><div>Reps</div><div>Notas</div></div>
+                    <div className="table-header"><div>Exercício</div><div>Tipo</div><div>Carga</div><div>Reps</div><div>Observação</div></div>
                     {weekData.exercises.map((exercise) => (
                       <div key={exercise.id} className="table-row"><div className="col-exercise"><strong>{exercise.exerciseName}</strong></div><div className="col-type">{exercise.trainingType}</div><div className="col-weight">{exercise.weight || '-'}{exercise.weight ? ' kg' : ''}</div><div className="col-reps">{exercise.reps || '-'}</div><div className="col-notes">{exercise.notes || '-'}</div></div>
                     ))}
@@ -177,10 +187,7 @@ export default function AdminTracking() {
                 )}
               </div>
 
-              <div className="student-observation-card">
-                <h4>Observação do aluno</h4>
-                <div className="observation-text">{weekData?.observation?.studentNote || 'O aluno ainda não deixou observação nesta semana.'}</div>
-              </div>
+              <div className="student-observation-card"><h4>Observação do aluno</h4><div className="observation-text">{weekData?.observation?.studentNote || 'O aluno ainda não deixou observação nesta semana.'}</div></div>
 
               <div className="admin-observation-card">
                 <h4>Observação da professora</h4>
