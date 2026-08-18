@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import api from '../services/api'
 import AdminTracking from '../components/AdminTracking'
 import StudentRanking from '../components/StudentRanking'
 import AdminRanking from '../components/AdminRanking'
@@ -12,25 +13,63 @@ import './AdminDashboard.css'
 export default function AdminDashboard({ user, token, onLogout, onNavigate }) {
   const [activeTab, setActiveTab] = useState('dashboard')
   const [userData, setUserData] = useState(user)
+  const [settings, setSettings] = useState({
+    profileImage: '',
+    logo: '',
+    motivationalPhrase: ''
+  })
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (user) {
       setUserData(user)
     }
+    fetchSettings()
   }, [user])
+
+  async function fetchSettings() {
+    try {
+      const response = await api.get('/admin/settings', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      setSettings(response.data)
+    } catch (error) {
+      console.error('Erro ao buscar settings:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <div className="admin-dashboard">
       {/* HEADER */}
       <div className="admin-dashboard-header">
         <div className="header-left">
-          <div className="header-logo">BA</div>
+          {/* FOTO OU BA */}
+          <div className="header-profile">
+            {settings.profileImage && !loading ? (
+              <img src={settings.profileImage} alt="Perfil" className="header-photo" />
+            ) : (
+              <div className="header-logo">BA</div>
+            )}
+          </div>
+
           <div>
             <h1>Painel de Administrador</h1>
             <p className="admin-email">{userData.email}</p>
           </div>
         </div>
-        <button onClick={onLogout} className="logout-btn">🚪 Logout</button>
+
+        <div className="header-right">
+          {/* LOGO PEQUENA */}
+          {settings.logo && !loading && (
+            <div className="header-logo-small">
+              <img src={settings.logo} alt="Logo" />
+            </div>
+          )}
+          
+          <button onClick={onLogout} className="logout-btn">🚪 Logout</button>
+        </div>
       </div>
 
       {/* TABS */}
