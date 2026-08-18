@@ -10,6 +10,11 @@ export default function AdicionarFoto({ isOpen, onClose, studentId, token }) {
   function handlePhotoSelect(e) {
     const file = e.target.files[0]
     if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        alert('❌ Arquivo muito grande! Máximo 5MB')
+        return
+      }
+      
       const reader = new FileReader()
       reader.onload = (event) => {
         setPreview(event.target.result)
@@ -27,29 +32,31 @@ export default function AdicionarFoto({ isOpen, onClose, studentId, token }) {
 
     setSaving(true)
     try {
-      const reader = new FileReader()
-      reader.onload = async (event) => {
-        try {
-          await api.put(
-            `/student/profile`,
-            { profilePhoto: event.target.result },
-            { headers: { Authorization: `Bearer ${token}` } }
-          )
-          alert('✅ Foto adicionada com sucesso!')
-          setPhoto(null)
-          setPreview(null)
-          onClose()
-        } catch (error) {
-          console.error('Erro ao salvar foto', error)
-          alert('❌ Erro ao salvar foto')
-        } finally {
-          setSaving(false)
+      const formData = new FormData()
+      formData.append('file', photo)
+
+      const response = await api.post('/upload/photo', formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
         }
-      }
-      reader.readAsDataURL(photo)
+      })
+
+      const photoUrl = response.data.url
+
+      await api.put(
+        `/student/profile`,
+        { profilePhoto: photoUrl },
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+
+      alert('✅ Foto adicionada com sucesso!')
+      setPhoto(null)
+      setPreview(null)
+      onClose()
     } catch (error) {
-      console.error('Erro ao processar foto', error)
-      alert('❌ Erro ao processar foto')
+      console.error('Erro ao salvar foto:', error)
+      alert('❌ Erro ao salvar foto. Tente novamente.')
       setSaving(false)
     }
   }

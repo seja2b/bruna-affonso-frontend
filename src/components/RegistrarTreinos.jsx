@@ -4,97 +4,80 @@ import './RegistrarTreinos.css'
 
 export default function RegistrarTreinos({ isOpen, onClose, studentId, token }) {
   const [weeks, setWeeks] = useState([])
-  const [selectedWeek, setSelectedWeek] = useState(null)
-  const [exercises, setExercises] = useState([])
+  const [weekData, setWeekData] = useState({})
   const [loading, setLoading] = useState(false)
-  const [message, setMessage] = useState('')
+  const [saving, setSaving] = useState(false)
 
-  // Carregar semanas liberadas
   useEffect(() => {
-    if (isOpen && studentId) {
+    if (isOpen) {
       fetchWeeks()
     }
-  }, [isOpen, studentId])
+  }, [isOpen])
 
-  const fetchWeeks = async () => {
+  async function fetchWeeks() {
+    setLoading(true)
     try {
-      setLoading(true)
-      const response = await api.get(`/tracking/student/${studentId}/weeks`, {
+      const response = await api.get(`/tracking/weeks/${studentId}`, {
         headers: { Authorization: `Bearer ${token}` }
       })
-      setWeeks(response.data)
-      if (response.data.length > 0) {
-        setSelectedWeek(response.data[0])
-        fetchExercises(response.data[0].id)
-      }
-    } catch (error) {
-      console.error('Erro ao carregar semanas:', error)
-      setMessage('Erro ao carregar semanas')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const fetchExercises = async (weeklyTrackingId) => {
-    try {
-      const response = await api.get(`/tracking/exercises/${weeklyTrackingId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      setExercises(response.data)
-    } catch (error) {
-      console.error('Erro ao carregar exercícios:', error)
-      setExercises([])
-    }
-  }
-
-  const handleWeekChange = (weekId) => {
-    const week = weeks.find(w => w.id === weekId)
-    setSelectedWeek(week)
-    fetchExercises(weekId)
-  }
-
-  const handleExerciseChange = (index, field, value) => {
-    const updatedExercises = [...exercises]
-    updatedExercises[index] = {
-      ...updatedExercises[index],
-      [field]: value
-    }
-    setExercises(updatedExercises)
-  }
-
-  const handleSave = async () => {
-    if (!selectedWeek) {
-      setMessage('Selecione uma semana')
-      return
-    }
-
-    // Validar se pelo menos um exercício foi preenchido
-    const hasData = exercises.some(ex => ex.weight || ex.reps)
-    if (!hasData) {
-      setMessage('Preencha pelo menos um exercício')
-      return
-    }
-
-    try {
-      setLoading(true)
       
-      // Salvar exercícios
-      await api.put(
-        `/tracking/exercises/${selectedWeek.id}`,
-        { exercises },
-        { headers: { Authorization: `Bearer ${token}` } }
-      )
+      const releasedWeeks = response.data.filter(w => w.isReleased || w.isCompleted)
+      setWeeks(releasedWeeks)
 
-      setMessage('✅ Treinos registrados com sucesso!')
-      setTimeout(() => {
-        onClose()
-        setMessage('')
-      }, 1500)
+      // Buscar exercícios de cada semana
+      const data = {}
+      for (let week of releasedWeeks) {
+        try {
+          const weekResponse = await api.get(`/tracking/week/${week.id}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          })
+          data[week.id] = {
+            exercises: weekResponse.data.exercises || [],
+            isCompleted: week.isCompleted
+          }
+        } catch (error) {
+          data[week.id] = { exercises: [], isCompleted: week.isCompleted }
+        }
+      }
+      setWeekData(data)
     } catch (error) {
-      console.error('Erro ao salvar exercícios:', error)
-      setMessage('❌ Erro ao salvar treinos')
+      console.error('Erro ao buscar semanas', error)
+      alert('❌ Erro ao carregar as semanas')
     } finally {
       setLoading(false)
+    }
+  }
+
+  function handleExerciseChange(weekId, exerciseIndex, field, value) {
+    setWeekData(prev => {
+      const updated = { ...prev }
+      if (updated[weekId] && updated[weekId].exercises[exerciseIndex]) {
+        updated[weekId].exercises[exerciseIndex][field] = value
+      }
+      return updated
+    })
+  }
+
+  async function handleSave() {
+    setSaving(true)
+    try {
+      // Salvar exercícios de cada semana
+      for (let weekId in weekData) {
+        if (weekData[weekId].exercises.length > 0) {
+          await api.put(
+            `/tracking/week/${weekId}`,
+            { exercises: weekData[weekId].exercises },
+            { headers: { Authorization: `Bearer ${token}` } }
+          )
+        }
+      }
+      alert('✅ Treinos registrados com sucesso!')
+      onClose()
+    } catch (error) {
+      console.error('Erro ao salvar treinos', error)
+      alert('❌ Erro ao salvar treinos')
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -102,92 +85,103 @@ export default function RegistrarTreinos({ isOpen, onClose, studentId, token }) 
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content registrar-treinos-modal" onClick={(e) => e.stopPropagation()}>
+      <div className="modal-content-large" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h2>📝 Registre seus Treinos</h2>
+          <h2>📝 Registre Seus Treinos - Todas as Semanas</h2>
           <button className="close-btn" onClick={onClose}>✕</button>
         </div>
 
-        {loading && <div className="loading">Carregando...</div>}
-
-        {!loading && (
+        {loading ? (
+          <div className="modal-body">
+            <div className="loading">Carregando semanas...</div>
+          </div>
+        ) : weeks.length === 0 ? (
+          <div className="modal-body">
+            <div className="empty-state">
+              <p>Nenhuma semana liberada ainda</p>
+            </div>
+          </div>
+        ) : (
           <>
-            {/* Seletor de Semana */}
-            <div className="week-selector">
-              <label>Selecione a Semana:</label>
-              <select 
-                value={selectedWeek?.id || ''} 
-                onChange={(e) => handleWeekChange(e.target.value)}
-                disabled={weeks.length === 0}
-              >
-                <option value="">-- Selecione --</option>
-                {weeks.map(week => (
-                  <option key={week.id} value={week.id}>
-                    Semana {week.weekNumber} {!week.isReleased ? '🔒 (Bloqueada)' : '🔓 (Liberada)'}
-                  </option>
-                ))}
-              </select>
+            <div className="modal-body spreadsheet-container">
+              <div className="info-banner">
+                💡 Preencha os pesos e repetições de cada exercício. Role horizontalmente para ver mais semanas.
+              </div>
+
+              <div className="spreadsheet-wrapper">
+                <div className="spreadsheet-scroll">
+                  {weeks.map(week => (
+                    <div key={week.id} className="week-column">
+                      <div className="week-header">
+                        <div className="week-title">Semana {week.weekNumber}</div>
+                        <div className="week-status">
+                          {weekData[week.id]?.isCompleted ? '✅' : '🟢'}
+                        </div>
+                      </div>
+
+                      <div className="exercises-column">
+                        {!weekData[week.id] || weekData[week.id].exercises.length === 0 ? (
+                          <div className="no-exercises">
+                            <p>Sem exercícios</p>
+                          </div>
+                        ) : (
+                          weekData[week.id].exercises.map((exercise, index) => (
+                            <div key={exercise.id} className="exercise-item">
+                              <div className="exercise-name">{exercise.exerciseName}</div>
+                              <div className="exercise-type">{exercise.trainingType}</div>
+
+                              <div className="input-group">
+                                <input
+                                  type="text"
+                                  placeholder="kg"
+                                  value={exercise.weight || ''}
+                                  onChange={(e) => handleExerciseChange(week.id, index, 'weight', e.target.value)}
+                                  className="input-weight"
+                                />
+                              </div>
+
+                              <div className="input-group">
+                                <input
+                                  type="text"
+                                  placeholder="reps"
+                                  value={exercise.reps || ''}
+                                  onChange={(e) => handleExerciseChange(week.id, index, 'reps', e.target.value)}
+                                  className="input-reps"
+                                />
+                              </div>
+
+                              <div className="input-group full">
+                                <input
+                                  type="text"
+                                  placeholder="notas"
+                                  value={exercise.notes || ''}
+                                  onChange={(e) => handleExerciseChange(week.id, index, 'notes', e.target.value)}
+                                  className="input-notes"
+                                />
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
 
-            {/* Tabela de Exercícios */}
-            {selectedWeek && (
-              <div className="exercises-table">
-                <h3>Exercícios - Semana {selectedWeek.weekNumber}</h3>
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Exercício</th>
-                      <th>Carga (kg)</th>
-                      <th>Repetições</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {exercises.length > 0 ? (
-                      exercises.map((exercise, index) => (
-                        <tr key={index}>
-                          <td>{exercise.exerciseName}</td>
-                          <td>
-                            <input
-                              type="number"
-                              min="0"
-                              step="0.5"
-                              value={exercise.weight || ''}
-                              onChange={(e) => handleExerciseChange(index, 'weight', e.target.value)}
-                              placeholder="0"
-                            />
-                          </td>
-                          <td>
-                            <input
-                              type="number"
-                              min="0"
-                              value={exercise.reps || ''}
-                              onChange={(e) => handleExerciseChange(index, 'reps', e.target.value)}
-                              placeholder="0"
-                            />
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan="3" className="no-exercises">Nenhum exercício para esta semana</td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            )}
-
-            {message && <div className="message">{message}</div>}
-
-            {/* Botões */}
-            <div className="modal-actions">
-              <button className="btn-cancel" onClick={onClose}>Cancelar</button>
+            <div className="modal-footer">
               <button 
-                className="btn-save" 
-                onClick={handleSave}
-                disabled={loading || !selectedWeek}
+                className="btn-cancelar"
+                onClick={onClose}
               >
-                💾 Salvar Treinos
+                ✕ Cancelar
+              </button>
+              <button 
+                className="btn-salvar"
+                onClick={handleSave}
+                disabled={saving}
+              >
+                {saving ? '⏳ Salvando...' : '✅ Salvar Treinos'}
               </button>
             </div>
           </>
