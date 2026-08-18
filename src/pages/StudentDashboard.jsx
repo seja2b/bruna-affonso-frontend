@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react'
+import api from '../services/api'
 import StudentWeeklyTracking from '../components/StudentWeeklyTracking'
 import StudentRanking from '../components/StudentRanking'
+import StudentVideos from '../components/StudentVideos'
+import StudentQuestions from '../components/StudentQuestions'
+import StudentWeeks from '../components/StudentWeeks'
 import RegistrarTreinos from '../components/RegistrarTreinos'
 import DeixarObservacoes from '../components/DeixarObservacoes'
 import AdicionarFoto from '../components/AdicionarFoto'
@@ -9,6 +13,12 @@ import './StudentDashboard.css'
 export default function StudentDashboard({ user, token, onLogout }) {
   const [activeTab, setActiveTab] = useState('dashboard')
   const [userData, setUserData] = useState(user)
+  const [settings, setSettings] = useState({
+    phone: '',
+    whatsappUrl: '',
+    motivationalPhrase: ''
+  })
+  const [loading, setLoading] = useState(true)
 
   // Estados dos modais
   const [showRegistrarTreinos, setShowRegistrarTreinos] = useState(false)
@@ -19,7 +29,21 @@ export default function StudentDashboard({ user, token, onLogout }) {
     if (user) {
       setUserData(user)
     }
+    fetchSettings()
   }, [user])
+
+  async function fetchSettings() {
+    try {
+      const response = await api.get('/admin/settings', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      setSettings(response.data)
+    } catch (error) {
+      console.error('Erro ao buscar frase motivacional', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   if (userData.status !== 'APPROVED') {
     return (
@@ -57,10 +81,28 @@ export default function StudentDashboard({ user, token, onLogout }) {
           📊 Dashboard
         </button>
         <button
+          className={`tab-btn ${activeTab === 'weeks' ? 'active' : ''}`}
+          onClick={() => setActiveTab('weeks')}
+        >
+          📅 Semanas
+        </button>
+        <button
           className={`tab-btn ${activeTab === 'tracking' ? 'active' : ''}`}
           onClick={() => setActiveTab('tracking')}
         >
-          📝 Acompanhamento Semanal
+          📝 Acompanhamento
+        </button>
+        <button
+          className={`tab-btn ${activeTab === 'videos' ? 'active' : ''}`}
+          onClick={() => setActiveTab('videos')}
+        >
+          🎥 Vídeos
+        </button>
+        <button
+          className={`tab-btn ${activeTab === 'questions' ? 'active' : ''}`}
+          onClick={() => setActiveTab('questions')}
+        >
+          ❓ Perguntas
         </button>
         <button
           className={`tab-btn ${activeTab === 'ranking' ? 'active' : ''}`}
@@ -75,6 +117,17 @@ export default function StudentDashboard({ user, token, onLogout }) {
         {/* ABA 1: DASHBOARD */}
         {activeTab === 'dashboard' && (
           <div className="dashboard-tab">
+            {/* MENSAGEM DO DIA */}
+            {settings.motivationalPhrase && !loading && (
+              <div className="motivational-banner">
+                <div className="motivational-icon">✨</div>
+                <div className="motivational-content">
+                  <div className="motivational-label">Mensagem do Dia</div>
+                  <div className="motivational-text">{settings.motivationalPhrase}</div>
+                </div>
+              </div>
+            )}
+
             <div className="welcome-card">
               <div className="welcome-icon">💪</div>
               <h2>Bem-vindo ao Acompanhamento de Treinos!</h2>
@@ -110,7 +163,7 @@ export default function StudentDashboard({ user, token, onLogout }) {
                   <h3>Adicione sua Foto</h3>
                   <p>Personalize seu perfil com uma foto</p>
                 </div>
-                
+
                 <div 
                   className="feature-box" 
                   onClick={() => setActiveTab('ranking')} 
@@ -121,6 +174,22 @@ export default function StudentDashboard({ user, token, onLogout }) {
                   <p>Complete semanas e suba no ranking!</p>
                 </div>
               </div>
+
+              {/* FALE COM SEU PERSONAL */}
+              {settings.whatsappUrl && (
+                <div className="contact-card">
+                  <h3>💬 Fale com Sua Personal</h3>
+                  <p>Tem dúvidas? Entre em contato pelo WhatsApp!</p>
+                  <a 
+                    href={settings.whatsappUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="btn-whatsapp"
+                  >
+                    💬 Abrir WhatsApp
+                  </a>
+                </div>
+              )}
 
               <div className="getting-started">
                 <h3>Como Começar?</h3>
@@ -140,14 +209,35 @@ export default function StudentDashboard({ user, token, onLogout }) {
           </div>
         )}
 
-        {/* ABA 2: ACOMPANHAMENTO SEMANAL */}
+        {/* ABA 2: SEMANAS */}
+        {activeTab === 'weeks' && (
+          <div className="weeks-tab">
+            <StudentWeeks studentId={userData.studentId} token={token} />
+          </div>
+        )}
+
+        {/* ABA 3: ACOMPANHAMENTO */}
         {activeTab === 'tracking' && (
           <div className="tracking-tab">
             <StudentWeeklyTracking studentId={userData.studentId} token={token} />
           </div>
         )}
 
-        {/* ABA 3: RANKING */}
+        {/* ABA 4: VÍDEOS */}
+        {activeTab === 'videos' && (
+          <div className="videos-tab">
+            <StudentVideos token={token} />
+          </div>
+        )}
+
+        {/* ABA 5: PERGUNTAS */}
+        {activeTab === 'questions' && (
+          <div className="questions-tab">
+            <StudentQuestions studentId={userData.studentId} token={token} />
+          </div>
+        )}
+
+        {/* ABA 6: RANKING */}
         {activeTab === 'ranking' && (
           <div className="ranking-tab">
             <StudentRanking token={token} />

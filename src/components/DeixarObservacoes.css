@@ -1,26 +1,44 @@
-/* DeixarObservacoes.css */
-@import './modals.css';
+/* ===== DEIXAR OBSERVAÇÕES ===== */
 
-.deixar-observacoes-modal {
-  /* Estilos adicionais específicos se necessário */
+.observation-section {
+  background: #fafafa;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
 }
 
-.deixar-observacoes-modal .observation-input {
-  animation: fadeInUp 0.4s ease;
+.observation-hint {
+  margin: 0 0 16px 0;
+  color: #666;
+  font-size: 13px;
+  line-height: 1.6;
+  padding: 12px;
+  background: linear-gradient(135deg, rgba(167, 109, 181, 0.1), rgba(201, 139, 184, 0.1));
+  border-radius: 6px;
+  border-left: 3px solid #a76db5;
 }
 
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.observation-textarea {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: inherit;
+  resize: vertical;
+  transition: all 0.3s;
 }
 
-/* Destaque na textarea quando focada */
-.deixar-observacoes-modal textarea:focus {
-  background-color: rgba(156, 39, 176, 0.02);
+.observation-textarea:focus {
+  outline: none;
+  border-color: #a76db5;
+  box-shadow: 0 0 0 3px rgba(167, 109, 181, 0.1);
+}
+
+.char-count {
+  font-size: 12px;
+  color: #999;
+  margin-top: 8px;
+  text-align: right;
 }

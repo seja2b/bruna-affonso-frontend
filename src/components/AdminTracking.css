@@ -1,548 +1,443 @@
-.admin-tracking-container {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 2rem;
-  background: #f9fafb;
-}
+/* ===== ADMIN TRACKING ===== */
 
-.admin-tracking-loading {
-  text-align: center;
-  padding: 3rem;
-  font-size: 1.1rem;
-  color: #666;
-}
-
-/* HEADER */
-.admin-tracking-header {
-  margin-bottom: 2rem;
-  text-align: center;
-}
-
-.admin-tracking-header h2 {
-  margin: 0;
-  font-size: 2rem;
-  color: #0f172a;
-}
-
-.admin-tracking-header p {
-  color: #666;
-  margin: 0.5rem 0 0 0;
-}
-
-/* CONTEÚDO PRINCIPAL */
-.admin-tracking-content {
-  display: grid;
-  grid-template-columns: 300px 1fr;
-  gap: 2rem;
-}
-
-/* SIDEBAR - LISTA DE ALUNOS */
-.admin-students-sidebar {
+.admin-tracking {
   background: white;
   border-radius: 12px;
-  padding: 1.5rem;
-  height: fit-content;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  position: sticky;
-  top: 20px;
+  padding: 30px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
 }
 
-.admin-students-sidebar h3 {
-  margin-top: 0;
-  color: #0f172a;
-  font-size: 1.1rem;
+.tracking-header {
+  margin-bottom: 30px;
+}
+
+.tracking-header h2 {
+  margin: 0 0 8px 0;
+  color: #333;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.tracking-header p {
+  margin: 0;
+  color: #999;
+  font-size: 14px;
+}
+
+/* TRACKING CONTAINER */
+.tracking-container {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 30px;
+}
+
+/* STUDENTS LIST SECTION */
+.students-list-section h3 {
+  margin: 0 0 16px 0;
+  color: #333;
+  font-size: 16px;
+  font-weight: 700;
 }
 
 .students-list {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  max-height: 70vh;
+  gap: 10px;
+  max-height: 600px;
   overflow-y: auto;
-}
-
-.no-students {
-  text-align: center;
-  color: #999;
-  padding: 1rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 10px;
 }
 
 .student-item {
-  padding: 1rem;
-  background: #f9fafb;
-  border: 2px solid #e5e7eb;
-  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: #fafafa;
+  border: 2px solid #e0e0e0;
+  border-radius: 6px;
   cursor: pointer;
   transition: all 0.3s;
+  text-align: left;
 }
 
 .student-item:hover {
-  border-color: #7c3aed;
-  background: #f9f5ff;
+  background: linear-gradient(135deg, rgba(167, 109, 181, 0.1), rgba(201, 139, 184, 0.1));
+  border-color: #a76db5;
 }
 
 .student-item.active {
-  background: #7c3aed;
-  border-color: #7c3aed;
+  background: linear-gradient(135deg, #a76db5 0%, #c98bb8 100%);
+  border-color: #a76db5;
   color: white;
 }
 
-.student-item-header {
-  display: flex;
-  gap: 0.75rem;
-  align-items: center;
-  margin-bottom: 0.75rem;
-}
-
-.student-item-photo,
-.student-item-photo-placeholder {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  object-fit: cover;
-  background: #e5e7eb;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.5rem;
+.student-avatar {
+  font-size: 24px;
   flex-shrink: 0;
 }
 
-.student-item.active .student-item-photo,
-.student-item.active .student-item-photo-placeholder {
-  background: rgba(255, 255, 255, 0.3);
-}
-
-.student-item-info {
+.student-info {
   flex: 1;
   min-width: 0;
 }
 
-.student-item-name {
-  margin: 0;
-  font-weight: 600;
-  font-size: 0.95rem;
+.student-name {
+  font-weight: 700;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.student-email {
+  font-size: 11px;
+  opacity: 0.8;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.student-item-email {
-  margin: 0.25rem 0 0 0;
-  font-size: 0.8rem;
-  opacity: 0.75;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.student-item.active .student-email {
+  opacity: 0.9;
 }
 
-.student-item-stats {
-  display: flex;
-  justify-content: flex-end;
+/* TRACKING CONTENT */
+.tracking-content {
+  min-height: 400px;
 }
 
-.badge {
-  background: #ec4899;
-  color: white;
-  padding: 0.4rem 0.8rem;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: 600;
-}
-
-.student-item.active .badge {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-/* MAIN CONTENT */
-.admin-tracking-main {
-  background: white;
-  border-radius: 12px;
-  padding: 2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-}
-
-.no-selection {
+.empty-placeholder {
   text-align: center;
-  padding: 3rem;
+  padding: 60px 40px;
+  background: #fafafa;
+  border-radius: 8px;
   color: #999;
 }
 
-/* HEADER DO ALUNO SELECIONADO */
-.selected-student-header {
-  display: flex;
-  gap: 1.5rem;
-  align-items: center;
-  margin-bottom: 2rem;
-  padding-bottom: 2rem;
-  border-bottom: 2px solid #e5e7eb;
+/* WEEKS SECTION */
+.weeks-section h3 {
+  margin: 0 0 20px 0;
+  color: #333;
+  font-size: 18px;
+  font-weight: 700;
 }
 
-.selected-student-photo,
-.selected-student-photo-placeholder {
-  width: 100px;
-  height: 100px;
+.weeks-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 15px;
+}
+
+.week-card {
+  background: white;
+  border: 2px solid #e0e0e0;
   border-radius: 12px;
-  object-fit: cover;
-  background: #f0f0f0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 3rem;
-  flex-shrink: 0;
-}
-
-.selected-student-info {
-  flex: 1;
-}
-
-.selected-student-info h2 {
-  margin: 0;
-  color: #0f172a;
-  font-size: 1.5rem;
-}
-
-.selected-student-info p {
-  margin: 0.5rem 0 0 0;
-  color: #666;
-}
-
-.student-points {
-  color: #7c3aed;
-  font-weight: 600;
-}
-
-/* SELETOR DE SEMANAS */
-.weeks-selector-admin {
-  display: flex;
-  gap: 0.75rem;
-  margin-bottom: 2rem;
-  overflow-x: auto;
-  padding-bottom: 0.5rem;
-}
-
-.week-btn-admin {
-  flex-shrink: 0;
-  padding: 0.75rem 1.25rem;
-  background: #f0f0f0;
-  border: 2px solid #e5e7eb;
-  border-radius: 8px;
+  padding: 20px 15px;
+  text-align: center;
   cursor: pointer;
-  font-weight: 600;
   transition: all 0.3s;
   display: flex;
-  gap: 0.5rem;
+  flex-direction: column;
   align-items: center;
-  font-size: 0.95rem;
+  gap: 10px;
 }
 
-.week-btn-admin:hover {
-  border-color: #7c3aed;
-  background: #f9f5ff;
+.week-card:hover {
+  border-color: #a76db5;
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(167, 109, 181, 0.15);
 }
 
-.week-btn-admin.active {
-  background: #7c3aed;
-  color: white;
-  border-color: #7c3aed;
+.week-card.completed {
+  background: linear-gradient(135deg, #d4edda, #c3e6cb);
+  border-color: #28a745;
 }
 
-.completed-badge {
-  font-size: 1rem;
+.week-icon {
+  font-size: 28px;
 }
 
-/* DETALHES DA SEMANA */
-.week-details-admin {
-  animation: fadeIn 0.3s ease-in;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.week-header-admin {
-  margin-bottom: 2rem;
-  padding-bottom: 1rem;
-  border-bottom: 2px solid #e5e7eb;
-}
-
-.week-header-admin h3 {
-  margin: 0;
-  color: #0f172a;
-  font-size: 1.3rem;
-}
-
-.week-dates {
-  margin: 0.5rem 0 0 0;
-  color: #666;
-  font-size: 0.95rem;
-}
-
-/* CAIXAS DE OBSERVAÇÃO */
-.observation-box {
-  background: #f0f9ff;
-  border-left: 4px solid #3b82f6;
-  padding: 1.5rem;
-  border-radius: 8px;
-  margin-bottom: 2rem;
-}
-
-.observation-box h4 {
-  margin-top: 0;
-  color: #1e40af;
-  font-size: 1rem;
-}
-
-.observation-box p {
-  margin: 0;
+.week-label {
+  font-weight: 700;
   color: #333;
-  line-height: 1.6;
+  font-size: 13px;
 }
 
-.observation-box.student-obs {
-  background: #f0fdf4;
-  border-left-color: #22c55e;
+.week-badge {
+  background: #28a745;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
 }
 
-.observation-box.student-obs h4 {
-  color: #166534;
-}
-
-/* GRID DE EXERCÍCIOS */
-.exercises-grid-admin {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 2rem;
-}
-
-.no-exercises-admin {
+.empty-state {
   text-align: center;
+  padding: 60px 40px;
+  background: #fafafa;
+  border-radius: 8px;
   color: #999;
-  padding: 2rem;
-  background: #f9fafb;
-  border-radius: 8px;
 }
 
-/* CARD DE EXERCÍCIO */
-.exercise-box-admin {
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 1.5rem;
-}
-
-.exercise-header-admin {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-  padding-bottom: 1rem;
-  border-bottom: 2px solid #e5e7eb;
-}
-
-.exercise-header-admin h4 {
+.empty-state p {
   margin: 0;
-  color: #0f172a;
-  font-size: 1rem;
+}
+
+/* WEEK DETAILS SECTION */
+.week-details-section h3 {
+  margin: 0 0 20px 0;
+  color: #333;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.btn-voltar-semanas {
+  padding: 10px 16px;
+  background: #e0e0e0;
+  color: #333;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
   font-weight: 600;
+  font-size: 12px;
+  margin-bottom: 20px;
+  transition: all 0.3s;
 }
 
-.training-type-admin {
-  background: #e5e7eb;
-  color: #666;
-  padding: 0.4rem 0.8rem;
-  border-radius: 6px;
-  font-size: 0.8rem;
-  font-weight: 500;
+.btn-voltar-semanas:hover {
+  background: #d0d0d0;
 }
 
-.exercise-data {
-  display: grid;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
-}
-
-.data-item {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.95rem;
-}
-
-.data-item .label {
-  color: #666;
-  font-weight: 500;
-}
-
-.data-item .value {
-  color: #0f172a;
-  font-weight: 600;
-}
-
-.exercise-notes {
-  background: white;
-  padding: 0.75rem;
-  border-radius: 6px;
-  margin-bottom: 1rem;
-  border-left: 3px solid #fbbf24;
-}
-
-.exercise-notes small {
-  color: #666;
-  font-style: italic;
-}
-
-.teacher-feedback {
-  width: 100%;
-  min-height: 100px;
-  padding: 0.75rem;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  font-size: 0.9rem;
-  font-family: inherit;
-  resize: vertical;
-}
-
-.teacher-feedback:focus {
-  outline: none;
-  border-color: #7c3aed;
-  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
-}
-
-/* FEEDBACK GERAL */
-.teacher-general-note {
-  background: #fef3c7;
-  border: 2px solid #fbbf24;
+/* WEEK EXERCISES CARD */
+.week-exercises-card {
+  background: #fafafa;
+  border: 1px solid #e0e0e0;
   border-radius: 8px;
-  padding: 1.5rem;
-  margin-bottom: 2rem;
+  padding: 20px;
+  margin-bottom: 20px;
 }
 
-.teacher-general-note h4 {
-  margin-top: 0;
-  color: #92400e;
+.week-exercises-card h4 {
+  margin: 0 0 16px 0;
+  color: #333;
+  font-size: 14px;
+  font-weight: 700;
 }
 
-.teacher-general-textarea {
-  width: 100%;
-  min-height: 120px;
-  padding: 1rem;
-  border: 1px solid #fbbf24;
+.empty-exercises {
+  text-align: center;
+  padding: 40px 20px;
+  background: white;
   border-radius: 6px;
-  font-size: 0.95rem;
+  color: #999;
+}
+
+.empty-exercises p {
+  margin: 0;
+  font-size: 13px;
+}
+
+/* EXERCISES TABLE */
+.exercises-table {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  overflow: hidden;
+  background: white;
+}
+
+.table-header {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr 2fr;
+  gap: 0;
+  background: #f5f5f5;
+  padding: 12px;
+  font-weight: 700;
+  font-size: 12px;
+  color: #666;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.table-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr 2fr;
+  gap: 0;
+  padding: 12px;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 12px;
+  color: #666;
+}
+
+.table-row:hover {
+  background: #f9f9f9;
+}
+
+.col-exercise strong {
+  color: #333;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.col-type,
+.col-weight,
+.col-reps,
+.col-notes {
+  word-break: break-word;
+}
+
+/* STUDENT OBSERVATION CARD */
+.student-observation-card {
+  background: linear-gradient(135deg, rgba(255, 152, 0, 0.1), rgba(255, 193, 7, 0.1));
+  border-left: 4px solid #ff9800;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.student-observation-card h4 {
+  margin: 0 0 12px 0;
+  color: #333;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.observation-text {
+  color: #666;
+  font-size: 13px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ADMIN OBSERVATION CARD */
+.admin-observation-card {
+  background: #fafafa;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.admin-observation-card h4 {
+  margin: 0 0 12px 0;
+  color: #333;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.admin-note-textarea {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 13px;
   font-family: inherit;
   resize: vertical;
+  transition: all 0.3s;
+  margin-bottom: 8px;
 }
 
-.teacher-general-textarea:focus {
+.admin-note-textarea:focus {
   outline: none;
-  border-color: #f59e0b;
-  box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.2);
+  border-color: #a76db5;
+  box-shadow: 0 0 0 3px rgba(167, 109, 181, 0.1);
 }
 
-/* BOTÃO SALVAR */
-.save-teacher-notes-btn {
-  width: 100%;
-  padding: 1rem;
-  background: #22c55e;
+.char-count {
+  font-size: 11px;
+  color: #999;
+  margin-bottom: 12px;
+  text-align: right;
+}
+
+.btn-salvar-nota {
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #a76db5 0%, #c98bb8 100%);
   color: white;
   border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 1rem;
+  border-radius: 6px;
   cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
   transition: all 0.3s;
 }
 
-.save-teacher-notes-btn:hover:not(:disabled) {
-  background: #16a34a;
+.btn-salvar-nota:hover:not(:disabled) {
   transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(167, 109, 181, 0.3);
 }
 
-.save-teacher-notes-btn:disabled {
+.btn-salvar-nota:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
+.admin-note-preview {
+  background: white;
+  border-left: 3px solid #4caf50;
+  border-radius: 4px;
+  padding: 12px;
+  margin-top: 12px;
+}
+
+.preview-label {
+  font-size: 11px;
+  color: #999;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.preview-text {
+  color: #333;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* LOADING */
+.loading {
+  text-align: center;
+  padding: 60px 20px;
+  color: #999;
+  font-size: 16px;
+}
+
 /* RESPONSIVO */
 @media (max-width: 1024px) {
-  .admin-tracking-content {
+  .tracking-container {
     grid-template-columns: 250px 1fr;
-    gap: 1.5rem;
+    gap: 20px;
   }
 
-  .exercises-grid-admin {
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  .students-list {
+    max-height: 500px;
   }
 }
 
 @media (max-width: 768px) {
-  .admin-tracking-container {
-    padding: 1rem;
-  }
-
-  .admin-tracking-content {
+  .tracking-container {
     grid-template-columns: 1fr;
   }
 
-  .admin-students-sidebar {
-    position: static;
+  .students-list-section {
+    max-height: 250px;
   }
 
-  .students-list {
-    max-height: none;
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.5rem;
+  .weeks-grid {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 12px;
   }
 
-  .student-item-header {
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
+  .table-header,
+  .table-row {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
   }
 
-  .admin-tracking-main {
-    padding: 1.5rem;
-  }
-
-  .selected-student-header {
-    flex-direction: column;
-    text-align: center;
-    gap: 1rem;
-  }
-
-  .exercises-grid-admin {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 480px) {
-  .admin-students-sidebar h3 {
-    font-size: 1rem;
-  }
-
-  .students-list {
-    grid-template-columns: 1fr;
-  }
-
-  .student-item {
-    padding: 0.75rem;
-  }
-
-  .weeks-selector-admin {
-    gap: 0.5rem;
-  }
-
-  .week-btn-admin {
-    padding: 0.6rem 1rem;
-    font-size: 0.85rem;
+  .col-type,
+  .col-reps,
+  .col-notes {
+    display: none;
   }
 }

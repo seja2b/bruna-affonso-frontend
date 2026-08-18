@@ -6,217 +6,235 @@ export default function AdminTracking({ token }) {
   const [students, setStudents] = useState([])
   const [selectedStudent, setSelectedStudent] = useState(null)
   const [weeks, setWeeks] = useState([])
-  const [exercises, setExercises] = useState({})
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [teacherNote, setTeacherNote] = useState('')
   const [selectedWeek, setSelectedWeek] = useState(null)
+  const [weekData, setWeekData] = useState(null)
+  const [adminNote, setAdminNote] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    fetchApprovedStudents()
+    fetchStudents()
   }, [])
 
-  const fetchApprovedStudents = async () => {
+  async function fetchStudents() {
     try {
-      setLoading(true)
-      setError('')
-      const response = await api.get('/tracking/admin/students', {
+      const response = await api.get('/admin/students', {
         headers: { Authorization: `Bearer ${token}` }
       })
-      setStudents(response.data)
-    } catch (err) {
-      console.error('Erro ao carregar alunos:', err)
-      setError('Erro ao carregar alunos')
+      setStudents(response.data.filter(s => s.status === 'APPROVED'))
+    } catch (error) {
+      console.error('Erro ao buscar alunos', error)
     } finally {
       setLoading(false)
     }
   }
 
-  const handleStudentSelect = async (studentId) => {
+  async function handleStudentSelect(studentId) {
+    setSelectedStudent(studentId)
+    setSelectedWeek(null)
+    setWeekData(null)
+    setAdminNote('')
+    
     try {
-      setLoading(true)
-      setError('')
-      const response = await api.get(`/tracking/student/${studentId}/weeks`, {
+      const response = await api.get(`/tracking/weeks/${studentId}`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       setWeeks(response.data)
-      setSelectedStudent(studentId)
-      setExercises({})
-      
-      // Carregar exercícios de cada semana
-      response.data.forEach(week => {
-        fetchExercisesForWeek(week.id)
-      })
-    } catch (err) {
-      console.error('Erro ao carregar semanas:', err)
-      setError('Erro ao carregar semanas do aluno')
-    } finally {
-      setLoading(false)
+    } catch (error) {
+      console.error('Erro ao buscar semanas', error)
     }
   }
 
-  const fetchExercisesForWeek = async (weekId) => {
-    try {
-      const response = await api.get(`/tracking/exercises/${weekId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      setExercises(prev => ({
-        ...prev,
-        [weekId]: response.data
-      }))
-    } catch (err) {
-      console.error(`Erro ao carregar exercícios da semana ${weekId}:`, err)
-    }
-  }
-
-  const handleWeekSelect = async (weekId) => {
+  async function handleWeekSelect(weekId) {
     setSelectedWeek(weekId)
     try {
-      const response = await api.get(`/tracking/note/${weekId}`, {
+      const response = await api.get(`/tracking/week/${weekId}`, {
         headers: { Authorization: `Bearer ${token}` }
       })
-      setTeacherNote(response.data.teacherNote || '')
-    } catch (err) {
-      console.error('Erro ao carregar observação:', err)
-      setTeacherNote('')
+      setWeekData(response.data)
+      setAdminNote(response.data.observation?.teacherNote || '')
+    } catch (error) {
+      console.error('Erro ao buscar dados da semana', error)
     }
   }
 
-  const handleSaveTeacherNote = async () => {
+  async function handleSaveAdminNote() {
     if (!selectedWeek) {
-      setError('Selecione uma semana')
+      alert('❌ Selecione uma semana!')
       return
     }
 
+    setSaving(true)
     try {
-      setLoading(true)
       await api.put(
-        `/tracking/note/teacher`,
-        {
-          weeklyTrackingId: selectedWeek,
-          teacherNote: teacherNote
-        },
+        `/tracking/week/${selectedWeek}/observation`,
+        { teacherNote: adminNote },
         { headers: { Authorization: `Bearer ${token}` } }
       )
-      setError('')
-      alert('✅ Observação salva com sucesso!')
-    } catch (err) {
-      console.error('Erro ao salvar observação:', err)
-      setError('Erro ao salvar observação')
+      alert('✅ Observação da professora salva com sucesso!')
+      handleWeekSelect(selectedWeek)
+    } catch (error) {
+      console.error('Erro ao salvar observação', error)
+      alert('❌ Erro ao salvar observação')
     } finally {
-      setLoading(false)
+      setSaving(false)
     }
   }
 
-  if (loading && students.length === 0) {
-    return (
-      <div className="admin-tracking-loading">
-        <div className="spinner"></div>
-        <p>Carregando...</p>
-      </div>
-    )
+  const studentName = students.find(s => s.id === selectedStudent)?.name
+
+  if (loading) {
+    return <div className="loading">Carregando...</div>
   }
 
   return (
     <div className="admin-tracking">
-      <h2>📊 Acompanhamento de Alunos</h2>
+      <div className="tracking-header">
+        <h2>📋 Acompanhamento de Treinos</h2>
+        <p>Visualize os treinos dos alunos e deixe suas observações</p>
+      </div>
 
-      {error && <div className="error-message">{error}</div>}
-
-      <div className="admin-layout">
+      <div className="tracking-container">
         {/* LISTA DE ALUNOS */}
-        <div className="students-list">
-          <h3>Alunos Aprovados</h3>
-          <div className="students-container">
-            {students.length > 0 ? (
-              students.map(student => (
-                <div
-                  key={student.id}
-                  className={`student-item ${selectedStudent === student.id ? 'active' : ''}`}
-                  onClick={() => handleStudentSelect(student.id)}
-                >
-                  <span className="student-name">{student.name}</span>
-                  <span className="student-email">{student.email}</span>
+        <div className="students-list-section">
+          <h3>👥 Selecione um Aluno</h3>
+          <div className="students-list">
+            {students.map(student => (
+              <button
+                key={student.id}
+                className={`student-item ${selectedStudent === student.id ? 'active' : ''}`}
+                onClick={() => handleStudentSelect(student.id)}
+              >
+                <span className="student-avatar">👤</span>
+                <div className="student-info">
+                  <div className="student-name">{student.name}</div>
+                  <div className="student-email">{student.email}</div>
                 </div>
-              ))
-            ) : (
-              <p className="no-students">Nenhum aluno aprovado</p>
-            )}
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* TRACKING DO ALUNO SELECIONADO */}
-        <div className="tracking-details">
-          {selectedStudent ? (
-            <>
-              <h3>Semanas do Aluno</h3>
-              <div className="weeks-tabs">
-                {weeks.length > 0 ? (
-                  weeks.map(week => (
+        {/* CONTEÚDO PRINCIPAL */}
+        <div className="tracking-content">
+          {!selectedStudent ? (
+            <div className="empty-placeholder">
+              <p>📌 Selecione um aluno para ver seus treinos</p>
+            </div>
+          ) : !selectedWeek ? (
+            <div className="weeks-section">
+              <h3>📅 {studentName} - Selecione uma Semana</h3>
+              
+              {weeks.length === 0 ? (
+                <div className="empty-state">
+                  <p>Nenhuma semana encontrada</p>
+                </div>
+              ) : (
+                <div className="weeks-grid">
+                  {weeks.map(week => (
                     <button
                       key={week.id}
-                      className={`week-tab ${selectedWeek === week.id ? 'active' : ''}`}
+                      className={`week-card ${week.isCompleted ? 'completed' : ''}`}
                       onClick={() => handleWeekSelect(week.id)}
                     >
-                      Semana {week.weekNumber}
+                      <div className="week-icon">
+                        {week.isCompleted ? '✅' : week.isReleased ? '🟢' : '🔒'}
+                      </div>
+                      <div className="week-label">Semana {week.weekNumber}</div>
+                      {week.isCompleted && (
+                        <div className="week-badge">Completa</div>
+                      )}
                     </button>
-                  ))
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="week-details-section">
+              <button 
+                className="btn-voltar-semanas"
+                onClick={() => {
+                  setSelectedWeek(null)
+                  setWeekData(null)
+                  setAdminNote('')
+                }}
+              >
+                ← Voltar para Semanas
+              </button>
+
+              <h3>Semana {weeks.find(w => w.id === selectedWeek)?.weekNumber} - {studentName}</h3>
+
+              {/* EXERCÍCIOS DO ALUNO */}
+              <div className="week-exercises-card">
+                <h4>📝 Exercícios Registrados</h4>
+                
+                {!weekData || weekData.exercises.length === 0 ? (
+                  <div className="empty-exercises">
+                    <p>Nenhum exercício registrado ainda</p>
+                  </div>
                 ) : (
-                  <p>Sem semanas disponíveis</p>
+                  <div className="exercises-table">
+                    <div className="table-header">
+                      <div>Exercício</div>
+                      <div>Tipo</div>
+                      <div>Peso</div>
+                      <div>Reps</div>
+                      <div>Notas</div>
+                    </div>
+                    {weekData.exercises.map((exercise, index) => (
+                      <div key={exercise.id} className="table-row">
+                        <div className="col-exercise">
+                          <strong>{exercise.exerciseName}</strong>
+                        </div>
+                        <div className="col-type">{exercise.trainingType}</div>
+                        <div className="col-weight">{exercise.weight || '-'} kg</div>
+                        <div className="col-reps">{exercise.reps || '-'}</div>
+                        <div className="col-notes">{exercise.notes || '-'}</div>
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
 
-              {selectedWeek && (
-                <>
-                  <h4>Exercícios - Semana {weeks.find(w => w.id === selectedWeek)?.weekNumber}</h4>
-                  <div className="exercises-display">
-                    {exercises[selectedWeek]?.length > 0 ? (
-                      <table className="admin-exercises-table">
-                        <thead>
-                          <tr>
-                            <th>Exercício</th>
-                            <th>Carga (kg)</th>
-                            <th>Repetições</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {exercises[selectedWeek].map((ex, idx) => (
-                            <tr key={idx}>
-                              <td>{ex.exerciseName}</td>
-                              <td>{ex.weight || '-'}</td>
-                              <td>{ex.reps || '-'}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    ) : (
-                      <p className="no-exercises">Nenhum exercício registrado</p>
-                    )}
+              {/* OBSERVAÇÃO DO ALUNO */}
+              {weekData?.observation?.studentNote && (
+                <div className="student-observation-card">
+                  <h4>💬 Observação do Aluno</h4>
+                  <div className="observation-text">
+                    {weekData.observation.studentNote}
                   </div>
-
-                  <h4>Deixar Observação</h4>
-                  <div className="teacher-note-section">
-                    <textarea
-                      value={teacherNote}
-                      onChange={(e) => setTeacherNote(e.target.value)}
-                      placeholder="Digite sua observação sobre o desempenho do aluno..."
-                      rows="6"
-                      maxLength="500"
-                    />
-                    <div className="char-count">{teacherNote.length}/500</div>
-                    <button
-                      onClick={handleSaveTeacherNote}
-                      className="save-btn"
-                      disabled={loading}
-                    >
-                      💾 Salvar Observação
-                    </button>
-                  </div>
-                </>
+                </div>
               )}
-            </>
-          ) : (
-            <p className="select-student">Selecione um aluno para ver os detalhes</p>
+
+              {/* OBSERVAÇÃO DA PROFESSORA */}
+              <div className="admin-observation-card">
+                <h4>📝 Sua Observação (Professora)</h4>
+                <textarea
+                  className="admin-note-textarea"
+                  placeholder="Deixe seu feedback sobre o treino do aluno..."
+                  value={adminNote}
+                  onChange={(e) => setAdminNote(e.target.value)}
+                  rows="5"
+                />
+                <div className="char-count">
+                  {adminNote.length} caracteres
+                </div>
+                <button 
+                  className="btn-salvar-nota"
+                  onClick={handleSaveAdminNote}
+                  disabled={saving}
+                >
+                  {saving ? '⏳ Salvando...' : '✅ Salvar Observação'}
+                </button>
+
+                {weekData?.observation?.teacherNote && (
+                  <div className="admin-note-preview">
+                    <div className="preview-label">Observação atual:</div>
+                    <div className="preview-text">{weekData.observation.teacherNote}</div>
+                  </div>
+                )}
+              </div>
+            </div>
           )}
         </div>
       </div>

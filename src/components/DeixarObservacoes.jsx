@@ -5,82 +5,63 @@ import './DeixarObservacoes.css'
 export default function DeixarObservacoes({ isOpen, onClose, studentId, token }) {
   const [weeks, setWeeks] = useState([])
   const [selectedWeek, setSelectedWeek] = useState(null)
-  const [studentNote, setStudentNote] = useState('')
+  const [observation, setObservation] = useState('')
   const [loading, setLoading] = useState(false)
-  const [message, setMessage] = useState('')
+  const [saving, setSaving] = useState(false)
 
-  // Carregar semanas
   useEffect(() => {
-    if (isOpen && studentId) {
+    if (isOpen) {
       fetchWeeks()
     }
-  }, [isOpen, studentId])
+  }, [isOpen])
 
-  const fetchWeeks = async () => {
+  async function fetchWeeks() {
+    setLoading(true)
     try {
-      setLoading(true)
-      const response = await api.get(`/tracking/student/${studentId}/weeks`, {
+      const response = await api.get(`/tracking/weeks/${studentId}`, {
         headers: { Authorization: `Bearer ${token}` }
       })
-      setWeeks(response.data)
-      if (response.data.length > 0) {
-        setSelectedWeek(response.data[0])
-        fetchObservation(response.data[0].id)
-      }
+      setWeeks(response.data.filter(w => w.isReleased || w.isCompleted))
     } catch (error) {
-      console.error('Erro ao carregar semanas:', error)
-      setMessage('Erro ao carregar semanas')
+      console.error('Erro ao buscar semanas', error)
     } finally {
       setLoading(false)
     }
   }
 
-  const fetchObservation = async (weeklyTrackingId) => {
+  async function handleWeekSelect(weekId) {
+    setSelectedWeek(weekId)
     try {
-      const response = await api.get(`/tracking/note/${weeklyTrackingId}`, {
+      const response = await api.get(`/tracking/week/${weekId}`, {
         headers: { Authorization: `Bearer ${token}` }
       })
-      setStudentNote(response.data.studentNote || '')
+      setObservation(response.data.observation?.studentNote || '')
     } catch (error) {
-      console.error('Erro ao carregar observação:', error)
-      setStudentNote('')
+      console.error('Erro ao buscar observação', error)
+      setObservation('')
     }
   }
 
-  const handleWeekChange = (weekId) => {
-    const week = weeks.find(w => w.id === weekId)
-    setSelectedWeek(week)
-    fetchObservation(weekId)
-  }
-
-  const handleSave = async () => {
+  async function handleSave() {
     if (!selectedWeek) {
-      setMessage('Selecione uma semana')
+      alert('❌ Selecione uma semana!')
       return
     }
 
+    setSaving(true)
     try {
-      setLoading(true)
-      
       await api.put(
-        `/tracking/note/student`,
-        {
-          weeklyTrackingId: selectedWeek.id,
-          studentNote: studentNote
-        },
+        `/tracking/week/${selectedWeek}/observation`,
+        { studentNote: observation },
         { headers: { Authorization: `Bearer ${token}` } }
       )
-
-      setMessage('✅ Observação salva com sucesso!')
-      setTimeout(() => {
-        onClose()
-        setMessage('')
-      }, 1500)
+      alert('✅ Observação salva com sucesso!')
+      onClose()
     } catch (error) {
-      console.error('Erro ao salvar observação:', error)
-      setMessage('❌ Erro ao salvar observação')
+      console.error('Erro ao salvar observação', error)
+      alert('❌ Erro ao salvar observação')
     } finally {
-      setLoading(false)
+      setSaving(false)
     }
   }
 
@@ -88,62 +69,88 @@ export default function DeixarObservacoes({ isOpen, onClose, studentId, token })
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content deixar-observacoes-modal" onClick={(e) => e.stopPropagation()}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h2>💬 Deixe suas Observações</h2>
+          <h2>💬 Deixe Suas Observações</h2>
           <button className="close-btn" onClick={onClose}>✕</button>
         </div>
 
-        {loading && <div className="loading">Carregando...</div>}
-
-        {!loading && (
-          <>
-            {/* Seletor de Semana */}
-            <div className="week-selector">
-              <label>Selecione a Semana:</label>
-              <select 
-                value={selectedWeek?.id || ''} 
-                onChange={(e) => handleWeekChange(e.target.value)}
-                disabled={weeks.length === 0}
-              >
-                <option value="">-- Selecione --</option>
+        {!selectedWeek ? (
+          <div className="modal-body">
+            <p className="modal-text">Selecione a semana para deixar suas observações:</p>
+            
+            {loading ? (
+              <div className="loading">Carregando semanas...</div>
+            ) : weeks.length === 0 ? (
+              <div className="empty-state">
+                <p>Nenhuma semana disponível</p>
+              </div>
+            ) : (
+              <div className="weeks-list">
                 {weeks.map(week => (
-                  <option key={week.id} value={week.id}>
-                    Semana {week.weekNumber}
-                  </option>
+                  <button
+                    key={week.id}
+                    className="week-option"
+                    onClick={() => handleWeekSelect(week.id)}
+                  >
+                    <span className="week-badge">
+                      {week.isCompleted ? '✅' : '🟢'}
+                    </span>
+                    <span className="week-text">Semana {week.weekNumber}</span>
+                    <span className="week-arrow">→</span>
+                  </button>
                 ))}
-              </select>
-            </div>
-
-            {/* Textarea para Observação */}
-            {selectedWeek && (
-              <div className="observation-input">
-                <label>Sua Observação (Semana {selectedWeek.weekNumber}):</label>
-                <textarea
-                  value={studentNote}
-                  onChange={(e) => setStudentNote(e.target.value)}
-                  placeholder="Como você se sentiu? Teve alguma dificuldade? Deixe suas observações aqui..."
-                  rows="6"
-                  maxLength="500"
-                />
-                <div className="char-count">{studentNote.length}/500</div>
               </div>
             )}
-
-            {message && <div className="message">{message}</div>}
-
-            {/* Botões */}
-            <div className="modal-actions">
-              <button className="btn-cancel" onClick={onClose}>Cancelar</button>
+          </div>
+        ) : (
+          <div className="modal-body">
+            <div className="back-button">
               <button 
-                className="btn-save" 
-                onClick={handleSave}
-                disabled={loading || !selectedWeek}
+                onClick={() => setSelectedWeek(null)}
+                className="btn-voltar"
               >
-                💾 Salvar Observação
+                ← Voltar para Semanas
               </button>
             </div>
-          </>
+
+            <h3>Observações - Semana {weeks.find(w => w.id === selectedWeek)?.weekNumber}</h3>
+
+            <div className="observation-section">
+              <p className="observation-hint">
+                💭 Como você se sentiu nesta semana? Teve dificuldades? 
+                Quer compartilhar algo com sua personal?
+              </p>
+
+              <textarea
+                className="observation-textarea"
+                placeholder="Digite suas observações aqui..."
+                value={observation}
+                onChange={(e) => setObservation(e.target.value)}
+                rows="8"
+              />
+
+              <div className="char-count">
+                {observation.length} caracteres
+              </div>
+            </div>
+
+            <div className="modal-footer">
+              <button 
+                className="btn-cancelar"
+                onClick={() => setSelectedWeek(null)}
+              >
+                ← Voltar
+              </button>
+              <button 
+                className="btn-salvar"
+                onClick={handleSave}
+                disabled={saving}
+              >
+                {saving ? '⏳ Salvando...' : '✅ Salvar Observação'}
+              </button>
+            </div>
+          </div>
         )}
       </div>
     </div>

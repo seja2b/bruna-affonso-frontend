@@ -1,26 +1,315 @@
-/* RegistrarTreinos.css */
-@import './modals.css';
+/* ===== MODAL OVERLAY ===== */
 
-.registrar-treinos-modal {
-  /* Estilos adicionais específicos se necessário */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
 }
 
-.registrar-treinos-modal .exercises-table {
-  margin-top: 20px;
+.modal-content {
+  background: white;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 50px rgba(0, 0, 0, 0.3);
 }
 
-/* Animação ao abrir */
-.registrar-treinos-modal .exercises-table table {
-  animation: tableSlideIn 0.4s ease;
+/* MODAL HEADER */
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 25px;
+  border-bottom: 1px solid #e0e0e0;
+  background: linear-gradient(135deg, rgba(167, 109, 181, 0.05), rgba(201, 139, 184, 0.05));
 }
 
-@keyframes tableSlideIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
+.modal-header h2 {
+  margin: 0;
+  color: #333;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 28px;
+  cursor: pointer;
+  color: #999;
+  transition: all 0.3s;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.close-btn:hover {
+  color: #333;
+  transform: scale(1.2);
+}
+
+/* MODAL BODY */
+.modal-body {
+  padding: 25px;
+}
+
+.modal-text {
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+
+/* WEEKS LIST */
+.weeks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.week-option {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 16px;
+  background: #fafafa;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+.week-option:hover {
+  background: linear-gradient(135deg, rgba(167, 109, 181, 0.1), rgba(201, 139, 184, 0.1));
+  border-color: #a76db5;
+  transform: translateX(5px);
+}
+
+.week-badge {
+  font-size: 20px;
+}
+
+.week-text {
+  flex: 1;
+}
+
+.week-arrow {
+  color: #a76db5;
+  font-weight: 700;
+}
+
+/* BACK BUTTON */
+.back-button {
+  margin-bottom: 20px;
+}
+
+.btn-voltar {
+  padding: 10px 16px;
+  background: #e0e0e0;
+  color: #333;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 12px;
+  transition: all 0.3s;
+}
+
+.btn-voltar:hover {
+  background: #d0d0d0;
+}
+
+/* MODAL BODY H3 */
+.modal-body h3 {
+  margin: 0 0 20px 0;
+  color: #333;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+/* EXERCISES FORM */
+.exercises-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.exercise-form-item {
+  background: #fafafa;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.exercise-name-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.exercise-name-section strong {
+  color: #333;
+  font-size: 14px;
+}
+
+.exercise-type {
+  font-size: 12px;
+  color: #999;
+  font-weight: 500;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group.full {
+  grid-column: 1 / -1;
+}
+
+.form-group label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 6px;
+}
+
+.form-group input {
+  padding: 8px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: inherit;
+  transition: all 0.3s;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #a76db5;
+  box-shadow: 0 0 0 3px rgba(167, 109, 181, 0.1);
+}
+
+/* MODAL FOOTER */
+.modal-footer {
+  display: flex;
+  gap: 12px;
+  padding: 20px 25px;
+  border-top: 1px solid #e0e0e0;
+  background: #fafafa;
+}
+
+.btn-cancelar,
+.btn-salvar {
+  flex: 1;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
+  transition: all 0.3s;
+}
+
+.btn-cancelar {
+  background: #e0e0e0;
+  color: #333;
+}
+
+.btn-cancelar:hover {
+  background: #d0d0d0;
+}
+
+.btn-salvar {
+  background: linear-gradient(135deg, #a76db5 0%, #c98bb8 100%);
+  color: white;
+}
+
+.btn-salvar:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(167, 109, 181, 0.3);
+}
+
+.btn-salvar:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* EMPTY STATE */
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: #999;
+  background: #fafafa;
+  border-radius: 8px;
+}
+
+.empty-state p {
+  margin: 0;
+  font-size: 14px;
+}
+
+/* LOADING */
+.loading {
+  text-align: center;
+  padding: 40px 20px;
+  color: #999;
+  font-size: 14px;
+}
+
+/* RESPONSIVO */
+@media (max-width: 600px) {
+  .modal-content {
+    width: 95%;
+    max-height: 95vh;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+
+  .modal-header {
+    padding: 20px;
+  }
+
+  .modal-header h2 {
+    font-size: 18px;
+  }
+
+  .modal-body {
+    padding: 20px;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-footer {
+    flex-direction: column;
+  }
+
+  .btn-cancelar,
+  .btn-salvar {
+    width: 100%;
   }
 }
