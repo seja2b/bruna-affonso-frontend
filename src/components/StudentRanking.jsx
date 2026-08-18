@@ -1,136 +1,61 @@
-import React, { useState, useEffect } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import api from '../services/api'
+import { useAuth } from '../context/AuthContext'
 import './StudentRanking.css'
 
-export default function StudentRanking({ token }) {
+export default function StudentRanking() {
+  const { user } = useAuth()
   const [ranking, setRanking] = useState([])
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [userPosition, setUserPosition] = useState(null)
 
-  useEffect(() => {
-    fetchRanking()
-  }, [])
+  useEffect(() => { fetchRanking() }, [])
 
-  const fetchRanking = async () => {
+  async function fetchRanking() {
     try {
       setLoading(true)
       setError('')
-      const response = await api.get('/tracking/ranking', {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      setRanking(response.data.ranking || [])
-      setUserPosition(response.data.userPosition || null)
+      const response = await api.get('/tracking/ranking')
+      setRanking(Array.isArray(response.data) ? response.data : response.data?.ranking || [])
     } catch (err) {
       console.error('Erro ao carregar ranking:', err)
-      setError('Erro ao carregar ranking')
+      setError('Não foi possível carregar o ranking agora.')
     } finally {
       setLoading(false)
     }
   }
 
-  if (loading) {
-    return (
-      <div className="ranking-loading">
-        <div className="spinner"></div>
-        <p>Carregando ranking...</p>
-      </div>
-    )
-  }
+  const rows = useMemo(() => ranking.map((entry, index) => ({
+    id: entry.id || index,
+    position: index + 1,
+    name: entry.student?.user?.name || entry.studentName || 'Aluno',
+    photo: entry.student?.user?.profilePhoto || null,
+    points: entry.totalPoints ?? entry.points ?? 0,
+    weeks: entry.weeksCompleted ?? 0,
+    isCurrentUser: entry.studentId === user?.studentId || entry.student?.user?.email === user?.email
+  })), [ranking, user])
 
-  if (error) {
-    return (
-      <div className="ranking-error">
-        <p>❌ {error}</p>
-        <button onClick={fetchRanking} className="retry-btn">
-          Tentar Novamente
-        </button>
-      </div>
-    )
-  }
+  const own = rows.find((row) => row.isCurrentUser)
+
+  if (loading) return <div className="ranking-loading"><div className="spinner" /><p>Carregando ranking...</p></div>
+  if (error) return <div className="ranking-error"><p>{error}</p><button onClick={fetchRanking} className="retry-btn">Tentar novamente</button></div>
 
   return (
     <div className="student-ranking">
-      <h2>🏆 Ranking de Alunos</h2>
+      <div className="ranking-heading"><div><span className="ranking-kicker">Desempenho</span><h2>Ranking de alunos</h2><p>Acompanhe sua posição com base nos pontos registrados pelo sistema.</p></div>{own && <div className="own-rank-card"><span>Sua posição</span><strong>#{own.position}</strong><small>{own.points} pontos</small></div>}</div>
 
-      {userPosition && (
-        <div className="user-position">
-          <div className="position-card">
-            <div className="position-number">#{userPosition.position}</div>
-            <div className="position-info">
-              <p className="position-label">Sua Posição</p>
-              <p className="position-points">{userPosition.points} pontos</p>
-            </div>
-          </div>
+      {rows.length === 0 ? <div className="ranking-empty">O ranking ainda não possui dados.</div> : (
+        <div className="ranking-list">
+          {rows.map((row) => (
+            <article key={row.id} className={`ranking-row ${row.isCurrentUser ? 'current-user' : ''}`}>
+              <div className={`ranking-position top-${row.position}`}><strong>{row.position}</strong></div>
+              <div className="ranking-person"><div className="ranking-avatar">{row.photo ? <img src={row.photo} alt="" /> : row.name[0]}</div><div><strong>{row.name}</strong>{row.isCurrentUser && <span className="badge-current">Você</span>}</div></div>
+              <div className="ranking-stat"><span>Semanas</span><strong>{row.weeks}</strong></div>
+              <div className="ranking-stat"><span>Pontos</span><strong>{row.points}</strong></div>
+            </article>
+          ))}
         </div>
       )}
-
-      <div className="ranking-table-wrapper">
-        <table className="ranking-table">
-          <thead>
-            <tr>
-              <th className="rank-col">Posição</th>
-              <th className="name-col">Nome</th>
-              <th className="weeks-col">Semanas</th>
-              <th className="points-col">Pontos</th>
-            </tr>
-          </thead>
-          <tbody>
-            {ranking.length > 0 ? (
-              ranking.map((entry, index) => (
-                <tr key={index} className={entry.isCurrentUser ? 'current-user' : ''}>
-                  <td className="rank-col">
-                    <div className="rank-badge">
-                      {index === 0 && '🥇'}
-                      {index === 1 && '🥈'}
-                      {index === 2 && '🥉'}
-                      {index > 2 && `#${index + 1}`}
-                    </div>
-                  </td>
-                  <td className="name-col">
-                    <div className="name-info">
-                      <span className="student-name">{entry.studentName}</span>
-                      {entry.isCurrentUser && <span className="badge-current">Você</span>}
-                    </div>
-                  </td>
-                  <td className="weeks-col">
-                    <div className="weeks-info">
-                      {entry.weeksCompleted} de {entry.totalWeeks}
-                    </div>
-                  </td>
-                  <td className="points-col">
-                    <div className="points-info">
-                      <span className="points-value">{entry.totalPoints}</span>
-                      <span className="points-label">pts</span>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan="4" className="no-ranking-message">
-                  Nenhum aluno no ranking ainda.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      <div className="ranking-info">
-        <div className="info-box">
-          <span className="info-icon">ℹ️</span>
-          <div>
-            <p><strong>Como o Ranking Funciona:</strong></p>
-            <ul>
-              <li>Cada semana completa = 100 pontos</li>
-              <li>Suba de posição conforme completa as semanas</li>
-              <li>Compita com seus colegas de treino</li>
-              <li>Ranking atualiza em tempo real</li>
-            </ul>
-          </div>
-        </div>
-      </div>
     </div>
   )
 }
