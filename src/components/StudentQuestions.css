@@ -1,0 +1,354 @@
+/* ===== STUDENT QUESTIONS ===== */
+
+.student-questions {
+  background: white;
+  border-radius: 12px;
+  padding: 30px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+}
+
+.questions-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.questions-header h2 {
+  margin: 0 0 8px 0;
+  color: #333;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.questions-header p {
+  margin: 0;
+  color: #999;
+  font-size: 14px;
+}
+
+.btn-nova-pergunta {
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #a76db5 0%, #c98bb8 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
+  transition: all 0.3s;
+  white-space: nowrap;
+}
+
+.btn-nova-pergunta:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(167, 109, 181, 0.3);
+}
+
+/* FORMULÁRIO */
+.form-card {
+  background: #fafafa;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 25px;
+  margin-bottom: 30px;
+}
+
+.form-card h3 {
+  margin: 0 0 20px 0;
+  color: #333;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+}
+
+.form-group textarea {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  transition: all 0.3s;
+  resize: vertical;
+}
+
+.form-group textarea:focus {
+  outline: none;
+  border-color: #a76db5;
+  box-shadow: 0 0 0 3px rgba(167, 109, 181, 0.1);
+}
+
+.form-actions {
+  display: flex;
+  gap: 15px;
+}
+
+.btn-enviar,
+.btn-cancelar {
+  flex: 1;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
+  transition: all 0.3s;
+}
+
+.btn-enviar {
+  background: linear-gradient(135deg, #a76db5 0%, #c98bb8 100%);
+  color: white;
+}
+
+.btn-enviar:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(167, 109, 181, 0.3);
+}
+
+.btn-enviar:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-cancelar {
+  background: #e0e0e0;
+  color: #333;
+}
+
+.btn-cancelar:hover {
+  background: #d0d0d0;
+}
+
+/* ABAS */
+.questions-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 30px;
+  border-bottom: 2px solid #f0f0f0;
+  flex-wrap: wrap;
+}
+
+.tab-btn {
+  padding: 12px 20px;
+  border: none;
+  background: transparent;
+  color: #666;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 8px 8px 0 0;
+  transition: all 0.3s;
+  font-size: 14px;
+}
+
+.tab-btn:hover {
+  background: #f5f5f5;
+  color: #333;
+}
+
+.tab-btn.active {
+  color: #a76db5;
+  border-bottom: 3px solid #a76db5;
+  background: transparent;
+}
+
+/* LISTA DE PERGUNTAS */
+.questions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.pergunta-card {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.3s;
+}
+
+.pergunta-card.pending {
+  background: #faf6fd;
+  border-left: 4px solid #ff9800;
+}
+
+.pergunta-card.answered {
+  background: #f0f7f4;
+  border-left: 4px solid #4caf50;
+}
+
+.pergunta-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.pergunta-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.pergunta-status {
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+}
+
+.pergunta-data {
+  font-size: 12px;
+  color: #999;
+}
+
+.pergunta-texto {
+  color: #333;
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* RESPOSTA */
+.resposta-box {
+  background: white;
+  padding: 15px;
+  border-radius: 8px;
+  border-left: 3px solid #4caf50;
+  margin-top: 15px;
+}
+
+.resposta-label {
+  font-weight: 700;
+  color: #333;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.resposta-texto {
+  color: #666;
+  font-size: 13px;
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* ESTADO VAZIO */
+.empty-state {
+  text-align: center;
+  padding: 60px 40px;
+  background: #fafafa;
+  border-radius: 8px;
+}
+
+.empty-state p {
+  margin: 0;
+  color: #999;
+  font-size: 16px;
+}
+
+.empty-text {
+  color: #bbb;
+  font-size: 14px;
+  margin-top: 8px;
+}
+
+/* INFO CARD */
+.info-card {
+  background: #f0f7ff;
+  border-left: 4px solid #2196F3;
+  border-radius: 8px;
+  padding: 25px;
+  margin-top: 30px;
+}
+
+.info-card h3 {
+  margin: 0 0 15px 0;
+  color: #333;
+  font-size: 16px;
+}
+
+.info-card ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.info-card li {
+  margin-bottom: 15px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #e0e0e0;
+  font-size: 12px;
+}
+
+.info-card li:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.info-card strong {
+  display: block;
+  color: #333;
+  margin-bottom: 5px;
+  font-size: 13px;
+}
+
+.info-card p {
+  margin: 0;
+  color: #666;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* LOADING */
+.loading {
+  text-align: center;
+  padding: 60px 20px;
+  color: #999;
+  font-size: 16px;
+}
+
+/* RESPONSIVO */
+@media (max-width: 768px) {
+  .student-questions {
+    padding: 20px;
+  }
+
+  .questions-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+
+  .questions-header h2 {
+    font-size: 20px;
+  }
+
+  .btn-nova-pergunta {
+    width: 100%;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .btn-enviar,
+  .btn-cancelar {
+    flex: none;
+    width: 100%;
+  }
+
+  .pergunta-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}
