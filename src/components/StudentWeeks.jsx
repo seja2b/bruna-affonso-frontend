@@ -9,20 +9,32 @@ const dateFormatter = new Intl.DateTimeFormat('pt-BR', {
   month: '2-digit'
 })
 
+const emptyExercise = () => ({ exerciseName: '', trainingType: '', weight: '', reps: '', notes: '' })
+
 export default function StudentWeeks({ studentId }) {
   const [weeks, setWeeks] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [selectedWeek, setSelectedWeek] = useState(null)
+  const [exercises, setExercises] = useState([])
+  const [saving, setSaving] = useState(false)
+  const [completing, setCompleting] = useState(false)
+  const [feedback, setFeedback] = useState('')
 
   useEffect(() => { fetchWeeks() }, [studentId])
 
-  async function fetchWeeks() {
+  async function fetchWeeks(preferredWeekId) {
     try {
       setLoading(true)
       setError('')
       const response = await api.get(`/tracking/student/${studentId}/weeks`)
-      setWeeks(response.data || [])
+      const nextWeeks = response.data || []
+      setWeeks(nextWeeks)
+
+      if (preferredWeekId) {
+        const refreshed = nextWeeks.find((week) => week.id === preferredWeekId)
+        if (refreshed) openWeek(refreshed)
+      }
     } catch (err) {
       console.error('Erro ao buscar semanas', err)
       setError('Não foi possível carregar suas semanas agora.')
@@ -31,23 +43,77 @@ export default function StudentWeeks({ studentId }) {
     }
   }
 
+  function openWeek(week) {
+    setSelectedWeek(week)
+    setExercises((week.exercises || []).length ? week.exercises.map((exercise) => ({ ...exercise })) : [emptyExercise()])
+    setFeedback('')
+  }
+
+  function updateExercise(index, field, value) {
+    setExercises((current) => current.map((exercise, itemIndex) => itemIndex === index ? { ...exercise, [field]: value } : exercise))
+  }
+
+  function addExercise() {
+    if (exercises.length >= 30) return
+    setExercises((current) => [...current, emptyExercise()])
+  }
+
+  function removeExercise(index) {
+    setExercises((current) => current.length === 1 ? [emptyExercise()] : current.filter((_, itemIndex) => itemIndex !== index))
+  }
+
+  async function saveWeek() {
+    if (!selectedWeek || selectedWeek.isCompleted) return
+    try {
+      setSaving(true)
+      setFeedback('')
+      await api.post('/tracking/exercise/save', { weekId: selectedWeek.id, exercises })
+      setFeedback('Treino salvo com sucesso.')
+      await fetchWeeks(selectedWeek.id)
+    } catch (err) {
+      setFeedback(err.response?.data?.error || 'Não foi possível salvar o treino.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function completeSelectedWeek() {
+    if (!selectedWeek || selectedWeek.isCompleted) return
+    try {
+      setCompleting(true)
+      setFeedback('')
+      await api.post('/tracking/exercise/save', { weekId: selectedWeek.id, exercises })
+      const response = await api.post(`/tracking/week/${selectedWeek.id}/complete`)
+      setFeedback(response.data.awardedPoints === 100 ? 'Semana concluída. Você ganhou 100 pontos!' : response.data.message)
+      await fetchWeeks(selectedWeek.id)
+    } catch (err) {
+      setFeedback(err.response?.data?.error || 'Não foi possível concluir a semana.')
+    } finally {
+      setCompleting(false)
+    }
+  }
+
   const progress = useMemo(() => {
     const completed = weeks.filter((week) => week.isCompleted).length
     return { completed, percentage: weeks.length ? Math.round((completed / weeks.length) * 100) : 0 }
   }, [weeks])
 
-  if (loading) return <div className="loading">Carregando semanas...</div>
-  if (error) return <div className="student-weeks-error"><p>{error}</p><button onClick={fetchWeeks}>Tentar novamente</button></div>
+  const canComplete = exercises.length > 0 && exercises.every((exercise) =>
+    exercise.exerciseName?.trim() && exercise.trainingType?.trim() && exercise.weight?.trim() && exercise.reps?.trim()
+  )
+
+  if (loading && weeks.length === 0) return <div className="loading">Carregando semanas...</div>
+  if (error) return <div className="student-weeks-error"><p>{error}</p><button onClick={() => fetchWeeks()}>Tentar novamente</button></div>
 
   return (
     <div className="student-weeks">
       <div className="weeks-header">
         <div>
           <span className="weeks-kicker">Programa anual</span>
-          <h2>Minhas semanas</h2>
-          <p>Cada ciclo vai de segunda a sexta. A próxima semana é liberada automaticamente na segunda-feira, às 00:00.</p>
+          <h2>Meus treinos</h2>
+          <p>Preencha seus exercícios manualmente. Cada semana concluída vale 100 pontos no ranking.</p>
         </div>
-        <div className="weeks-summary"><strong>{progress.percentage}%</strong><span>concluído</span></div>
+        <div className="weeks-summary"><strong>{progress.percentage}%</strong><span>{progress.completed} semanas concluídas</span></div>
       </div>
 
       <div className="weeks-progress"><span style={{ width: `${progress.percentage}%` }} /></div>
@@ -57,15 +123,12 @@ export default function StudentWeeks({ studentId }) {
           const state = week.isCompleted ? 'completed' : week.isReleased ? 'released' : 'locked'
           const start = dateFormatter.format(new Date(week.startDate))
           const end = dateFormatter.format(new Date(week.endDate))
-
           return (
-            <button key={week.id} className={`week-card ${state}`} disabled={!week.isReleased} onClick={() => setSelectedWeek(week)}>
+            <button key={week.id} className={`week-card ${state}`} disabled={!week.isReleased} onClick={() => openWeek(week)}>
               <span className="week-state-dot" />
               <span className="week-number">Semana {week.weekNumber}</span>
               <span className="week-calendar">{start} a {end}</span>
-              <span className="week-label">
-                {week.isCompleted ? 'Concluída' : week.isReleased ? 'Disponível' : `Libera em ${start} às 00:00`}
-              </span>
+              <span className="week-label">{week.isCompleted ? 'Concluída' : week.isReleased ? 'Disponível' : `Libera em ${start} às 00:00`}</span>
               {week.calendarWeek && <span className="week-calendar-index">Semana {week.calendarWeek} de {week.calendarYear}</span>}
               {week.isCompleted && <span className="week-badge">100 pts</span>}
             </button>
@@ -74,24 +137,42 @@ export default function StudentWeeks({ studentId }) {
       </div>
 
       {selectedWeek && (
-        <div className="week-details">
+        <div className="week-details week-editor">
           <div className="details-header">
             <div>
-              <span className="weeks-kicker">Detalhes</span>
+              <span className="weeks-kicker">{selectedWeek.isCompleted ? 'Semana concluída' : 'Preenchimento manual'}</span>
               <h3>Semana {selectedWeek.weekNumber}</h3>
               <p>{dateFormatter.format(new Date(selectedWeek.startDate))} a {dateFormatter.format(new Date(selectedWeek.endDate))} · segunda a sexta</p>
             </div>
             <button className="close-btn" onClick={() => setSelectedWeek(null)} aria-label="Fechar">×</button>
           </div>
-          {(selectedWeek.exercises || []).length === 0 ? <div className="no-exercises">Nenhum exercício registrado ainda.</div> : (
-            <div className="exercises-list">{selectedWeek.exercises.map((exercise, index) => (
-              <div key={exercise.id || index} className="exercise-item"><div className="exercise-number">{index + 1}</div><div className="exercise-info"><strong>{exercise.exerciseName}</strong><span>{exercise.trainingType}</span></div><div className="exercise-stats">{exercise.weight && <span>{exercise.weight} kg</span>}{exercise.reps && <span>{exercise.reps} reps</span>}</div></div>
-            ))}</div>
-          )}
-          {selectedWeek.observation?.teacherNote && (
-            <div className="week-teacher-feedback">
-              <strong>Feedback da professora</strong>
-              <p>{selectedWeek.observation.teacherNote}</p>
+
+          <div className="manual-exercises">
+            <div className="manual-exercises-heading">
+              <div><strong>Exercícios realizados</strong><span>Informe exercício, tipo, carga e repetições. Observações são opcionais.</span></div>
+              {!selectedWeek.isCompleted && <button type="button" onClick={addExercise}>+ Adicionar exercício</button>}
+            </div>
+
+            {exercises.map((exercise, index) => (
+              <div className="manual-exercise-row" key={exercise.id || index}>
+                <span className="manual-exercise-index">{index + 1}</span>
+                <input disabled={selectedWeek.isCompleted} value={exercise.exerciseName || ''} onChange={(e) => updateExercise(index, 'exerciseName', e.target.value)} placeholder="Exercício" />
+                <input disabled={selectedWeek.isCompleted} value={exercise.trainingType || ''} onChange={(e) => updateExercise(index, 'trainingType', e.target.value)} placeholder="Tipo de treino" />
+                <input disabled={selectedWeek.isCompleted} value={exercise.weight || ''} onChange={(e) => updateExercise(index, 'weight', e.target.value)} placeholder="Carga (kg)" />
+                <input disabled={selectedWeek.isCompleted} value={exercise.reps || ''} onChange={(e) => updateExercise(index, 'reps', e.target.value)} placeholder="Repetições" />
+                <input disabled={selectedWeek.isCompleted} value={exercise.notes || ''} onChange={(e) => updateExercise(index, 'notes', e.target.value)} placeholder="Observação (opcional)" />
+                {!selectedWeek.isCompleted && <button className="manual-remove" type="button" onClick={() => removeExercise(index)} aria-label="Remover exercício">×</button>}
+              </div>
+            ))}
+          </div>
+
+          {selectedWeek.observation?.teacherNote && <div className="week-teacher-feedback"><strong>Feedback da professora</strong><p>{selectedWeek.observation.teacherNote}</p></div>}
+          {feedback && <div className="week-action-feedback">{feedback}</div>}
+
+          {!selectedWeek.isCompleted && (
+            <div className="week-editor-actions">
+              <button type="button" className="week-save" onClick={saveWeek} disabled={saving || completing}>{saving ? 'Salvando...' : 'Salvar preenchimento'}</button>
+              <button type="button" className="week-complete" onClick={completeSelectedWeek} disabled={!canComplete || saving || completing}>{completing ? 'Concluindo...' : 'Concluir semana +100 pts'}</button>
             </div>
           )}
         </div>
