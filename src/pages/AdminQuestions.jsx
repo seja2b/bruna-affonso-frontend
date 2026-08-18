@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import api from '../services/api'
-import AdminLayout from '../components/AdminLayout'
 import './AdminQuestions.css'
 
 export default function AdminQuestions({ user, token, onNavigate }) {
   const [questions, setQuestions] = useState([])
   const [loading, setLoading] = useState(true)
+  const [activeTab, setActiveTab] = useState('pending')
   const [answeringId, setAnsweringId] = useState(null)
   const [answerText, setAnswerText] = useState('')
 
@@ -15,7 +15,7 @@ export default function AdminQuestions({ user, token, onNavigate }) {
 
   async function fetchQuestions() {
     try {
-      const response = await api.get('/admin/questions/pending', {
+      const response = await api.get('/admin/questions', {
         headers: { Authorization: `Bearer ${token}` }
       })
       setQuestions(response.data)
@@ -28,7 +28,7 @@ export default function AdminQuestions({ user, token, onNavigate }) {
 
   async function handleAnswerQuestion(questionId) {
     if (!answerText.trim()) {
-      alert('Digite uma resposta')
+      alert('❌ Digite uma resposta')
       return
     }
 
@@ -41,92 +41,130 @@ export default function AdminQuestions({ user, token, onNavigate }) {
       setAnsweringId(null)
       setAnswerText('')
       fetchQuestions()
+      alert('✅ Resposta enviada com sucesso!')
     } catch (error) {
       alert('Erro ao responder pergunta')
     }
   }
 
+  const pendingQuestions = questions.filter(q => !q.answeredAt)
+  const answeredQuestions = questions.filter(q => q.answeredAt)
+
   return (
-    <AdminLayout user={user} token={token} onNavigate={onNavigate} currentPage="questions">
-      <div className="page">
-        <div className="page-header">
-          <div>
-            <h1>Perguntas dos Alunos</h1>
-            <p className="page-subtitle">Responda às dúvidas de seus alunos</p>
-          </div>
-          <div className="page-stats">
-            <span className="stat-badge">{questions.length} pendentes</span>
-          </div>
+    <div className="admin-questions">
+      <div className="questions-header">
+        <div>
+          <h2>❓ Perguntas dos Alunos</h2>
+          <p>Responda às dúvidas de seus alunos</p>
         </div>
-
-        {loading ? (
-          <div className="loading">Carregando perguntas...</div>
-        ) : questions.length === 0 ? (
-          <div className="empty-state">
-            <p>Nenhuma pergunta pendente</p>
-            <p className="empty-text">Parabéns! Todos as dúvidas foram respondidas.</p>
-          </div>
-        ) : (
-          <div className="questions-list">
-            {questions.map(question => (
-              <div key={question.id} className="question-item">
-                <div className="question-header">
-                  <div className="student-info">
-                    <div className="student-avatar">{question.user.name.charAt(0)}</div>
-                    <div>
-                      <h3>{question.user.name}</h3>
-                      <p className="student-email">{question.user.email}</p>
-                    </div>
-                  </div>
-                  <span className="question-date">
-                    {new Date(question.createdAt).toLocaleDateString('pt-BR')}
-                  </span>
-                </div>
-
-                <div className="question-content">
-                  <h4>{question.title}</h4>
-                  <p>{question.text}</p>
-                </div>
-
-                {answeringId === question.id ? (
-                  <div className="answer-form">
-                    <textarea
-                      placeholder="Digite sua resposta aqui..."
-                      value={answerText}
-                      onChange={(e) => setAnswerText(e.target.value)}
-                      rows="4"
-                    />
-                    <div className="answer-actions">
-                      <button
-                        className="btn-submit"
-                        onClick={() => handleAnswerQuestion(question.id)}
-                      >
-                        Enviar Resposta
-                      </button>
-                      <button
-                        className="btn-cancel"
-                        onClick={() => {
-                          setAnsweringId(null)
-                          setAnswerText('')
-                        }}
-                      >
-                        Cancelar
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <button
-                    className="btn-answer"
-                    onClick={() => setAnsweringId(question.id)}
-                  >
-                    Responder
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
       </div>
-    </AdminLayout>
+
+      {/* ABAS */}
+      <div className="questions-tabs">
+        <button
+          className={`tab-btn ${activeTab === 'pending' ? 'active' : ''}`}
+          onClick={() => setActiveTab('pending')}
+        >
+          ⏳ Pendentes ({pendingQuestions.length})
+        </button>
+        <button
+          className={`tab-btn ${activeTab === 'answered' ? 'active' : ''}`}
+          onClick={() => setActiveTab('answered')}
+        >
+          ✅ Respondidas ({answeredQuestions.length})
+        </button>
+      </div>
+
+      {loading ? (
+        <div className="loading">Carregando perguntas...</div>
+      ) : (
+        <>
+          {/* PERGUNTAS PENDENTES */}
+          {activeTab === 'pending' && (
+            <div className="questions-list">
+              {pendingQuestions.length === 0 ? (
+                <div className="empty-state">
+                  <p>🎉 Nenhuma pergunta pendente!</p>
+                  <p className="empty-text">Parabéns! Todas as dúvidas foram respondidas.</p>
+                </div>
+              ) : (
+                pendingQuestions.map(question => (
+                  <div key={question.id} className="pergunta-card">
+                    <div className="pergunta-autor">
+                      👤 {question.student?.name || question.user?.name || 'Aluno'}
+                    </div>
+                    <div className="pergunta-texto">{question.text}</div>
+                    <div className="pergunta-status">
+                      ⏳ Pendente de resposta
+                    </div>
+
+                    {answeringId === question.id ? (
+                      <div className="responder-box">
+                        <textarea
+                          placeholder="Digite sua resposta..."
+                          value={answerText}
+                          onChange={(e) => setAnswerText(e.target.value)}
+                          rows="4"
+                        />
+                        <div style={{display: 'flex', gap: '10px'}}>
+                          <button
+                            className="btn-salvar"
+                            onClick={() => handleAnswerQuestion(question.id)}
+                          >
+                            Enviar Resposta
+                          </button>
+                          <button
+                            className="btn-cancelar"
+                            onClick={() => {
+                              setAnsweringId(null)
+                              setAnswerText('')
+                            }}
+                          >
+                            Cancelar
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        className="btn-responder"
+                        onClick={() => setAnsweringId(question.id)}
+                      >
+                        Responder
+                      </button>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+
+          {/* PERGUNTAS RESPONDIDAS */}
+          {activeTab === 'answered' && (
+            <div className="questions-list">
+              {answeredQuestions.length === 0 ? (
+                <div className="empty-state">
+                  <p>Nenhuma pergunta respondida ainda</p>
+                </div>
+              ) : (
+                answeredQuestions.map(question => (
+                  <div key={question.id} className="pergunta-card">
+                    <div className="pergunta-autor">
+                      👤 {question.student?.name || question.user?.name || 'Aluno'}
+                    </div>
+                    <div className="pergunta-texto">{question.text}</div>
+                    <div className="pergunta-status">✅ Respondida</div>
+
+                    <div className="resposta-box">
+                      <strong>✅ Sua resposta:</strong>
+                      <p>{question.answer}</p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+        </>
+      )}
+    </div>
   )
 }

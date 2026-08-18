@@ -1,253 +1,293 @@
-.page {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
+/* ===== ADMIN STUDENTS ===== */
+
+.admin-students {
+  background: white;
+  border-radius: 12px;
+  padding: 30px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
 }
 
-.page-header {
+.students-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
+  margin-bottom: 30px;
 }
 
-.page-header h1 {
+.students-header h2 {
   margin: 0 0 8px 0;
-  font-size: 32px;
-  font-weight: 700;
-  color: #1f2937;
+  color: #333;
+  font-size: 24px;
 }
 
-.page-subtitle {
+.students-header p {
   margin: 0;
+  color: #999;
   font-size: 14px;
-  color: #6b7280;
 }
 
-.page-stats {
+.header-stats {
   display: flex;
-  gap: 12px;
+  gap: 10px;
 }
 
 .stat-badge {
-  background: #eff6ff;
-  color: #1e40af;
+  background: linear-gradient(135deg, #a76db5 0%, #c98bb8 100%);
+  color: white;
   padding: 8px 16px;
-  border-radius: 8px;
-  font-size: 13px;
+  border-radius: 20px;
+  font-size: 12px;
   font-weight: 600;
 }
 
-.filter-bar {
+/* TABS DE FILTRO */
+.students-tabs {
   display: flex;
-  gap: 12px;
+  gap: 10px;
+  margin-bottom: 30px;
+  border-bottom: 2px solid #f0f0f0;
   flex-wrap: wrap;
 }
 
 .filter-btn {
-  background: white;
-  border: 1px solid #e5e7eb;
-  padding: 8px 16px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 13px;
+  padding: 12px 20px;
+  border: none;
+  background: transparent;
+  color: #666;
   font-weight: 600;
-  color: #6b7280;
-  transition: all 0.3s ease;
+  cursor: pointer;
+  border-radius: 8px 8px 0 0;
+  transition: all 0.3s;
+  font-size: 14px;
 }
 
 .filter-btn:hover {
-  border-color: #1e40af;
-  color: #1e40af;
+  background: #f5f5f5;
+  color: #333;
 }
 
 .filter-btn.active {
-  background: #1e40af;
-  border-color: #1e40af;
-  color: white;
+  color: #a76db5;
+  border-bottom: 3px solid #a76db5;
+  background: transparent;
 }
 
-.students-table {
-  background: white;
+/* GRID DE ALUNOS */
+.students-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 25px;
+}
+
+.student-card {
+  background: #fafafa;
   border-radius: 12px;
-  border: 1px solid #e5e7eb;
-  overflow: hidden;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-thead {
-  background: #f9fafb;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-th {
-  padding: 16px;
-  text-align: left;
-  font-weight: 600;
-  font-size: 12px;
-  color: #6b7280;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-tbody tr {
-  border-bottom: 1px solid #f3f4f6;
-  transition: background-color 0.2s ease;
-}
-
-tbody tr:hover {
-  background: #f9fafb;
-}
-
-td {
-  padding: 16px;
-  font-size: 14px;
-  color: #374151;
-}
-
-.name-cell {
+  padding: 25px;
+  border: 1px solid #e0e0e0;
+  transition: all 0.3s;
   display: flex;
-  align-items: center;
-  gap: 12px;
-  font-weight: 600;
-  color: #1f2937;
+  flex-direction: column;
 }
 
-.avatar {
-  width: 36px;
-  height: 36px;
+.student-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(167, 109, 181, 0.15);
+  border-color: #a76db5;
+}
+
+/* FOTO DO ALUNO */
+.student-photo-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 15px;
+  cursor: pointer;
+}
+
+.student-photo {
+  width: 120px;
+  height: 120px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #1e40af 0%, #7c3aed 100%);
-  color: white;
+  overflow: hidden;
+  border: 3px solid #a76db5;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: white;
+  transition: all 0.3s;
+  position: relative;
+}
+
+.student-photo:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(167, 109, 181, 0.3);
+}
+
+.student-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photo-placeholder {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #a76db5 0%, #c98bb8 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 48px;
   font-weight: 700;
-  font-size: 14px;
+}
+
+/* INFORMAÇÕES DO ALUNO */
+.student-info {
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+.student-info h3 {
+  margin: 0 0 8px 0;
+  color: #333;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.student-info .email {
+  margin: 0 0 6px 0;
+  font-size: 12px;
+  color: #999;
+}
+
+.student-info .phone {
+  margin: 0;
+  font-size: 12px;
+  color: #666;
+}
+
+/* STATUS */
+.student-status {
+  text-align: center;
+  margin-bottom: 15px;
 }
 
 .status-badge {
   display: inline-block;
   padding: 6px 12px;
-  border-radius: 6px;
+  border-radius: 20px;
   font-size: 12px;
   font-weight: 600;
 }
 
 .status-badge.pending {
-  background: #fef3c7;
-  color: #92400e;
+  background: #fff3cd;
+  color: #856404;
 }
 
 .status-badge.approved {
-  background: #dcfce7;
-  color: #166534;
+  background: #d4edda;
+  color: #155724;
 }
 
-.status-badge.rejected {
-  background: #fee2e2;
-  color: #991b1b;
-}
-
+.status-badge.rejected,
 .status-badge.inactive {
-  background: #f3f4f6;
-  color: #4b5563;
+  background: #f8d7da;
+  color: #721c24;
 }
 
-.actions-cell {
+/* BOTÕES DE AÇÃO */
+.student-actions {
   display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: auto;
 }
 
-.action-btn {
-  padding: 6px 12px;
-  border: 1px solid;
-  border-radius: 6px;
+.btn-approve,
+.btn-reject,
+.btn-admin {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
   cursor: pointer;
-  font-size: 12px;
   font-weight: 600;
-  transition: all 0.3s ease;
-  background: white;
+  font-size: 12px;
+  transition: all 0.3s;
+  width: 100%;
 }
 
-.action-btn.approve {
-  border-color: #22c55e;
-  color: #16a34a;
+.btn-approve {
+  background: #4caf50;
+  color: white;
 }
 
-.action-btn.approve:hover {
-  background: #dcfce7;
+.btn-approve:hover {
+  background: #45a049;
+  transform: translateY(-2px);
 }
 
-.action-btn.reject {
-  border-color: #ef4444;
-  color: #dc2626;
+.btn-reject {
+  background: #ff6b6b;
+  color: white;
 }
 
-.action-btn.reject:hover {
-  background: #fee2e2;
+.btn-reject:hover {
+  background: #ee5a52;
+  transform: translateY(-2px);
 }
 
-.action-btn.deactivate {
-  border-color: #f59e0b;
-  color: #d97706;
+.btn-admin {
+  background: #e0e0e0;
+  color: #333;
 }
 
-.action-btn.deactivate:hover {
-  background: #fef3c7;
+.btn-admin:hover {
+  background: #d0d0d0;
+  transform: translateY(-2px);
 }
 
-.action-btn.reactivate {
-  border-color: #3b82f6;
-  color: #2563eb;
+.btn-admin.active {
+  background: linear-gradient(135deg, #a76db5 0%, #c98bb8 100%);
+  color: white;
 }
 
-.action-btn.reactivate:hover {
-  background: #dbeafe;
-}
-
-.loading,
+/* ESTADO VAZIO */
 .empty-state {
   text-align: center;
-  padding: 60px 20px;
-  background: white;
-  border-radius: 12px;
-  color: #6b7280;
+  padding: 60px 40px;
+  color: #999;
+}
+
+.empty-state p {
+  margin: 0;
   font-size: 16px;
 }
 
-@media (max-width: 1024px) {
-  table {
-    font-size: 13px;
-  }
-
-  th, td {
-    padding: 12px;
-  }
+/* LOADING */
+.loading {
+  text-align: center;
+  padding: 60px 20px;
+  color: #999;
+  font-size: 16px;
 }
 
+/* RESPONSIVO */
 @media (max-width: 768px) {
-  .page-header {
+  .admin-students {
+    padding: 20px;
+  }
+
+  .students-header {
     flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
   }
 
-  .filter-bar {
-    overflow-x: auto;
+  .students-grid {
+    grid-template-columns: 1fr;
   }
 
-  .students-table {
-    overflow-x: auto;
-  }
-
-  .actions-cell {
-    flex-direction: column;
-  }
-
-  .action-btn {
-    width: 100%;
+  .student-card {
+    padding: 20px;
   }
 }
