@@ -7,13 +7,11 @@ export default function AdminSettings({ user, token, onNavigate }) {
     phone: '',
     whatsappUrl: '',
     motivationalPhrase: '',
-    profileImage: null,
-    logo: null
+    profileImage: '',
+    logo: ''
   })
   const [loading, setLoading] = useState(true)
   const [saved, setSaved] = useState(false)
-  const [profileImagePreview, setProfileImagePreview] = useState('')
-  const [logoPreview, setLogoPreview] = useState('')
 
   useEffect(() => {
     fetchSettings()
@@ -25,12 +23,6 @@ export default function AdminSettings({ user, token, onNavigate }) {
         headers: { Authorization: `Bearer ${token}` }
       })
       setSettings(response.data)
-      if (response.data.profileImage) {
-        setProfileImagePreview(response.data.profileImage)
-      }
-      if (response.data.logo) {
-        setLogoPreview(response.data.logo)
-      }
     } catch (error) {
       console.error('Erro ao buscar configurações', error)
     } finally {
@@ -43,53 +35,24 @@ export default function AdminSettings({ user, token, onNavigate }) {
     setSaved(false)
     
     try {
-      const formData = new FormData()
-      formData.append('phone', settings.phone || '')
-      formData.append('whatsappUrl', settings.whatsappUrl || '')
-      formData.append('motivationalPhrase', settings.motivationalPhrase || '')
-      
-      if (settings.profileImage instanceof File) {
-        formData.append('profileImage', settings.profileImage)
-      }
-      if (settings.logo instanceof File) {
-        formData.append('logo', settings.logo)
+      const payload = {
+        phone: settings.phone || '',
+        whatsappUrl: settings.whatsappUrl || '',
+        motivationalPhrase: settings.motivationalPhrase || '',
+        profileImage: settings.profileImage || '',
+        logo: settings.logo || ''
       }
 
-      await api.put('/admin/settings', formData, {
-        headers: { 
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data'
-        }
+      await api.put('/admin/settings', payload, {
+        headers: { Authorization: `Bearer ${token}` }
       })
+      
       setSaved(true)
       setTimeout(() => setSaved(false), 3000)
       fetchSettings()
     } catch (error) {
-      alert('Erro ao salvar configurações')
-    }
-  }
-
-  function handleProfileImageChange(e) {
-    const file = e.target.files[0]
-    if (file) {
-      setSettings({...settings, profileImage: file})
-      const reader = new FileReader()
-      reader.onload = (event) => {
-        setProfileImagePreview(event.target.result)
-      }
-      reader.readAsDataURL(file)
-    }
-  }
-
-  function handleLogoChange(e) {
-    const file = e.target.files[0]
-    if (file) {
-      setSettings({...settings, logo: file})
-      const reader = new FileReader()
-      reader.onload = (event) => {
-        setLogoPreview(event.target.result)
-      }
-      reader.readAsDataURL(file)
+      console.error('Erro ao salvar:', error)
+      alert('❌ Erro ao salvar configurações')
     }
   }
 
@@ -107,52 +70,7 @@ export default function AdminSettings({ user, token, onNavigate }) {
       </div>
 
       <form onSubmit={handleSaveSettings} className="settings-form">
-        {/* SEÇÃO 1: FOTOS */}
-        <div className="settings-section">
-          <h3>📸 Imagens</h3>
-
-          <div className="form-group">
-            <label>👩 Foto de Perfil</label>
-            <div className="photo-upload">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleProfileImageChange}
-                id="profile-photo"
-              />
-              <label htmlFor="profile-photo" className="upload-btn">
-                📤 Clique para fazer upload
-              </label>
-            </div>
-            {profileImagePreview && (
-              <div className="photo-preview">
-                <img src={profileImagePreview} alt="Perfil" />
-              </div>
-            )}
-          </div>
-
-          <div className="form-group">
-            <label>🎨 Logo da Marca</label>
-            <div className="photo-upload">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleLogoChange}
-                id="logo-photo"
-              />
-              <label htmlFor="logo-photo" className="upload-btn">
-                📤 Clique para fazer upload
-              </label>
-            </div>
-            {logoPreview && (
-              <div className="logo-preview">
-                <img src={logoPreview} alt="Logo" />
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* SEÇÃO 2: CONTATO */}
+        {/* SEÇÃO 1: CONTATO */}
         <div className="settings-section">
           <h3>📱 Informações de Contato</h3>
 
@@ -175,6 +93,41 @@ export default function AdminSettings({ user, token, onNavigate }) {
               onChange={(e) => setSettings({...settings, whatsappUrl: e.target.value})}
             />
             <small>Formato: https://wa.me/SEU_NUMERO</small>
+          </div>
+        </div>
+
+        {/* SEÇÃO 2: IMAGENS */}
+        <div className="settings-section">
+          <h3>📸 Imagens</h3>
+
+          <div className="form-group">
+            <label>👩 Foto de Perfil (URL)</label>
+            <input
+              type="url"
+              placeholder="https://..."
+              value={settings.profileImage || ''}
+              onChange={(e) => setSettings({...settings, profileImage: e.target.value})}
+            />
+            {settings.profileImage && (
+              <div className="photo-preview">
+                <img src={settings.profileImage} alt="Perfil" />
+              </div>
+            )}
+          </div>
+
+          <div className="form-group">
+            <label>🎨 Logo da Marca (URL)</label>
+            <input
+              type="url"
+              placeholder="https://..."
+              value={settings.logo || ''}
+              onChange={(e) => setSettings({...settings, logo: e.target.value})}
+            />
+            {settings.logo && (
+              <div className="logo-preview">
+                <img src={settings.logo} alt="Logo" />
+              </div>
+            )}
           </div>
         </div>
 
@@ -216,8 +169,8 @@ export default function AdminSettings({ user, token, onNavigate }) {
       <div className="info-card">
         <h3>💡 Dicas</h3>
         <ul>
-          <li><strong>Foto de Perfil:</strong> Sua foto aparecerá no painel e aos alunos</li>
-          <li><strong>Logo:</strong> Imagem da sua marca (recomendado: 200x200px)</li>
+          <li><strong>Foto de Perfil:</strong> Cole o link da sua foto (funciona com URLs)</li>
+          <li><strong>Logo:</strong> Cole o link do logo da sua marca</li>
           <li><strong>Telefone:</strong> Seu número para contato com alunos</li>
           <li><strong>WhatsApp:</strong> Link direto para iniciar conversa</li>
           <li><strong>Frase:</strong> Algo motivador que inspira seus alunos diariamente</li>
