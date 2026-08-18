@@ -6,7 +6,7 @@ const items = [
   ['','Início','home'],
   ['treinos','Meus treinos','calendar'],
   ['acompanhamento','Acompanhamento','chart'],
-  ['videos','Vídeos','play'],
+  ['videos','VideoAulas','play'],
   ['perguntas','Perguntas','message'],
   ['ranking','Ranking','trophy'],
   ['perfil','Perfil','user']
