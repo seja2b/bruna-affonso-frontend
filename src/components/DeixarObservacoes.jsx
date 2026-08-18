@@ -13,33 +13,26 @@ export default function DeixarObservacoes({ isOpen, onClose, studentId, token })
     if (isOpen) {
       fetchWeeks()
     }
-  }, [isOpen])
+  }, [isOpen, studentId])
 
   async function fetchWeeks() {
     setLoading(true)
     try {
-      const response = await api.get(`/tracking/weeks/${studentId}`, {
+      const response = await api.get(`/tracking/student/${studentId}/weeks`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       setWeeks(response.data.filter(w => w.isReleased || w.isCompleted))
     } catch (error) {
       console.error('Erro ao buscar semanas', error)
+      alert('❌ Erro ao carregar as semanas')
     } finally {
       setLoading(false)
     }
   }
 
-  async function handleWeekSelect(weekId) {
-    setSelectedWeek(weekId)
-    try {
-      const response = await api.get(`/tracking/week/${weekId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      setObservation(response.data.observation?.studentNote || '')
-    } catch (error) {
-      console.error('Erro ao buscar observação', error)
-      setObservation('')
-    }
+  async function handleWeekSelect(week) {
+    setSelectedWeek(week.id)
+    setObservation(week.studentNote || '')
   }
 
   async function handleSave() {
@@ -51,8 +44,11 @@ export default function DeixarObservacoes({ isOpen, onClose, studentId, token })
     setSaving(true)
     try {
       await api.put(
-        `/tracking/week/${selectedWeek}/observation`,
-        { studentNote: observation },
+        `/tracking/note/student`,
+        { 
+          weekId: selectedWeek,
+          studentNote: observation 
+        },
         { headers: { Authorization: `Bearer ${token}` } }
       )
       alert('✅ Observação salva com sucesso!')
@@ -91,7 +87,7 @@ export default function DeixarObservacoes({ isOpen, onClose, studentId, token })
                   <button
                     key={week.id}
                     className="week-option"
-                    onClick={() => handleWeekSelect(week.id)}
+                    onClick={() => handleWeekSelect(week)}
                   >
                     <span className="week-badge">
                       {week.isCompleted ? '✅' : '🟢'}

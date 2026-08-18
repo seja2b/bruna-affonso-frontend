@@ -10,30 +10,29 @@ export default function StudentWeeks({ studentId, token }) {
 
   useEffect(() => {
     fetchWeeks()
-  }, [])
+  }, [studentId])
 
   async function fetchWeeks() {
     try {
-      const response = await api.get(`/tracking/weeks/${studentId}`, {
+      const response = await api.get(`/tracking/student/${studentId}/weeks`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       setWeeks(response.data)
     } catch (error) {
       console.error('Erro ao buscar semanas', error)
+      alert('❌ Erro ao carregar as semanas')
     } finally {
       setLoading(false)
     }
   }
 
-  async function fetchWeekExercises(weekId) {
+  async function fetchWeekExercises(week) {
     try {
-      const response = await api.get(`/tracking/week/${weekId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      setWeekExercises(response.data.exercises || [])
-      setSelectedWeek(weekId)
+      // As semanas já vêm com os exercícios
+      setWeekExercises(week.exercises || [])
+      setSelectedWeek(week.id)
     } catch (error) {
-      console.error('Erro ao buscar exercícios da semana', error)
+      console.error('Erro ao buscar exercícios', error)
     }
   }
 
@@ -66,7 +65,7 @@ export default function StudentWeeks({ studentId, token }) {
           <div
             key={week.id}
             className={`week-card ${week.isCompleted ? 'completed' : ''} ${week.isReleased ? 'released' : 'locked'}`}
-            onClick={() => week.isReleased && fetchWeekExercises(week.id)}
+            onClick={() => week.isReleased && fetchWeekExercises(week)}
             style={{ cursor: week.isReleased ? 'pointer' : 'not-allowed' }}
           >
             <div className="week-status">{getWeekStatus(week)}</div>

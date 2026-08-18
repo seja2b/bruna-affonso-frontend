@@ -18,7 +18,7 @@ export default function AdicionarFoto({ isOpen, onClose, studentId, token }) {
       const reader = new FileReader()
       reader.onload = (event) => {
         setPreview(event.target.result)
-        setPhoto(file)
+        setPhoto(event.target.result)
       }
       reader.readAsDataURL(file)
     }
@@ -32,21 +32,9 @@ export default function AdicionarFoto({ isOpen, onClose, studentId, token }) {
 
     setSaving(true)
     try {
-      const formData = new FormData()
-      formData.append('file', photo)
-
-      const response = await api.post('/upload/photo', formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data'
-        }
-      })
-
-      const photoUrl = response.data.url
-
       await api.put(
-        `/student/profile`,
-        { profilePhoto: photoUrl },
+        `/tracking/profile-photo/${studentId}`,
+        { profilePhoto: photo },
         { headers: { Authorization: `Bearer ${token}` } }
       )
 

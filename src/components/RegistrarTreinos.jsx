@@ -12,33 +12,26 @@ export default function RegistrarTreinos({ isOpen, onClose, studentId, token }) 
     if (isOpen) {
       fetchWeeks()
     }
-  }, [isOpen])
+  }, [isOpen, studentId])
 
   async function fetchWeeks() {
     setLoading(true)
     try {
-      const response = await api.get(`/tracking/weeks/${studentId}`, {
+      const response = await api.get(`/tracking/student/${studentId}/weeks`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       
       const releasedWeeks = response.data.filter(w => w.isReleased || w.isCompleted)
       setWeeks(releasedWeeks)
 
-      // Buscar exercícios de cada semana
+      // Preparar dados das semanas
       const data = {}
-      for (let week of releasedWeeks) {
-        try {
-          const weekResponse = await api.get(`/tracking/week/${week.id}`, {
-            headers: { Authorization: `Bearer ${token}` }
-          })
-          data[week.id] = {
-            exercises: weekResponse.data.exercises || [],
-            isCompleted: week.isCompleted
-          }
-        } catch (error) {
-          data[week.id] = { exercises: [], isCompleted: week.isCompleted }
+      releasedWeeks.forEach(week => {
+        data[week.id] = {
+          exercises: week.exercises || [],
+          isCompleted: week.isCompleted
         }
-      }
+      })
       setWeekData(data)
     } catch (error) {
       console.error('Erro ao buscar semanas', error)
@@ -64,9 +57,12 @@ export default function RegistrarTreinos({ isOpen, onClose, studentId, token }) 
       // Salvar exercícios de cada semana
       for (let weekId in weekData) {
         if (weekData[weekId].exercises.length > 0) {
-          await api.put(
-            `/tracking/week/${weekId}`,
-            { exercises: weekData[weekId].exercises },
+          await api.post(
+            `/tracking/exercise/save`,
+            { 
+              weekId,
+              exercises: weekData[weekId].exercises 
+            },
             { headers: { Authorization: `Bearer ${token}` } }
           )
         }
@@ -126,7 +122,7 @@ export default function RegistrarTreinos({ isOpen, onClose, studentId, token }) 
                           </div>
                         ) : (
                           weekData[week.id].exercises.map((exercise, index) => (
-                            <div key={exercise.id} className="exercise-item">
+                            <div key={exercise.id || index} className="exercise-item">
                               <div className="exercise-name">{exercise.exerciseName}</div>
                               <div className="exercise-type">{exercise.trainingType}</div>
 
