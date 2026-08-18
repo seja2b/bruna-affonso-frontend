@@ -33,6 +33,14 @@ export default function AdminStudents() {
     }
   }
 
+  function openStudentWeeks(student) {
+    if (!student.studentId || student.status !== 'APPROVED') {
+      navigate(`/admin/alunos/${student.id}`)
+      return
+    }
+    navigate(`/admin/acompanhamentos?student=${encodeURIComponent(student.studentId)}`)
+  }
+
   async function runAction(studentId, action, successMessage) {
     try {
       setBusyId(studentId)
@@ -53,7 +61,6 @@ export default function AdminStudents() {
       const matchesTerm = !term || [student.name, student.email, student.phone]
         .filter(Boolean)
         .some((value) => value.toLowerCase().includes(term))
-
       const matchesStatus = filter === 'all' || student.status === filter
       return matchesTerm && matchesStatus
     })
@@ -67,7 +74,7 @@ export default function AdminStudents() {
         <div>
           <span className="admin-eyebrow">Gestão de alunos</span>
           <h2>Alunos</h2>
-          <p>Busque, acompanhe status e abra o perfil completo de cada aluno.</p>
+          <p>Clique em um aluno aprovado para abrir diretamente suas semanas e acompanhar o preenchimento.</p>
         </div>
         <div className="students-count-card"><strong>{students.length}</strong><span>cadastrados</span></div>
       </div>
@@ -75,13 +82,7 @@ export default function AdminStudents() {
       {feedback && <div className={`admin-inline-feedback ${feedback.type}`}>{feedback.message}</div>}
 
       <div className="students-toolbar">
-        <input
-          type="search"
-          placeholder="Buscar por nome, email ou telefone"
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          aria-label="Buscar alunos"
-        />
+        <input type="search" placeholder="Buscar por nome, email ou telefone" value={search} onChange={(event) => setSearch(event.target.value)} aria-label="Buscar alunos" />
         <select value={filter} onChange={(event) => setFilter(event.target.value)} aria-label="Filtrar por status">
           <option value="all">Todos os status</option>
           <option value="APPROVED">Aprovados</option>
@@ -99,10 +100,10 @@ export default function AdminStudents() {
             <thead><tr><th>Aluno</th><th>Status</th><th>Contato</th><th>Cadastro</th><th>Ações</th></tr></thead>
             <tbody>
               {filteredStudents.map((student) => (
-                <tr key={student.id}>
+                <tr key={student.id} className={student.status === 'APPROVED' ? 'student-row-clickable' : ''}>
                   <td>
-                    <button className="student-identity" onClick={() => navigate(`/admin/alunos/${student.id}`)}>
-                      <span className="student-avatar">{student.profilePhoto ? <img src={student.profilePhoto} alt="" /> : student.name?.charAt(0)?.toUpperCase()}</span>
+                    <button className="student-identity" onClick={() => openStudentWeeks(student)}>
+                      <span className="student-avatar">{student.profilePhoto ? <img src={student.profilePhoto} alt={`Foto de ${student.name}`} /> : student.name?.charAt(0)?.toUpperCase()}</span>
                       <span><strong>{student.name}</strong><small>{student.email}</small></span>
                     </button>
                   </td>
@@ -111,6 +112,7 @@ export default function AdminStudents() {
                   <td>{new Date(student.createdAt).toLocaleDateString('pt-BR')}</td>
                   <td>
                     <div className="student-row-actions">
+                      {student.status === 'APPROVED' && <button onClick={() => openStudentWeeks(student)}>Ver semanas</button>}
                       <button onClick={() => navigate(`/admin/alunos/${student.id}`)}>Ver perfil</button>
                       {student.status === 'PENDING' && <button disabled={busyId === student.id} onClick={() => runAction(student.id, 'approve', 'Aluno aprovado com sucesso.')}>Aprovar</button>}
                       {student.status === 'PENDING' && <button className="danger" disabled={busyId === student.id} onClick={() => runAction(student.id, 'reject', 'Cadastro rejeitado.')}>Rejeitar</button>}
