@@ -70,7 +70,70 @@ export default function AdminSettings({ user, token, onNavigate }) {
       </div>
 
       <form onSubmit={handleSaveSettings} className="settings-form">
-        {/* SEÇÃO 1: CONTATO */}
+        {/* SEÇÃO 1: IMAGENS */}
+        <div className="settings-section">
+          <h3>📸 Imagens</h3>
+
+          <div className="form-group">
+            <label>👩 Foto de Perfil</label>
+            <div className="photo-upload">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files[0]
+                  if (file) {
+                    const reader = new FileReader()
+                    reader.onload = (event) => {
+                      setSettings({...settings, profileImage: event.target.result})
+                    }
+                    reader.readAsDataURL(file)
+                  }
+                }}
+                id="profile-photo"
+              />
+              <label htmlFor="profile-photo" className="upload-btn">
+                📤 Clique para fazer upload
+              </label>
+            </div>
+            {settings.profileImage && settings.profileImage.startsWith('data:') && (
+              <div className="photo-preview">
+                <img src={settings.profileImage} alt="Perfil" />
+              </div>
+            )}
+          </div>
+
+          <div className="form-group">
+            <label>🎨 Logo da Marca</label>
+            <div className="photo-upload">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files[0]
+                  if (file) {
+                    const reader = new FileReader()
+                    reader.onload = (event) => {
+                      setSettings({...settings, logo: event.target.result})
+                    }
+                    reader.readAsDataURL(file)
+                  }
+                }}
+                id="logo-photo"
+              />
+              <label htmlFor="logo-photo" className="upload-btn">
+                📤 Clique para fazer upload
+              </label>
+            </div>
+            {settings.logo && settings.logo.startsWith('data:') && (
+              <div className="logo-preview">
+                <img src={settings.logo} alt="Logo" />
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* SEÇÃO 2: CONTATO */}
         <div className="settings-section">
           <h3>📱 Informações de Contato</h3>
 
@@ -93,41 +156,6 @@ export default function AdminSettings({ user, token, onNavigate }) {
               onChange={(e) => setSettings({...settings, whatsappUrl: e.target.value})}
             />
             <small>Formato: https://wa.me/SEU_NUMERO</small>
-          </div>
-        </div>
-
-        {/* SEÇÃO 2: IMAGENS */}
-        <div className="settings-section">
-          <h3>📸 Imagens</h3>
-
-          <div className="form-group">
-            <label>👩 Foto de Perfil (URL)</label>
-            <input
-              type="url"
-              placeholder="https://..."
-              value={settings.profileImage || ''}
-              onChange={(e) => setSettings({...settings, profileImage: e.target.value})}
-            />
-            {settings.profileImage && (
-              <div className="photo-preview">
-                <img src={settings.profileImage} alt="Perfil" />
-              </div>
-            )}
-          </div>
-
-          <div className="form-group">
-            <label>🎨 Logo da Marca (URL)</label>
-            <input
-              type="url"
-              placeholder="https://..."
-              value={settings.logo || ''}
-              onChange={(e) => setSettings({...settings, logo: e.target.value})}
-            />
-            {settings.logo && (
-              <div className="logo-preview">
-                <img src={settings.logo} alt="Logo" />
-              </div>
-            )}
           </div>
         </div>
 
@@ -169,8 +197,8 @@ export default function AdminSettings({ user, token, onNavigate }) {
       <div className="info-card">
         <h3>💡 Dicas</h3>
         <ul>
-          <li><strong>Foto de Perfil:</strong> Cole o link da sua foto (funciona com URLs)</li>
-          <li><strong>Logo:</strong> Cole o link do logo da sua marca</li>
+          <li><strong>Foto de Perfil:</strong> Clique para fazer upload da sua foto</li>
+          <li><strong>Logo:</strong> Clique para fazer upload do logo da sua marca</li>
           <li><strong>Telefone:</strong> Seu número para contato com alunos</li>
           <li><strong>WhatsApp:</strong> Link direto para iniciar conversa</li>
           <li><strong>Frase:</strong> Algo motivador que inspira seus alunos diariamente</li>
