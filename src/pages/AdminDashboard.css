@@ -74,15 +74,15 @@
 }
 
 .header-logo-small {
-  width: 50px;
-  height: 50px;
+  width: 120px;
+  height: 60px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 8px;
-  padding: 5px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+  border: none;
 }
 
 .header-logo-small img {
@@ -90,6 +90,7 @@
   height: 100%;
   object-fit: contain;
   object-position: center;
+  filter: brightness(1.1);
 }
 
 .logout-btn {
@@ -674,6 +675,11 @@
   .ranking-table th,
   .ranking-table td {
     padding: 12px 8px;
+  }
+
+  .header-logo-small {
+    width: 100px;
+    height: 50px;
   }
 }
 
