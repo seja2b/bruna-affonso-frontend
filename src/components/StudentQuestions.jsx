@@ -1,27 +1,26 @@
-import React, { useState, useEffect } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import api from '../services/api'
 import './StudentQuestions.css'
 
-export default function StudentQuestions({ studentId, token }) {
+export default function StudentQuestions() {
   const [questions, setQuestions] = useState([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('pending')
   const [newQuestion, setNewQuestion] = useState('')
   const [showForm, setShowForm] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [feedback, setFeedback] = useState(null)
 
-  useEffect(() => {
-    fetchQuestions()
-  }, [])
+  useEffect(() => { fetchQuestions() }, [])
 
   async function fetchQuestions() {
     try {
-      const response = await api.get(`/questions?studentId=${studentId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      setQuestions(response.data)
+      setLoading(true)
+      const response = await api.get('/questions')
+      setQuestions(response.data || [])
     } catch (error) {
       console.error('Erro ao buscar perguntas', error)
+      setFeedback({ type: 'error', text: 'Não foi possível carregar suas perguntas agora.' })
     } finally {
       setLoading(false)
     }
@@ -29,167 +28,64 @@ export default function StudentQuestions({ studentId, token }) {
 
   async function handleSubmitQuestion(e) {
     e.preventDefault()
-    
-    if (!newQuestion.trim()) {
-      alert('❌ Digite uma pergunta!')
+    const text = newQuestion.trim()
+    if (text.length < 3) {
+      setFeedback({ type: 'error', text: 'Digite uma pergunta com pelo menos 3 caracteres.' })
       return
     }
 
     setSubmitting(true)
+    setFeedback(null)
     try {
-      await api.post(
-        '/questions',
-        { text: newQuestion },
-        { headers: { Authorization: `Bearer ${token}` } }
-      )
+      await api.post('/questions', { text })
       setNewQuestion('')
       setShowForm(false)
-      fetchQuestions()
-      alert('✅ Pergunta enviada com sucesso!')
+      setFeedback({ type: 'success', text: 'Pergunta enviada com sucesso.' })
+      await fetchQuestions()
     } catch (error) {
       console.error('Erro ao enviar pergunta', error)
-      alert('❌ Erro ao enviar pergunta')
+      setFeedback({ type: 'error', text: error.response?.data?.error || 'Não foi possível enviar sua pergunta.' })
     } finally {
       setSubmitting(false)
     }
   }
 
-  const pendingQuestions = questions.filter(q => !q.answeredAt && !q.answer)
-  const answeredQuestions = questions.filter(q => q.answeredAt || q.answer)
+  const pendingQuestions = useMemo(() => questions.filter((q) => q.status !== 'ANSWERED' && !q.answer), [questions])
+  const answeredQuestions = useMemo(() => questions.filter((q) => q.status === 'ANSWERED' || q.answer), [questions])
 
-  if (loading) {
-    return <div className="loading">Carregando perguntas...</div>
-  }
+  if (loading) return <div className="loading">Carregando perguntas...</div>
 
   return (
     <div className="student-questions">
       <div className="questions-header">
-        <div>
-          <h2>❓ Minhas Perguntas</h2>
-          <p>Faça suas dúvidas e acompanhe as respostas</p>
-        </div>
-        <button 
-          className="btn-nova-pergunta"
-          onClick={() => setShowForm(!showForm)}
-        >
-          {showForm ? '✖️ Cancelar' : '➕ Nova Pergunta'}
-        </button>
+        <div><span className="questions-kicker">Suporte</span><h2>Minhas perguntas</h2><p>Envie dúvidas e acompanhe as respostas.</p></div>
+        <button className="btn-nova-pergunta" onClick={() => setShowForm((value) => !value)}>{showForm ? 'Cancelar' : 'Nova pergunta'}</button>
       </div>
 
-      {/* FORMULÁRIO DE NOVA PERGUNTA */}
+      {feedback && <div className={`question-feedback ${feedback.type}`}>{feedback.text}</div>}
+
       {showForm && (
         <div className="form-card">
-          <h3>📝 Faça sua Pergunta</h3>
+          <h3>Enviar uma dúvida</h3>
           <form onSubmit={handleSubmitQuestion}>
-            <div className="form-group">
-              <label>Sua Dúvida</label>
-              <textarea
-                placeholder="Digite sua pergunta aqui... seja específico para receber a melhor resposta!"
-                value={newQuestion}
-                onChange={(e) => setNewQuestion(e.target.value)}
-                rows="5"
-              />
-            </div>
-            <div className="form-actions">
-              <button 
-                type="submit" 
-                className="btn-enviar"
-                disabled={submitting}
-              >
-                {submitting ? '⏳ Enviando...' : '✅ Enviar Pergunta'}
-              </button>
-              <button 
-                type="button"
-                className="btn-cancelar"
-                onClick={() => setShowForm(false)}
-              >
-                Cancelar
-              </button>
-            </div>
+            <div className="form-group"><label>Sua pergunta</label><textarea placeholder="Descreva sua dúvida com contexto suficiente para receber uma boa resposta." value={newQuestion} onChange={(e) => setNewQuestion(e.target.value)} rows="5" maxLength="5000" /></div>
+            <div className="form-actions"><button type="submit" className="btn-enviar" disabled={submitting}>{submitting ? 'Enviando...' : 'Enviar pergunta'}</button><button type="button" className="btn-cancelar" onClick={() => setShowForm(false)}>Cancelar</button></div>
           </form>
         </div>
       )}
 
-      {/* ABAS */}
-      <div className="questions-tabs">
-        <button
-          className={`tab-btn ${activeTab === 'pending' ? 'active' : ''}`}
-          onClick={() => setActiveTab('pending')}
-        >
-          ⏳ Pendentes ({pendingQuestions.length})
-        </button>
-        <button
-          className={`tab-btn ${activeTab === 'answered' ? 'active' : ''}`}
-          onClick={() => setActiveTab('answered')}
-        >
-          ✅ Respondidas ({answeredQuestions.length})
-        </button>
+      <div className="questions-tabs"><button className={`tab-btn ${activeTab === 'pending' ? 'active' : ''}`} onClick={() => setActiveTab('pending')}>Pendentes ({pendingQuestions.length})</button><button className={`tab-btn ${activeTab === 'answered' ? 'active' : ''}`} onClick={() => setActiveTab('answered')}>Respondidas ({answeredQuestions.length})</button></div>
+
+      <div className="questions-list">
+        {(activeTab === 'pending' ? pendingQuestions : answeredQuestions).length === 0 ? <div className="empty-state"><p>{activeTab === 'pending' ? 'Nenhuma pergunta pendente.' : 'Nenhuma pergunta respondida ainda.'}</p></div> : (activeTab === 'pending' ? pendingQuestions : answeredQuestions).map((question) => (
+          <article key={question.id} className={`pergunta-card ${question.answer ? 'answered' : 'pending'}`}>
+            <div className="pergunta-header"><div className="pergunta-status">{question.answer ? 'Respondida' : 'Aguardando resposta'}</div><div className="pergunta-data">{new Date(question.createdAt).toLocaleDateString('pt-BR')}</div></div>
+            {question.title && <strong className="pergunta-title">{question.title}</strong>}
+            <div className="pergunta-texto">{question.text}</div>
+            {question.answer && <div className="resposta-box"><div className="resposta-label">Resposta da Bruna</div><p className="resposta-texto">{question.answer}</p></div>}
+          </article>
+        ))}
       </div>
-
-      {/* PERGUNTAS PENDENTES */}
-      {activeTab === 'pending' && (
-        <div className="questions-list">
-          {pendingQuestions.length === 0 ? (
-            <div className="empty-state">
-              <p>🎉 Nenhuma pergunta pendente!</p>
-              <p className="empty-text">Parabéns! Todas as suas dúvidas foram respondidas.</p>
-            </div>
-          ) : (
-            pendingQuestions.map(question => (
-              <div key={question.id} className="pergunta-card pending">
-                <div className="pergunta-header">
-                  <div className="pergunta-status">⏳ Aguardando Resposta</div>
-                  <div className="pergunta-data">
-                    {new Date(question.createdAt).toLocaleDateString('pt-BR')}
-                  </div>
-                </div>
-                <div className="pergunta-texto">{question.text}</div>
-              </div>
-            ))
-          )}
-        </div>
-      )}
-
-      {/* PERGUNTAS RESPONDIDAS */}
-      {activeTab === 'answered' && (
-        <div className="questions-list">
-          {answeredQuestions.length === 0 ? (
-            <div className="empty-state">
-              <p>Nenhuma pergunta respondida ainda</p>
-            </div>
-          ) : (
-            answeredQuestions.map(question => (
-              <div key={question.id} className="pergunta-card answered">
-                <div className="pergunta-header">
-                  <div className="pergunta-status">✅ Respondida</div>
-                  <div className="pergunta-data">
-                    {new Date(question.answeredAt || question.createdAt).toLocaleDateString('pt-BR')}
-                  </div>
-                </div>
-                <div className="pergunta-texto">{question.text}</div>
-
-                <div className="resposta-box">
-                  <div className="resposta-label">💬 Resposta da Bruna:</div>
-                  <p className="resposta-texto">{question.answer}</p>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      )}
-
-      {/* DICA */}
-      {questions.length === 0 && (
-        <div className="info-card">
-          <h3>💡 Como Fazer uma Boa Pergunta?</h3>
-          <ul>
-            <li><strong>Seja específico:</strong> Descreva exatamente qual é sua dúvida</li>
-            <li><strong>Contexto:</strong> Mencione em qual exercício ou semana está a dúvida</li>
-            <li><strong>Detalhes:</strong> Quanto mais informação, melhor a resposta</li>
-            <li><strong>Paciência:</strong> Bruna responderá assim que possível</li>
-          </ul>
-        </div>
-      )}
     </div>
   )
 }
