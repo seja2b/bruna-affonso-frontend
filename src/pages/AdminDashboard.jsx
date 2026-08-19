@@ -19,7 +19,7 @@ export default function AdminDashboard({ user, token, onLogout }) {
         <Route index element={<AdminHome />} />
         <Route path="alunos" element={<AdminStudents user={user} token={token} />} />
         <Route path="alunos/:id" element={<AdminStudentDetail />} />
-        <Route path="treinos" element={<AdminWorkouts user={user} token={token} />} />
+        <Route path="treinos" element={<Navigate to="../videos" replace />} />
         <Route path="semanas" element={<Navigate to="../acompanhamentos" replace />} />
         <Route path="acompanhamentos" element={<AdminTracking token={token} />} />
         <Route path="perguntas" element={<AdminQuestions user={user} token={token} />} />
