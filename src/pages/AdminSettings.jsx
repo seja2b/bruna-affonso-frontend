@@ -73,7 +73,9 @@ export default function AdminSettings() {
       setFeedback(null)
       const payload = Object.fromEntries(Object.keys(emptySettings).map((key) => [key, settings[key] || '']))
       const { data } = await api.put('/admin/settings', payload)
-      setSettings({ ...emptySettings, ...(data.settings || payload) })
+      const nextSettings = { ...emptySettings, ...(data.settings || payload) }
+      setSettings(nextSettings)
+      window.dispatchEvent(new CustomEvent('platform-settings-updated', { detail: nextSettings }))
       setFeedback({ type: 'success', message: 'Identidade e conteúdo da plataforma atualizados.' })
     } catch (error) {
       console.error('Erro ao salvar configurações', error)
