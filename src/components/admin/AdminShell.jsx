@@ -4,7 +4,6 @@ import { NavLink, Outlet, useLocation } from 'react-router-dom'
 const items = [
   ['','Dashboard','grid'],
   ['alunos','Alunos','users'],
-  ['treinos','Treinos','activity'],
   ['acompanhamentos','Acompanhamentos','chart'],
   ['perguntas','Perguntas','message'],
   ['videos','VideoAulas','video'],
