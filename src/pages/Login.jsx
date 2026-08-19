@@ -12,6 +12,21 @@ function EyeIcon({ hidden }) {
   )
 }
 
+function AlertIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7.5v5M12 16.5h.01" />
+    </svg>
+  )
+}
+
+function getAuthError(error) {
+  if (!error.response) return 'Não foi possível conectar à plataforma. Verifique sua internet e tente novamente.'
+  if (error.response.status === 429) return 'Muitas tentativas em pouco tempo. Aguarde alguns minutos e tente novamente.'
+  return error.response.data?.error || 'Não foi possível concluir sua solicitação. Tente novamente.'
+}
+
 export default function Login() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -31,6 +46,17 @@ export default function Login() {
   async function handleSubmit(e) {
     e.preventDefault()
     setError('')
+
+    if (!email.trim() || !password || (isRegister && !name.trim())) {
+      setError('Preencha todos os campos para continuar.')
+      return
+    }
+
+    if (isRegister && password.length < 8) {
+      setError('A senha deve ter pelo menos 8 caracteres.')
+      return
+    }
+
     setLoading(true)
 
     try {
@@ -45,7 +71,7 @@ export default function Login() {
       const destination = location.state?.from?.pathname || fallback
       navigate(destination, { replace: true })
     } catch (err) {
-      setError(err.response?.data?.error || 'Não foi possível concluir sua solicitação. Tente novamente.')
+      setError(getAuthError(err))
     } finally {
       setLoading(false)
     }
@@ -93,20 +119,20 @@ export default function Login() {
             {isRegister && (
               <label className="auth-field">
                 <span>Nome completo</span>
-                <input type="text" autoComplete="name" placeholder="Seu nome completo" value={name} onChange={(e) => setName(e.target.value)} required />
+                <input type="text" autoComplete="name" placeholder="Seu nome completo" value={name} onChange={(e) => setName(e.target.value)} disabled={loading} aria-invalid={Boolean(error)} required />
               </label>
             )}
 
             <label className="auth-field">
               <span>E-mail</span>
-              <input type="email" autoComplete="email" inputMode="email" placeholder="voce@exemplo.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
+              <input type="email" autoComplete="email" inputMode="email" placeholder="voce@exemplo.com" value={email} onChange={(e) => setEmail(e.target.value)} disabled={loading} aria-invalid={Boolean(error)} aria-describedby={error ? 'auth-error' : undefined} required />
             </label>
 
             <label className="auth-field">
               <span>Senha</span>
               <div className="password-field">
-                <input type={showPassword ? 'text' : 'password'} autoComplete={isRegister ? 'new-password' : 'current-password'} placeholder={isRegister ? 'Mínimo de 8 caracteres' : 'Digite sua senha'} value={password} onChange={(e) => setPassword(e.target.value)} minLength={isRegister ? 8 : undefined} required />
-                <button type="button" className="password-toggle" onClick={() => setShowPassword((value) => !value)} aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}>
+                <input type={showPassword ? 'text' : 'password'} autoComplete={isRegister ? 'new-password' : 'current-password'} placeholder={isRegister ? 'Mínimo de 8 caracteres' : 'Digite sua senha'} value={password} onChange={(e) => setPassword(e.target.value)} disabled={loading} aria-invalid={Boolean(error)} aria-describedby={error ? 'auth-error' : undefined} minLength={isRegister ? 8 : undefined} required />
+                <button type="button" className="password-toggle" onClick={() => setShowPassword((value) => !value)} disabled={loading} aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'} aria-pressed={showPassword}>
                   <EyeIcon hidden={showPassword} />
                 </button>
               </div>
@@ -119,10 +145,10 @@ export default function Login() {
               </div>
             )}
 
-            {error && <div className="auth-alert" role="alert">{error}</div>}
+            {error && <div id="auth-error" className="auth-alert" role="alert" aria-live="polite"><AlertIcon /><span>{error}</span></div>}
 
             <button type="submit" className="submit-button" disabled={loading || authLoading}>
-              {loading ? <><span className="button-spinner" /> Processando...</> : isRegister ? 'Solicitar acesso' : 'Entrar na plataforma'}
+              {loading || authLoading ? <><span className="button-spinner" /> {authLoading ? 'Verificando sessão...' : 'Processando...'}</> : isRegister ? 'Solicitar acesso' : 'Entrar na plataforma'}
             </button>
           </form>
 
@@ -137,3 +163,4 @@ export default function Login() {
     </main>
   )
 }
+
