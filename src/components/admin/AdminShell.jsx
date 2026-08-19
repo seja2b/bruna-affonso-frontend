@@ -1,5 +1,6 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import api from '../../services/api'
 
 const items = [
   ['','Dashboard','grid'],
@@ -29,15 +30,33 @@ function Icon({ name }) {
 
 export default function AdminShell({ user, onLogout }) {
   const [open,setOpen]=useState(false)
+  const [brandSettings,setBrandSettings]=useState({ profileImage: '', logo: '' })
   const location=useLocation()
+
+  useEffect(()=>{
+    let active=true
+    function syncSettings(event){
+      if(event?.detail){
+        if(active) setBrandSettings(event.detail)
+        return
+      }
+      api.get('/admin/settings').then(({data})=>{if(active) setBrandSettings(data||{})}).catch(()=>{})
+    }
+    syncSettings()
+    window.addEventListener('platform-settings-updated',syncSettings)
+    return()=>{active=false;window.removeEventListener('platform-settings-updated',syncSettings)}
+  },[])
+
+  const teacherImage=brandSettings.profileImage||user?.profilePhoto
   const title=items.find(([path])=>location.pathname.endsWith(path)||(!path&&location.pathname==='/admin'))?.[1]||'Administração'
   return <div className="admin-shell">
     <aside className={`admin-sidebar ${open?'is-open':''}`}>
-      <div className="admin-brand"><div className="admin-brand-mark">BA</div><div><strong>Bruna Affonso</strong><span>Administração</span></div></div>
+      <div className="admin-brand"><div className="admin-brand-mark">{teacherImage?<img src={teacherImage} alt="Foto da professora"/>:'BA'}</div><div><strong>Bruna Affonso</strong><span>Administração</span></div></div>
       <nav className="admin-nav">{items.map(([path,label,icon])=><NavLink key={label} end={!path} to={path||'.'} onClick={()=>setOpen(false)} className={({isActive})=>isActive?'active':''}><Icon name={icon}/><span>{label}</span></NavLink>)}</nav>
+      {brandSettings.logo&&<div className="admin-brand-signature"><img src={brandSettings.logo} alt="Logo Bruna Affonso"/></div>}
       <button className="admin-logout" onClick={onLogout}><Icon name="logout"/><span>Sair</span></button>
     </aside>
     {open&&<button className="admin-backdrop" aria-label="Fechar menu" onClick={()=>setOpen(false)}/>} 
-    <div className="admin-main"><header className="admin-topbar"><button className="admin-menu-btn" onClick={()=>setOpen(true)} aria-label="Abrir menu"><Icon name="menu"/></button><div><span className="admin-eyebrow">Painel administrativo</span><h1>{title}</h1></div><div className="admin-user-chip"><div className="admin-avatar">{user?.profilePhoto?<img src={user.profilePhoto} alt=""/>:(user?.name?.[0]||'A')}</div><div><strong>{user?.name}</strong><span>{user?.email}</span></div></div></header><main className="admin-page"><Outlet/></main></div>
+    <div className="admin-main"><header className="admin-topbar"><button className="admin-menu-btn" onClick={()=>setOpen(true)} aria-label="Abrir menu"><Icon name="menu"/></button><div><span className="admin-eyebrow">Painel administrativo</span><h1>{title}</h1></div><div className="admin-user-chip"><div className="admin-avatar">{teacherImage?<img src={teacherImage} alt="Foto da professora"/>:(user?.name?.[0]||'A')}</div><div><strong>{user?.name}</strong><span>{user?.email}</span></div></div></header><main className="admin-page"><Outlet/></main></div>
   </div>
 }
