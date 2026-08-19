@@ -168,7 +168,9 @@
   height: 52px;
   flex: 0 0 auto;
   border-radius: 15px;
-  background: #fff center / cover no-repeat;
+  background: #fff center / contain no-repeat;
+  background-origin: content-box;
+  padding: 4px;
   box-shadow: 0 10px 28px rgba(28,49,79,.14), 0 0 0 4px rgba(124,58,237,.04);
   border: 1px solid rgba(124,58,237,.14);
 }
