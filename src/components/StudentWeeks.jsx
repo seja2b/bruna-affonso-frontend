@@ -125,7 +125,7 @@ export default function StudentWeeks({ studentId }) {
           const start = dateFormatter.format(new Date(week.startDate))
           const end = dateFormatter.format(new Date(week.endDate))
           return (
-            <button key={week.id} className={`week-card ${state}`} disabled={!week.isReleased} onClick={() => openWeek(week)}>
+            <button key={week.id} className={`week-card ${state}`} aria-disabled={!week.isReleased} onClick={() => openWeek(week)}>
               <span className="week-state-dot" />
               <span className="week-number">Semana {week.weekNumber}</span>
               <span className="week-calendar">{start} a {end}</span>
@@ -148,7 +148,9 @@ export default function StudentWeeks({ studentId }) {
             <button className="close-btn" onClick={() => setSelectedWeek(null)} aria-label="Fechar">×</button>
           </div>
 
-          <div className="manual-exercises">
+          {!selectedWeek.isReleased && <div className="week-locked-notice" role="status"><strong>Semana ainda bloqueada</strong><p>Esta semana será liberada automaticamente na segunda-feira correspondente, às 00:00, ou poderá ser antecipada pela professora.</p></div>}
+
+          {selectedWeek.isReleased && <div className="manual-exercises">
             <div className="manual-exercises-heading">
               <div><strong>Exercícios realizados</strong><span>Informe exercício, tipo, carga e repetições. Observações são opcionais.</span></div>
               {!selectedWeek.isCompleted && <button type="button" onClick={addExercise}>+ Adicionar exercício</button>}
@@ -165,12 +167,12 @@ export default function StudentWeeks({ studentId }) {
                 {!selectedWeek.isCompleted && <button className="manual-remove" type="button" onClick={() => removeExercise(index)} aria-label="Remover exercício">×</button>}
               </div>
             ))}
-          </div>
+          </div>}
 
           {selectedWeek.observation?.teacherNote && <div className="week-teacher-feedback"><strong>Feedback da professora</strong><p>{selectedWeek.observation.teacherNote}</p></div>}
           {feedback && <div className="week-action-feedback">{feedback}</div>}
 
-          {!selectedWeek.isCompleted && (
+          {selectedWeek.isReleased && !selectedWeek.isCompleted && (
             <div className="week-editor-actions">
               <button type="button" className="week-save" onClick={saveWeek} disabled={saving || completing}>{saving ? 'Salvando...' : 'Salvar preenchimento'}</button>
               <button type="button" className="week-complete" onClick={completeSelectedWeek} disabled={!canComplete || saving || completing}>{completing ? 'Concluindo...' : 'Concluir semana +100 pts'}</button>
