@@ -25,6 +25,8 @@ const legacyRefreshClient = axios.create({
   withCredentials: true
 })
 
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+
 export function setAccessToken(token) {
   accessToken = token || null
   localStorage.removeItem('token')
@@ -47,8 +49,8 @@ export function clearAccessToken() {
 api.interceptors.request.use((config) => {
   if (accessToken) config.headers.Authorization = `Bearer ${accessToken}`
 
-  // O backend novo usa esta marca no payload para não devolver refresh JWT ao
-  // JavaScript. Backends antigos simplesmente ignoram o campo, permitindo rollout seguro.
+  // O backend novo pode usar esta marca no payload durante o período de rollout.
+  // Backends antigos simplesmente ignoram o campo.
   if (config.method?.toLowerCase() === 'post' && config.url?.startsWith('/auth/login')) {
     config.data = { ...(config.data || {}), clientVersion: 2 }
   }
@@ -58,14 +60,27 @@ api.interceptors.request.use((config) => {
 
 let refreshPromise = null
 
+async function requestRefresh() {
+  const legacyRefreshToken = localStorage.getItem('refreshToken')
+
+  try {
+    return legacyRefreshToken
+      ? await legacyRefreshClient.post('/auth/refresh', { refreshToken: legacyRefreshToken })
+      : await refreshClient.post('/auth/refresh', {})
+  } catch (error) {
+    if (error.response?.status === 409 && error.response?.data?.retry) {
+      // Outra aba pode ter acabado de rotacionar o cookie compartilhado. Aguarda a
+      // resposta dela atualizar o cookie e tenta uma única vez com o modo seguro.
+      await wait(250)
+      return refreshClient.post('/auth/refresh', {})
+    }
+    throw error
+  }
+}
+
 export async function refreshAccessToken() {
   if (!refreshPromise) {
-    const legacyRefreshToken = localStorage.getItem('refreshToken')
-    const request = legacyRefreshToken
-      ? legacyRefreshClient.post('/auth/refresh', { refreshToken: legacyRefreshToken })
-      : refreshClient.post('/auth/refresh', {})
-
-    refreshPromise = request
+    refreshPromise = requestRefresh()
       .then(({ data }) => {
         setAccessToken(data.token)
         localStorage.removeItem('refreshToken')
