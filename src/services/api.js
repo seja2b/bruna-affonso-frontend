@@ -9,14 +9,20 @@ const sessionHeaders = { 'X-Requested-With': 'XMLHttpRequest' }
 
 const api = axios.create({
   baseURL,
-  withCredentials: true,
-  headers: sessionHeaders
+  withCredentials: true
 })
 
 const refreshClient = axios.create({
   baseURL,
   withCredentials: true,
   headers: sessionHeaders
+})
+
+// Usado somente para transformar uma sessão antiga, já existente no navegador,
+// em cookie HttpOnly. Não é usado após a migração.
+const legacyRefreshClient = axios.create({
+  baseURL,
+  withCredentials: true
 })
 
 export function setAccessToken(token) {
@@ -40,6 +46,13 @@ export function clearAccessToken() {
 
 api.interceptors.request.use((config) => {
   if (accessToken) config.headers.Authorization = `Bearer ${accessToken}`
+
+  // O backend novo usa esta marca no payload para não devolver refresh JWT ao
+  // JavaScript. Backends antigos simplesmente ignoram o campo, permitindo rollout seguro.
+  if (config.method?.toLowerCase() === 'post' && config.url?.startsWith('/auth/login')) {
+    config.data = { ...(config.data || {}), clientVersion: 2 }
+  }
+
   return config
 })
 
@@ -48,9 +61,11 @@ let refreshPromise = null
 export async function refreshAccessToken() {
   if (!refreshPromise) {
     const legacyRefreshToken = localStorage.getItem('refreshToken')
-    const payload = legacyRefreshToken ? { refreshToken: legacyRefreshToken } : {}
+    const request = legacyRefreshToken
+      ? legacyRefreshClient.post('/auth/refresh', { refreshToken: legacyRefreshToken })
+      : refreshClient.post('/auth/refresh', {})
 
-    refreshPromise = refreshClient.post('/auth/refresh', payload)
+    refreshPromise = request
       .then(({ data }) => {
         setAccessToken(data.token)
         localStorage.removeItem('refreshToken')
@@ -62,6 +77,10 @@ export async function refreshAccessToken() {
   }
 
   return refreshPromise
+}
+
+export async function revokeServerSession() {
+  return api.post('/auth/logout', {}, { headers: sessionHeaders })
 }
 
 api.interceptors.response.use(
