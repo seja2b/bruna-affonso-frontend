@@ -1,6 +1,7 @@
 import React from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import Login from './pages/Login'
+import Privacy from './pages/Privacy'
 import StudentDashboard from './pages/StudentDashboard'
 import AdminDashboard from './pages/AdminDashboard'
 import { ProtectedRoute, RoleRoute } from './components/RouteGuards'
@@ -29,6 +30,7 @@ export default function App() {
     <Routes>
       <Route path="/" element={<HomeRedirect />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/privacidade" element={<Privacy />} />
 
       <Route element={<ProtectedRoute />}>
         <Route element={<RoleRoute role="STUDENT" />}>

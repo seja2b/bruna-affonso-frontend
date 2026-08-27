@@ -138,6 +138,27 @@ a:hover {
   color: #1e3a8a;
 }
 
+.login-footer a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.login-footer a:hover {
+  color: #ffffff;
+}
+
+.auth-alert.auth-success {
+  border-color: #b9e0c6;
+  background: rgba(241, 251, 244, .96);
+  color: #22653a;
+}
+
+.auth-alert.auth-success > span:first-child {
+  font-weight: 800;
+  line-height: 1.25;
+}
+
 /* SELECTION */
 ::selection {
   background: #1e40af;
