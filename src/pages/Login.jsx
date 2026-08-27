@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import api from '../services/api'
 import { useAuth } from '../context/AuthContext'
 import './Login.css'
@@ -157,10 +157,11 @@ export default function Login() {
             <button type="button" className="toggle-button" onClick={toggleMode}>{isRegister ? 'Entrar' : 'Criar conta'}</button>
           </div>
 
-          <footer className="login-footer">© 2026 Bruna Affonso. Ambiente exclusivo para alunos.</footer>
+          <footer className="login-footer">
+            © 2026 Bruna Affonso. Ambiente exclusivo para alunos. · <Link to="/privacidade">Privacidade</Link>
+          </footer>
         </div>
       </section>
     </main>
   )
 }
-
