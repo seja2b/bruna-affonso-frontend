@@ -38,6 +38,7 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
 
   if (!authLoading && user) {
     return <Navigate to={user.role === 'ADMIN' ? '/admin' : '/aluno'} replace />
@@ -46,6 +47,7 @@ export default function Login() {
   async function handleSubmit(e) {
     e.preventDefault()
     setError('')
+    setSuccess('')
 
     if (!email.trim() || !password || (isRegister && !name.trim())) {
       setError('Preencha todos os campos para continuar.')
@@ -66,6 +68,15 @@ export default function Login() {
         : { email: email.trim(), password }
 
       const { data } = await api.post(endpoint, payload)
+
+      if (isRegister) {
+        setSuccess(data.message || 'Cadastro recebido. Aguarde a aprovação antes de entrar na plataforma.')
+        setIsRegister(false)
+        setName('')
+        setPassword('')
+        return
+      }
+
       const sessionUser = await establishSession(data)
       const fallback = sessionUser.role === 'ADMIN' ? '/admin' : '/aluno'
       const destination = location.state?.from?.pathname || fallback
@@ -80,6 +91,7 @@ export default function Login() {
   function toggleMode() {
     setIsRegister((current) => !current)
     setError('')
+    setSuccess('')
     setPassword('')
   }
 
@@ -145,6 +157,7 @@ export default function Login() {
               </div>
             )}
 
+            {success && <div className="auth-alert auth-success" role="status" aria-live="polite"><span>✓</span><span>{success}</span></div>}
             {error && <div id="auth-error" className="auth-alert" role="alert" aria-live="polite"><AlertIcon /><span>{error}</span></div>}
 
             <button type="submit" className="submit-button" disabled={loading || authLoading}>
