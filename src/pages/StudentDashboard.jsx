@@ -10,6 +10,7 @@ import StudentVideos from '../components/StudentVideos'
 import StudentQuestions from '../components/StudentQuestions'
 import StudentRanking from '../components/StudentRanking'
 import StudentAssessments from './student/StudentAssessments'
+import AssessmentWelcomeModal from '../components/student/AssessmentWelcomeModal'
 import './StudentDashboard.css'
 
 function PendingApproval({ user, onLogout }) {
@@ -30,7 +31,9 @@ export default function StudentDashboard({ user, token, onLogout }) {
   if (user?.status !== 'APPROVED') return <PendingApproval user={user} onLogout={onLogout} />
 
   return (
-    <Routes>
+    <>
+      <AssessmentWelcomeModal user={user} />
+      <Routes>
       <Route element={<StudentShell user={user} onLogout={onLogout} />}>
         <Route index element={<StudentHome user={user} />} />
         <Route path="treinos" element={<StudentWeeks studentId={user.studentId} token={token} />} />
@@ -43,6 +46,7 @@ export default function StudentDashboard({ user, token, onLogout }) {
         <Route path="perfil" element={<StudentProfile />} />
         <Route path="*" element={<Navigate to="." replace />} />
       </Route>
-    </Routes>
+      </Routes>
+    </>
   )
 }
