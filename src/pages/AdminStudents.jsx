@@ -102,7 +102,7 @@ export default function AdminStudents() {
               {filteredStudents.map((student) => (
                 <tr key={student.id} className={student.status === 'APPROVED' ? 'student-row-clickable' : ''}>
                   <td>
-                    <button className="student-identity" onClick={() => openStudentWeeks(student)}>
+                    <button className="student-identity" onClick={() => navigate(`/admin/alunos/${student.id}`)}>
                       <span className="student-avatar">{student.profilePhoto ? <img src={student.profilePhoto} alt={`Foto de ${student.name}`} /> : student.name?.charAt(0)?.toUpperCase()}</span>
                       <span><strong>{student.name}</strong><small>{student.email}</small></span>
                     </button>

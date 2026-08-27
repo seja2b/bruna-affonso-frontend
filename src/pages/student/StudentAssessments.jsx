@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import api from '../../services/api'
+import { useAuth } from '../../context/AuthContext'
+import { generateAssessmentPdf } from '../../utils/assessmentPdf'
 import './StudentAssessments.css'
 
 const stages = [
@@ -17,9 +19,10 @@ function Video({ url }) {
   return id ? <div className="assessment-video"><iframe src={`https://www.youtube-nocookie.com/embed/${id}`} title="Orientação da Bruna" allowFullScreen /></div> : null
 }
 
-export default function StudentAssessments() {
-  const [payload, setPayload] = useState({ cycles: [], videos: [] }); const [selected, setSelected] = useState(0); const [open, setOpen] = useState('ANAMNESIS'); const [form, setForm] = useState({}); const [message, setMessage] = useState(''); const [busy, setBusy] = useState(false)
-  const load = async () => { const { data } = await api.get('/assessments'); setPayload(data); setSelected(Math.max(0, data.cycles.length - 1)) }
+export default function StudentAssessments({ mode = 'assessment' }) {
+  const { user } = useAuth()
+  const [payload, setPayload] = useState({ cycles: [], videos: [] }); const [settings, setSettings] = useState({}); const [selected, setSelected] = useState(0); const [open, setOpen] = useState('ANAMNESIS'); const [form, setForm] = useState({}); const [message, setMessage] = useState(''); const [busy, setBusy] = useState(false)
+  const load = async () => { const [{ data }, settingsResponse] = await Promise.all([api.get('/assessments'), api.get('/admin/settings')]); setPayload(data); setSettings(settingsResponse.data || {}); const available = mode === 'reassessment' ? data.cycles.map((item, index) => item.sequence ? index : -1).filter((index) => index >= 0) : [0]; setSelected(available.at(-1) ?? 0) }
   useEffect(() => { load().catch(() => setMessage('Não foi possível carregar sua avaliação.')) }, [])
   const cycle = payload.cycles[selected]
   const videos = useMemo(() => Object.fromEntries(payload.videos.map((item) => [item.stage, item.youtubeUrl])), [payload.videos])
@@ -28,9 +31,10 @@ export default function StudentAssessments() {
   async function save(stage, complete) { try { setBusy(true); const { data } = await api.patch(`/assessments/${cycle.id}/stages/${stage}`, { data: form[stage], complete, healthConsent: form.healthConsent }); setPayload((old) => ({ ...old, cycles: old.cycles.map((item) => item.id === data.id ? data : item) })); setMessage(complete ? 'Etapa concluída.' : 'Rascunho salvo.') } catch (error) { setMessage(error.response?.data?.error || 'Não foi possível salvar.') } finally { setBusy(false) } }
   async function photo(view, file) { if (!file) return; const body = new FormData(); body.append('photo', file); try { setBusy(true); await api.post(`/assessments/${cycle.id}/photos/${view}`, body); await load(); setMessage('Foto enviada com segurança.') } catch (error) { setMessage(error.response?.data?.error || 'Não foi possível enviar a foto.') } finally { setBusy(false) } }
   if (!cycle) return <div className="assessment-state">Carregando avaliação...</div>
+  if (mode === 'reassessment' && !cycle.sequence) return <div className="assessment-state"><h2>Reavaliação</h2><p>Nenhuma reavaliação foi liberada para você ainda.</p></div>
   return <section className="assessments-page">
-    <header className="assessment-hero"><div><span>Minha evolução</span><h2>{cycle.sequence ? `Reavaliação ${cycle.sequence}` : 'Avaliação inicial'}</h2><p>Faça as etapas na ordem que preferir. O prazo único é de 7 dias corridos.</p></div><div className="assessment-deadline"><strong>{cycle.progress}%</strong><span>{cycle.status === 'COMPLETED' ? 'Concluída' : `${cycle.daysRemaining} dias restantes`}</span></div></header>
-    {payload.cycles.length > 1 && <div className="cycle-tabs">{payload.cycles.map((item, index) => <button className={index === selected ? 'active' : ''} onClick={() => setSelected(index)} key={item.id}>{item.sequence ? `Reavaliação ${item.sequence}` : 'Inicial'}</button>)}</div>}
+    <header className="assessment-hero"><div><span>Minha evolução</span><h2>{cycle.sequence ? `Reavaliação ${cycle.sequence}` : 'Avaliação inicial'}</h2><p>Faça as etapas na ordem que preferir. O prazo único é de 7 dias corridos.</p></div><div className="assessment-deadline"><strong>{cycle.progress}%</strong><span>{cycle.status === 'COMPLETED' ? 'Concluída' : `${cycle.daysRemaining} dias restantes`}</span><button className="assessment-pdf-button" onClick={() => generateAssessmentPdf({ cycle, previous: payload.cycles[selected - 1], student: user, settings })}>Gerar PDF</button></div></header>
+    {mode === 'reassessment' && payload.cycles.filter((item) => item.sequence).length > 1 && <div className="cycle-tabs">{payload.cycles.map((item, index) => item.sequence ? <button className={index === selected ? 'active' : ''} onClick={() => setSelected(index)} key={item.id}>{`Reavaliação ${item.sequence}`}</button> : null)}</div>}
     {message && <div className="assessment-message">{message}</div>}
     <div className="assessment-layout"><nav className="stage-list">{stages.map(([key, title, description]) => <button key={key} className={open === key ? 'active' : ''} onClick={() => setOpen(key)}><span className={`stage-dot ${cycle.stageStatuses[key]?.toLowerCase()}`}>✓</span><span><strong>{title}</strong><small>{description}</small></span><em>{statusLabel[cycle.stageStatuses[key]]}</em></button>)}</nav>
       <article className="stage-panel"><div className="stage-heading"><div><span>Orientação</span><h3>{stages.find(([key]) => key === open)?.[1]}</h3></div><span className="stage-status">{statusLabel[cycle.stageStatuses[open]]}</span></div><Video url={videos[open]} />
