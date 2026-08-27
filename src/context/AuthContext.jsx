@@ -4,6 +4,7 @@ import api, {
   getAccessToken,
   hasLegacyRefreshToken,
   refreshAccessToken,
+  revokeServerSession,
   setAccessToken
 } from '../services/api'
 
@@ -59,7 +60,7 @@ export function AuthProvider({ children }) {
 
   const logout = useCallback(async () => {
     try {
-      await api.post('/auth/logout')
+      await revokeServerSession()
     } catch (error) {
       // A sessão local deve ser encerrada mesmo que a API esteja indisponível.
     } finally {
