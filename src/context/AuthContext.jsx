@@ -1,5 +1,11 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
-import api from '../services/api'
+import api, {
+  clearAccessToken,
+  getAccessToken,
+  hasLegacyRefreshToken,
+  refreshAccessToken,
+  setAccessToken
+} from '../services/api'
 
 const AuthContext = createContext(null)
 
@@ -8,19 +14,18 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
 
   const clearSession = useCallback(() => {
-    localStorage.removeItem('token')
-    localStorage.removeItem('refreshToken')
+    clearAccessToken()
     setUser(null)
   }, [])
 
   const loadUser = useCallback(async () => {
-    const token = localStorage.getItem('token')
-    if (!token) {
-      setLoading(false)
-      return
-    }
-
     try {
+      // Em reloads, o access token vive apenas em memória. O cookie HttpOnly renova
+      // a sessão. Durante a transição, um refresh token legado é migrado uma única vez.
+      if (!getAccessToken() || hasLegacyRefreshToken()) {
+        await refreshAccessToken()
+      }
+
       const { data } = await api.get('/auth/me')
       setUser(data)
     } catch (error) {
@@ -35,8 +40,12 @@ export function AuthProvider({ children }) {
   }, [loadUser])
 
   const establishSession = useCallback(async ({ token, refreshToken, user: loginUser }) => {
-    localStorage.setItem('token', token)
+    setAccessToken(token)
+
+    // Compatibilidade temporária se o frontend novo conversar por alguns minutos
+    // com o backend antigo durante o rollout. O próximo refresh migra e remove isso.
     if (refreshToken) localStorage.setItem('refreshToken', refreshToken)
+
     setUser(loginUser || null)
 
     if (!loginUser) {
