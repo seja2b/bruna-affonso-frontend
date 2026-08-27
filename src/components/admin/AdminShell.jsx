@@ -5,6 +5,7 @@ import api from '../../services/api'
 const items = [
   ['','Dashboard','grid'],
   ['alunos','Alunos','users'],
+  ['avaliacoes','Avaliações','activity'],
   ['acompanhamentos','Acompanhamentos','chart'],
   ['perguntas','Perguntas','message'],
   ['videos','VideoAulas','video'],

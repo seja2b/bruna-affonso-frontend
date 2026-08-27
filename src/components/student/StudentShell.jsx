@@ -4,6 +4,7 @@ import NotificationBell from './NotificationBell'
 
 const items = [
   ['','Início','home'],
+  ['avaliacao','Avaliação','activity'],
   ['treinos','Meus treinos','calendar'],
   ['acompanhamento','Acompanhamento','chart'],
   ['videos','VideoAulas','play'],
@@ -17,6 +18,7 @@ function Icon({ name }) {
     home: <><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/></>,
     calendar: <><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></>,
     chart: <><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></>,
+    activity: <><path d="M3 12h4l2-5 4 10 2-5h6"/></>,
     play: <><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m10 9 5 3-5 3Z"/></>,
     message: <><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z"/></>,
     trophy: <><path d="M8 4h8v5a4 4 0 0 1-8 0Z"/><path d="M6 6H3a3 3 0 0 0 3 4M18 6h3a3 3 0 0 1-3 4M12 13v4M8 21h8M9 17h6"/></>,

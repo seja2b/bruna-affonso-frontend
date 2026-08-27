@@ -9,6 +9,7 @@ import StudentWeeklyTracking from '../components/StudentWeeklyTracking'
 import StudentVideos from '../components/StudentVideos'
 import StudentQuestions from '../components/StudentQuestions'
 import StudentRanking from '../components/StudentRanking'
+import StudentAssessments from './student/StudentAssessments'
 import './StudentDashboard.css'
 
 function PendingApproval({ user, onLogout }) {
@@ -35,6 +36,7 @@ export default function StudentDashboard({ user, token, onLogout }) {
         <Route path="treinos" element={<StudentWeeks studentId={user.studentId} token={token} />} />
         <Route path="semanas" element={<Navigate to="../treinos" replace />} />
         <Route path="acompanhamento" element={<StudentWeeklyTracking studentId={user.studentId} token={token} />} />
+        <Route path="avaliacao" element={<StudentAssessments />} />
         <Route path="videos" element={<StudentVideos token={token} />} />
         <Route path="perguntas" element={<StudentQuestions studentId={user.studentId} token={token} />} />
         <Route path="ranking" element={<StudentRanking token={token} />} />
