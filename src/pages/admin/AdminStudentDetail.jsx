@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import api from '../../services/api'
+import { generateAssessmentPdf } from '../../utils/assessmentPdf'
 import './AdminStudentDetail.css'
 
 export default function AdminStudentDetail() {
@@ -9,6 +10,8 @@ export default function AdminStudentDetail() {
   const [student, setStudent] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [assessmentData, setAssessmentData] = useState({ cycles: [] })
+  const [settings, setSettings] = useState({})
 
   useEffect(() => {
     async function loadStudent() {
@@ -17,6 +20,11 @@ export default function AdminStudentDetail() {
         setError('')
         const response = await api.get(`/admin/students/${id}`)
         setStudent(response.data)
+        if (response.data.studentId) {
+          const [assessments, platformSettings] = await Promise.all([api.get(`/admin/students/${response.data.studentId}/assessments`), api.get('/admin/settings')])
+          setAssessmentData(assessments.data)
+          setSettings(platformSettings.data || {})
+        }
       } catch (err) {
         setError(err.response?.data?.error || 'Não foi possível carregar este aluno.')
       } finally {
@@ -59,6 +67,25 @@ export default function AdminStudentDetail() {
         <Metric label="Perguntas pendentes" value={student.metrics.pendingQuestions} />
         <Metric label="Perguntas totais" value={student.metrics.totalQuestions} />
       </div>
+
+      <section className="detail-card detail-assessments-overview">
+        <div className="detail-card-heading"><h2>Avaliação e reavaliações</h2><span>{assessmentData.cycles.length} ciclos</span></div>
+        {assessmentData.cycles.length === 0 ? <p className="detail-empty">Nenhuma avaliação iniciada.</p> : assessmentData.cycles.map((cycle, index) => (
+          <article className="detail-assessment-cycle" key={cycle.id}>
+            <div><strong>{cycle.sequence ? `Reavaliação ${cycle.sequence}` : 'Avaliação inicial'}</strong><small>{cycle.progress}% concluído · {cycle.status === 'COMPLETED' ? 'Finalizada' : `${cycle.daysRemaining} dias restantes`}</small></div>
+            <div className="detail-assessment-stages">{Object.entries(cycle.stageStatuses).map(([stage, status]) => <span key={stage}>{stage}: {status === 'COMPLETED' ? 'Concluída' : status === 'IN_PROGRESS' ? 'Em andamento' : 'Pendente'}</span>)}</div>
+            <button onClick={() => generateAssessmentPdf({ cycle, previous: assessmentData.cycles[index - 1], student, settings, professional: true })}>Gerar PDF profissional</button>
+            <details className="detail-assessment-data">
+              <summary>Ver todos os dados deste ciclo</summary>
+              <div><strong>Anamnese</strong><pre>{JSON.stringify(cycle.anamnesis || {}, null, 2)}</pre></div>
+              <div><strong>Medidas corporais</strong><pre>{JSON.stringify(cycle.bodyAssessment || {}, null, 2)}</pre></div>
+              <div><strong>Teste de força</strong><pre>{JSON.stringify(cycle.strengthTest || {}, null, 2)}</pre></div>
+              <div><strong>Resistência</strong><pre>{JSON.stringify(cycle.enduranceTest || {}, null, 2)}</pre></div>
+              <div><strong>Fotos posturais privadas</strong><p>{cycle.photos?.length || 0} de 4 fotos recebidas. As imagens completas ficam disponíveis na área administrativa de Avaliações.</p></div>
+            </details>
+          </article>
+        ))}
+      </section>
 
       <div className="detail-grid-two">
         <section className="detail-card">

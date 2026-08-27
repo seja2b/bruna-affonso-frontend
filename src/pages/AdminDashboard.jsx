@@ -11,6 +11,7 @@ import AdminQuestions from './AdminQuestions'
 import AdminSettings from './AdminSettings'
 import AdminTracking from '../components/AdminTracking'
 import AdminRanking from '../components/AdminRanking'
+import AdminAssessments from './admin/AdminAssessments'
 
 export default function AdminDashboard({ user, token, onLogout }) {
   return (
@@ -22,6 +23,7 @@ export default function AdminDashboard({ user, token, onLogout }) {
         <Route path="treinos" element={<Navigate to="../videos" replace />} />
         <Route path="semanas" element={<Navigate to="../acompanhamentos" replace />} />
         <Route path="acompanhamentos" element={<AdminTracking token={token} />} />
+        <Route path="avaliacoes" element={<AdminAssessments />} />
         <Route path="perguntas" element={<AdminQuestions user={user} token={token} />} />
         <Route path="videos" element={<AdminVideoClasses />} />
         <Route path="ranking" element={<AdminRanking token={token} />} />
