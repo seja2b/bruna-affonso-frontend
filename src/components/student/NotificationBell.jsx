@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import api from '../../services/api'
 import './NotificationBell.css'
 
@@ -20,6 +21,7 @@ function BellIcon() {
 }
 
 export default function NotificationBell() {
+  const navigate = useNavigate()
   const [open, setOpen] = useState(false)
   const [items, setItems] = useState([])
   const [unreadCount, setUnreadCount] = useState(0)
@@ -42,12 +44,17 @@ export default function NotificationBell() {
     }
   }
 
-  async function markRead(notification) {
-    if (notification.isRead) return
+  async function openNotification(notification) {
     try {
-      await api.put(`/notifications/${notification.id}/read`)
-      setItems((current) => current.map((item) => item.id === notification.id ? { ...item, isRead: true } : item))
-      setUnreadCount((count) => Math.max(0, count - 1))
+      if (!notification.isRead) {
+        await api.put(`/notifications/${notification.id}/read`)
+        setItems((current) => current.map((item) => item.id === notification.id ? { ...item, isRead: true } : item))
+        setUnreadCount((count) => Math.max(0, count - 1))
+      }
+      if (notification.actionUrl) {
+        setOpen(false)
+        navigate(notification.actionUrl)
+      }
     } catch (err) {
       setError('Não foi possível atualizar a notificação.')
     }
@@ -87,7 +94,7 @@ export default function NotificationBell() {
           ) : (
             <div className="notification-list">
               {items.slice(0, 12).map((notification) => (
-                <button key={notification.id} className={`notification-item ${notification.isRead ? 'read' : 'unread'}`} onClick={() => markRead(notification)}>
+                <button key={notification.id} className={`notification-item ${notification.isRead ? 'read' : 'unread'}`} onClick={() => openNotification(notification)}>
                   <span className="notification-dot" />
                   <span className="notification-copy">
                     <strong>{notification.title}</strong>

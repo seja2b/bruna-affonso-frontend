@@ -12,6 +12,24 @@ export default function AdminStudentDetail() {
   const [error, setError] = useState('')
   const [assessmentData, setAssessmentData] = useState({ cycles: [] })
   const [settings, setSettings] = useState({})
+  const [assessmentMessage, setAssessmentMessage] = useState('')
+  const [releasing, setReleasing] = useState(false)
+
+  async function releaseReassessment() {
+    if (!student?.studentId) return
+    try {
+      setReleasing(true)
+      setAssessmentMessage('')
+      await api.post(`/admin/students/${student.studentId}/reassessments`)
+      const { data } = await api.get(`/admin/students/${student.studentId}/assessments`)
+      setAssessmentData(data)
+      setAssessmentMessage('Nova reavaliação liberada por 7 dias.')
+    } catch (err) {
+      setAssessmentMessage(err.response?.data?.error || 'Não foi possível liberar a reavaliação.')
+    } finally {
+      setReleasing(false)
+    }
+  }
 
   useEffect(() => {
     async function loadStudent() {
@@ -70,6 +88,8 @@ export default function AdminStudentDetail() {
 
       <section className="detail-card detail-assessments-overview">
         <div className="detail-card-heading"><h2>Avaliação e reavaliações</h2><span>{assessmentData.cycles.length} ciclos</span></div>
+        {assessmentData.cycles.at(-1)?.status === 'COMPLETED' && <button disabled={releasing} onClick={releaseReassessment}>{releasing ? 'Liberando...' : 'Liberar nova reavaliação'}</button>}
+        {assessmentMessage && <p>{assessmentMessage}</p>}
         {assessmentData.cycles.length === 0 ? <p className="detail-empty">Nenhuma avaliação iniciada.</p> : assessmentData.cycles.map((cycle, index) => (
           <article className="detail-assessment-cycle" key={cycle.id}>
             <div><strong>{cycle.sequence ? `Reavaliação ${cycle.sequence}` : 'Avaliação inicial'}</strong><small>{cycle.progress}% concluído · {cycle.status === 'COMPLETED' ? 'Finalizada' : `${cycle.daysRemaining} dias restantes`}</small></div>
