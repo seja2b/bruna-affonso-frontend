@@ -138,6 +138,16 @@ a:hover {
   color: #1e3a8a;
 }
 
+.login-footer a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.login-footer a:hover {
+  color: #ffffff;
+}
+
 /* SELECTION */
 ::selection {
   background: #1e40af;
