@@ -148,6 +148,17 @@ a:hover {
   color: #ffffff;
 }
 
+.auth-alert.auth-success {
+  border-color: #b9e0c6;
+  background: rgba(241, 251, 244, .96);
+  color: #22653a;
+}
+
+.auth-alert.auth-success > span:first-child {
+  font-weight: 800;
+  line-height: 1.25;
+}
+
 /* SELECTION */
 ::selection {
   background: #1e40af;
