@@ -8,7 +8,17 @@ function Initials({ user }) {
 }
 
 function formatDate(value) {
-  return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(value))
+  const date = value ? new Date(value) : null
+  if (!date || Number.isNaN(date.getTime())) return 'data não informada'
+  return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }).format(date)
+}
+
+function accountStatus(status) {
+  if (status === 'APPROVED') return 'aprovado'
+  if (status === 'PENDING') return 'aguardando aprovação'
+  if (status === 'INACTIVE') return 'inativo'
+  if (status === 'REJECTED') return 'rejeitado'
+  return 'status não informado'
 }
 
 export default function AdminAdministrators() {
@@ -23,13 +33,13 @@ export default function AdminAdministrators() {
 
   const loadAdministrators = useCallback(async () => {
     const { data } = await api.get('/admin/administrators')
-    setAdministrators(data.administrators || [])
+    setAdministrators(Array.isArray(data?.administrators) ? data.administrators : [])
     setCurrentUserId(data.currentUserId || '')
   }, [])
 
   const loadCandidates = useCallback(async (search = '') => {
     const { data } = await api.get('/admin/administrators/candidates', { params: search ? { q: search } : {} })
-    setCandidates(data || [])
+    setCandidates(Array.isArray(data) ? data : [])
   }, [])
 
   useEffect(() => {
@@ -101,7 +111,7 @@ export default function AdminAdministrators() {
       <div className="adm-list candidates">
         {candidates.map((candidate) => <article key={candidate.id} className="adm-row">
           <Initials user={candidate} />
-          <div className="adm-identity"><strong>{candidate.name}</strong><span>{candidate.email}</span><small>Cadastro {candidate.status === 'APPROVED' ? 'aprovado' : candidate.status === 'PENDING' ? 'aguardando aprovação' : candidate.status.toLowerCase()}</small></div>
+          <div className="adm-identity"><strong>{candidate.name || 'Nome não informado'}</strong><span>{candidate.email || 'E-mail não informado'}</span><small>Cadastro {accountStatus(candidate.status)}</small></div>
           <button className="adm-promote" onClick={() => setConfirmation({ action: 'promote', user: candidate })}>Tornar administrador</button>
         </article>)}
         {!candidates.length && <div className="adm-empty"><strong>Nenhuma conta disponível</strong><span>Peça para a pessoa se cadastrar na plataforma e tente novamente.</span></div>}
