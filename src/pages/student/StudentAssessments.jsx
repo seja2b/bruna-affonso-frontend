@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext'
 import './StudentAssessments.css'
 
 const stages = [
-  ['ANAMNESIS', 'Anamnese dissertativa', 'Histórico de saúde, rotina e objetivos'], ['BODY', 'Avaliação Antropométrica', 'Medidas para acompanhar sua evolução'],
+  ['ANAMNESIS', 'Anamnese', 'Histórico de saúde, rotina e objetivos'], ['BODY', 'Avaliação Antropométrica', 'Medidas para acompanhar sua evolução'],
   ['POSTURAL', 'Avaliação Postural', '23 fotos privadas para análise completa'], ['STRENGTH', 'Teste Físico', 'Força e resistência de força'],
   ['ENDURANCE', 'Teste Cardiorrespiratório', 'VAM na esteira; bike a definir']
 ]
