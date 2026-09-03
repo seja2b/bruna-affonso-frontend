@@ -5,11 +5,11 @@ import './StudentAssessments.css'
 
 const stages = [
   ['ANAMNESIS', 'Anamnese dissertativa', 'Histórico de saúde, rotina e objetivos'], ['BODY', 'Avaliação Antropométrica', 'Medidas para acompanhar sua evolução'],
-  ['POSTURAL', 'Avaliação Postural', '20 fotos privadas para análise completa'], ['STRENGTH', 'Teste de Força', 'Estimativa de 1RM pela fórmula de Epley'],
+  ['POSTURAL', 'Avaliação Postural', '23 fotos privadas para análise completa'], ['STRENGTH', 'Teste de Força', 'Estimativa de 1RM pela fórmula de Epley'],
   ['ENDURANCE', 'Teste Físico', 'VAM e resistência de força']
 ]
 const exercises = [['smithSquat', 'Agachamento no Smith'], ['closeGripPulldown', 'Puxador Fechado'], ['seatedDumbbellPress', 'Desenvolvimento com Halteres Sentado'], ['deadlift', 'Levantamento Terra']]
-const views = [['FRONT', 'Frente 1'], ['BACK', 'Costas 1'], ['RIGHT', 'Lado direito 1'], ['LEFT', 'Lado esquerdo 1'], ['FRONT_RELAXED', 'Frente 2'], ['BACK_RELAXED', 'Costas 2'], ['RIGHT_RELAXED', 'Lado direito 2'], ['LEFT_RELAXED', 'Lado esquerdo 2'], ['FRONT_DETAIL', 'Frente 3'], ['BACK_DETAIL', 'Costas 3'], ['RIGHT_DETAIL', 'Lado direito 3'], ['LEFT_DETAIL', 'Lado esquerdo 3'], ['FRONT_FOURTH', 'Frente 4'], ['BACK_FOURTH', 'Costas 4'], ['RIGHT_FOURTH', 'Lado direito 4'], ['LEFT_FOURTH', 'Lado esquerdo 4'], ['FRONT_FIFTH', 'Frente 5'], ['BACK_FIFTH', 'Costas 5'], ['RIGHT_FIFTH', 'Lado direito 5'], ['LEFT_FIFTH', 'Lado esquerdo 5']]
+const views = [['FRONT', 'Foto de frente'], ['BACK', 'Foto de costas'], ['RIGHT', 'Lado direito - braços ao lado'], ['LEFT', 'Lado esquerdo - braços ao lado'], ['FRONT_RELAXED', 'Lado direito - braços para cima'], ['BACK_RELAXED', 'Lado esquerdo - braços para cima'], ['RIGHT_RELAXED', 'Agachamento - frente'], ['LEFT_RELAXED', 'Agachamento - lado esquerdo'], ['FRONT_DETAIL', 'Agachamento - costas'], ['BACK_DETAIL', 'Agachamento - lado direito'], ['RIGHT_DETAIL', 'Trendelenburg - lado direito'], ['LEFT_DETAIL', 'Trendelenburg - lado esquerdo'], ['FRONT_FOURTH', 'Teste de Adams'], ['BACK_FOURTH', 'Mobilidade escapular'], ['RIGHT_FOURTH', 'Teste de FABER - lado direito'], ['LEFT_FOURTH', 'Teste de FABER - lado esquerdo'], ['FRONT_FIFTH', 'Sentar e alcançar'], ['BACK_FIFTH', 'Sentar e alcançar - adutores'], ['RIGHT_FIFTH', 'Teste de Thomas - lado direito'], ['LEFT_FIFTH', 'Teste de Thomas - lado esquerdo'], ['POSTERIOR_RIGHT', 'Teste para posteriores - perna direita'], ['POSTERIOR_LEFT', 'Teste para posteriores - perna esquerda'], ['DEEP_SQUAT', 'Cócoras']]
 const statusLabel = { PENDING: 'Pendente', IN_PROGRESS: 'Em andamento', COMPLETED: 'Concluída' }
 
 function Video({ url }) {
