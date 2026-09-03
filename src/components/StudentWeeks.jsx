@@ -9,7 +9,11 @@ const dateFormatter = new Intl.DateTimeFormat('pt-BR', {
   month: '2-digit'
 })
 
-const emptyExercise = () => ({ exerciseName: '', trainingType: '', weight: '', reps: '', notes: '' })
+const weekdays = [
+  ['MONDAY', 'Segunda-feira'], ['TUESDAY', 'Terça-feira'], ['WEDNESDAY', 'Quarta-feira'],
+  ['THURSDAY', 'Quinta-feira'], ['FRIDAY', 'Sexta-feira']
+]
+const emptyExercise = (dayOfWeek = 'MONDAY') => ({ dayOfWeek, exerciseName: '', trainingType: '', weight: '', reps: '', notes: '' })
 
 export default function StudentWeeks({ studentId }) {
   const [weeks, setWeeks] = useState([])
@@ -45,7 +49,11 @@ export default function StudentWeeks({ studentId }) {
 
   function openWeek(week) {
     setSelectedWeek(week)
-    setExercises((week.exercises || []).length ? week.exercises.map((exercise) => ({ ...exercise })) : [emptyExercise()])
+    const saved = week.exercises || []
+    setExercises(weekdays.flatMap(([day]) => {
+      const daily = saved.filter((exercise) => (exercise.dayOfWeek || 'MONDAY') === day)
+      return daily.length ? daily.map((exercise) => ({ ...exercise, dayOfWeek: day })) : [emptyExercise(day)]
+    }))
     setFeedback('')
   }
 
@@ -53,13 +61,13 @@ export default function StudentWeeks({ studentId }) {
     setExercises((current) => current.map((exercise, itemIndex) => itemIndex === index ? { ...exercise, [field]: value } : exercise))
   }
 
-  function addExercise() {
-    if (exercises.length >= 30) return
-    setExercises((current) => [...current, emptyExercise()])
+  function addExercise(dayOfWeek) {
+    if (exercises.filter((exercise) => exercise.dayOfWeek === dayOfWeek).length >= 15) return
+    setExercises((current) => [...current, emptyExercise(dayOfWeek)])
   }
 
   function removeExercise(index) {
-    setExercises((current) => current.length === 1 ? [emptyExercise()] : current.filter((_, itemIndex) => itemIndex !== index))
+    setExercises((current) => current.filter((_, itemIndex) => itemIndex !== index))
   }
 
   async function saveWeek() {
@@ -99,7 +107,8 @@ export default function StudentWeeks({ studentId }) {
     return { completed, percentage: weeks.length ? Math.round((completed / weeks.length) * 100) : 0 }
   }, [weeks])
 
-  const canComplete = exercises.length > 0 && exercises.every((exercise) =>
+  const filledExercises = exercises.filter((exercise) => [exercise.exerciseName, exercise.trainingType, exercise.weight, exercise.reps, exercise.notes].some((value) => value?.trim()))
+  const canComplete = filledExercises.length > 0 && filledExercises.every((exercise) =>
     exercise.exerciseName?.trim() && exercise.trainingType?.trim() && exercise.weight?.trim() && exercise.reps?.trim()
   )
 
@@ -153,23 +162,20 @@ function WeekEditor({selectedWeek,exercises,updateExercise,addExercise,removeExe
 
           {!selectedWeek.isReleased && <div className="week-locked-notice" role="status"><strong>Semana ainda bloqueada</strong><p>Esta semana será liberada automaticamente na segunda-feira correspondente, às 00:00, ou poderá ser antecipada pela professora.</p></div>}
 
-          {selectedWeek.isReleased && <div className="manual-exercises">
-            <div className="manual-exercises-heading">
-              <div><strong>Exercícios realizados</strong><span>Informe exercício, tipo, carga e repetições. Observações são opcionais.</span></div>
-              {!selectedWeek.isCompleted && <button type="button" onClick={addExercise}>+ Adicionar exercício</button>}
-            </div>
-
-            {exercises.map((exercise, index) => (
-              <div className="manual-exercise-row" key={exercise.id || index}>
-                <span className="manual-exercise-index">{index + 1}</span>
-                <input disabled={selectedWeek.isCompleted} value={exercise.exerciseName || ''} onChange={(e) => updateExercise(index, 'exerciseName', e.target.value)} placeholder="Exercício" />
-                <input disabled={selectedWeek.isCompleted} value={exercise.trainingType || ''} onChange={(e) => updateExercise(index, 'trainingType', e.target.value)} placeholder="Tipo de treino" />
-                <input disabled={selectedWeek.isCompleted} value={exercise.weight || ''} onChange={(e) => updateExercise(index, 'weight', e.target.value)} placeholder="Carga (kg)" />
-                <input disabled={selectedWeek.isCompleted} value={exercise.reps || ''} onChange={(e) => updateExercise(index, 'reps', e.target.value)} placeholder="Repetições" />
-                <input disabled={selectedWeek.isCompleted} value={exercise.notes || ''} onChange={(e) => updateExercise(index, 'notes', e.target.value)} placeholder="Observação (opcional)" />
-                {!selectedWeek.isCompleted && <button className="manual-remove" type="button" onClick={() => removeExercise(index)} aria-label="Remover exercício">×</button>}
-              </div>
-            ))}
+          {selectedWeek.isReleased && <div className="daily-training-table">
+            <div className="daily-training-intro"><strong>Exercícios por dia</strong><span>Registre separadamente o treino realizado de segunda a sexta.</span></div>
+            {weekdays.map(([day, label], dayIndex) => {const daily=exercises.map((exercise,index)=>({exercise,index})).filter(({exercise})=>exercise.dayOfWeek===day);return <section className="training-day" key={day}>
+              <header><div><span>{String(dayIndex+1).padStart(2,'0')}</span><strong>{label}</strong><small>{daily.filter(({exercise})=>exercise.exerciseName?.trim()).length} exercício(s)</small></div>{!selectedWeek.isCompleted&&<button type="button" onClick={()=>addExercise(day)}>+ Adicionar exercício</button>}</header>
+              <div className="day-exercises">{daily.length===0?<p className="day-empty">Nenhum exercício adicionado neste dia.</p>:daily.map(({exercise,index},dailyIndex)=><div className="manual-exercise-row" key={exercise.id||`${day}-${index}`}>
+                <span className="manual-exercise-index">{dailyIndex+1}</span>
+                <input disabled={selectedWeek.isCompleted} value={exercise.exerciseName||''} onChange={e=>updateExercise(index,'exerciseName',e.target.value)} placeholder="Exercício" />
+                <input disabled={selectedWeek.isCompleted} value={exercise.trainingType||''} onChange={e=>updateExercise(index,'trainingType',e.target.value)} placeholder="Tipo de treino" />
+                <input disabled={selectedWeek.isCompleted} value={exercise.weight||''} onChange={e=>updateExercise(index,'weight',e.target.value)} placeholder="Carga (kg)" />
+                <input disabled={selectedWeek.isCompleted} value={exercise.reps||''} onChange={e=>updateExercise(index,'reps',e.target.value)} placeholder="Repetições" />
+                <input disabled={selectedWeek.isCompleted} value={exercise.notes||''} onChange={e=>updateExercise(index,'notes',e.target.value)} placeholder="Observação (opcional)" />
+                {!selectedWeek.isCompleted&&<button className="manual-remove" type="button" onClick={()=>removeExercise(index)} aria-label={`Remover exercício de ${label}`}>×</button>}
+              </div>)}</div>
+            </section>})}
           </div>}
 
           {selectedWeek.observation?.teacherNote && <div className="week-teacher-feedback"><strong>Feedback da professora</strong><p>{selectedWeek.observation.teacherNote}</p></div>}

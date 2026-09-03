@@ -4,6 +4,8 @@ import api from '../services/api'
 import './AdminTracking.css'
 import './AdminTrackingCalendar.css'
 
+const weekdays = [['MONDAY','Segunda-feira'],['TUESDAY','Terça-feira'],['WEDNESDAY','Quarta-feira'],['THURSDAY','Quinta-feira'],['FRIDAY','Sexta-feira']]
+
 const dateFormatter = new Intl.DateTimeFormat('pt-BR', {
   timeZone: 'America/Sao_Paulo',
   day: '2-digit',
@@ -187,12 +189,7 @@ export default function AdminTracking() {
                 {!weekData || weekData.exercises.length === 0 ? (
                   <div className="empty-exercises"><p>Nenhum exercício registrado ainda.</p></div>
                 ) : (
-                  <div className="exercises-table">
-                    <div className="table-header"><div>Exercício</div><div>Tipo</div><div>Carga</div><div>Reps</div><div>Observação</div></div>
-                    {weekData.exercises.map((exercise) => (
-                      <div key={exercise.id} className="table-row"><div className="col-exercise"><strong>{exercise.exerciseName}</strong></div><div className="col-type">{exercise.trainingType}</div><div className="col-weight">{exercise.weight || '-'}{exercise.weight ? ' kg' : ''}</div><div className="col-reps">{exercise.reps || '-'}</div><div className="col-notes">{exercise.notes || '-'}</div></div>
-                    ))}
-                  </div>
+                  <div className="admin-daily-exercises">{weekdays.map(([day,label])=>{const daily=weekData.exercises.filter(exercise=>(exercise.dayOfWeek||'MONDAY')===day);return <section key={day} className="admin-training-day"><h5>{label}<span>{daily.length} exercício(s)</span></h5>{daily.length===0?<p>Nenhum exercício registrado.</p>:<div className="exercises-table"><div className="table-header"><div>Exercício</div><div>Tipo</div><div>Carga</div><div>Reps</div><div>Observação</div></div>{daily.map(exercise=><div key={exercise.id} className="table-row"><div className="col-exercise"><strong>{exercise.exerciseName}</strong></div><div className="col-type">{exercise.trainingType}</div><div className="col-weight">{exercise.weight||'-'}{exercise.weight?' kg':''}</div><div className="col-reps">{exercise.reps||'-'}</div><div className="col-notes">{exercise.notes||'-'}</div></div>)}</div>}</section>})}</div>
                 )}
               </div>
 
