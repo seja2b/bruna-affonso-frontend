@@ -36,7 +36,7 @@ function Icon({ name }) {
 export default function StudentShell({ user, onLogout }) {
   const [open, setOpen] = useState(false)
   const location = useLocation()
-  const title = items.find(([path]) => location.pathname.endsWith(path) || (!path && location.pathname === '/aluno'))?.[1] || 'Área do Aluno'
+  const title = items.find(([path]) => path ? location.pathname.endsWith(`/${path}`) : location.pathname === '/aluno')?.[1] || 'Área do Aluno'
 
   return (
     <div className="student-shell">

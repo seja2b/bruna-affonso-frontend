@@ -108,44 +108,47 @@ export default function StudentWeeks({ studentId }) {
 
   return (
     <div className="student-weeks">
-      <div className="weeks-header">
-        <div>
+      <div className="weeks-hero">
+        <div className="weeks-header-copy">
           <span className="weeks-kicker">Ciclos de 6 semanas</span>
           <h2>Meus treinos</h2>
           <p>Preencha seus exercícios por semana. Cada treino completo de 6 semanas vale 100 pontos.</p>
         </div>
-        <div className="weeks-summary"><strong>{progress.percentage}%</strong><span>{progress.completed} semanas concluídas</span></div>
+        <div className="weeks-summary"><span>Progresso geral</span><strong>{progress.percentage}%</strong><small>{progress.completed} de {weeks.length} semanas concluídas</small></div>
       </div>
 
-      <div className="weeks-progress"><span style={{ width: `${progress.percentage}%` }} /></div>
+      <div className="weeks-progress" aria-label={`${progress.percentage}% concluído`}><span style={{ width: `${progress.percentage}%` }} /></div>
 
-      {[...new Set(weeks.map(week=>week.trainingNumber||1))].map(training=><section className="student-training-group" key={training}><h3>Treino {String(training).padStart(2,'0')}</h3><div className="weeks-grid">
-        {weeks.filter(week=>(week.trainingNumber||1)===training).map((week) => {
+      {[...new Set(weeks.map(week=>week.trainingNumber||1))].map(training=>{const trainingWeeks=weeks.filter(week=>(week.trainingNumber||1)===training);const done=trainingWeeks.filter(week=>week.isCompleted).length;return <section className="student-training-group" key={training}><header className="training-group-header"><div><span>Programa de treino</span><h3>Treino {String(training).padStart(2,'0')}</h3></div><div className="training-status"><strong>{done}/6</strong><span>{done===6?'Treino concluído':'semanas concluídas'}</span></div></header><div className="weeks-grid">
+        {trainingWeeks.map((week) => {
           const state = week.isCompleted ? 'completed' : week.isReleased ? 'released' : 'locked'
+          const isSelected=selectedWeek?.id===week.id
           const start = dateFormatter.format(new Date(week.startDate))
           const end = dateFormatter.format(new Date(week.endDate))
           return (
-            <button key={week.id} className={`week-card ${state}`} aria-disabled={!week.isReleased} onClick={() => openWeek(week)}>
-              <span className="week-state-dot" />
-              <span className="week-number">Semana {week.weekNumber}</span>
-              <span className="week-calendar">{start} a {end}</span>
-              <span className="week-label">{week.isCompleted ? 'Concluída' : week.isReleased ? 'Disponível' : `Libera em ${start} às 00:00`}</span>
-              {week.calendarWeek && <span className="week-calendar-index">Semana {week.calendarWeek} de {week.calendarYear}</span>}
-              {week.isCompleted && <span className="week-badge">Concluída</span>}
+            <button key={week.id} className={`week-card ${state} ${isSelected?'selected':''}`} aria-expanded={isSelected} onClick={() => isSelected?setSelectedWeek(null):openWeek(week)}>
+              <span className="week-card-top"><span className="week-step">{week.isCompleted?'✓':String(week.weekNumber).padStart(2,'0')}</span><span className={`week-status-chip ${state}`}>{week.isCompleted?'Concluída':week.isReleased?'Disponível':'Bloqueada'}</span></span>
+              <span className="week-number">Semana {week.weekNumber}</span><span className="week-calendar">{start} — {end}</span>
+              <span className="week-label">{week.isCompleted?'Preenchimento finalizado':week.isReleased?'Clique para preencher':`Liberação em ${start}`}</span>
+              <span className="week-open-hint">{isSelected?'Fechar detalhes':'Ver semana'} <b>{isSelected?'↑':'→'}</b></span>
             </button>
           )
         })}
-      </div></section>)}
+      </div>{selectedWeek&&(selectedWeek.trainingNumber||1)===training&&<WeekEditor selectedWeek={selectedWeek} exercises={exercises} updateExercise={updateExercise} addExercise={addExercise} removeExercise={removeExercise} saveWeek={saveWeek} completeSelectedWeek={completeSelectedWeek} canComplete={canComplete} saving={saving} completing={completing} feedback={feedback} close={()=>setSelectedWeek(null)}/>}</section>})}
 
-      {selectedWeek && (
-        <div className="week-details week-editor">
+    </div>
+  )
+}
+
+function WeekEditor({selectedWeek,exercises,updateExercise,addExercise,removeExercise,saveWeek,completeSelectedWeek,canComplete,saving,completing,feedback,close}){return (
+        <div className="week-details week-editor" id={`week-details-${selectedWeek.id}`}>
           <div className="details-header">
             <div>
               <span className="weeks-kicker">{selectedWeek.isCompleted ? 'Semana concluída' : 'Preenchimento manual'}</span>
               <h3>Semana {selectedWeek.weekNumber}</h3>
               <p>{dateFormatter.format(new Date(selectedWeek.startDate))} a {dateFormatter.format(new Date(selectedWeek.endDate))} · segunda a sexta</p>
             </div>
-            <button className="close-btn" onClick={() => setSelectedWeek(null)} aria-label="Fechar">×</button>
+            <button className="close-btn" onClick={close} aria-label="Fechar">×</button>
           </div>
 
           {!selectedWeek.isReleased && <div className="week-locked-notice" role="status"><strong>Semana ainda bloqueada</strong><p>Esta semana será liberada automaticamente na segunda-feira correspondente, às 00:00, ou poderá ser antecipada pela professora.</p></div>}
@@ -178,8 +181,4 @@ export default function StudentWeeks({ studentId }) {
               <button type="button" className="week-complete" onClick={completeSelectedWeek} disabled={!canComplete || saving || completing}>{completing ? 'Concluindo...' : 'Concluir semana'}</button>
             </div>
           )}
-        </div>
-      )}
-    </div>
-  )
-}
+        </div>)}
