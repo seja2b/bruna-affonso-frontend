@@ -42,7 +42,7 @@ export default function AdminRanking() {
       <div className="ranking-header">
         <span className="admin-eyebrow">Ranking oficial</span>
         <h2>Desempenho dos alunos</h2>
-        <p>Cada treino de 6 semanas e cada reavaliação concluída valem 100 pontos.</p>
+        <p>O ciclo completo vale 400 pontos: 100 por etapa no plano trimestral e 50 por etapa no semestral.</p>
       </div>
 
       <div className="admin-ranking-summary">

@@ -92,7 +92,7 @@ export default function StudentWeeks({ studentId }) {
       setFeedback('')
       await api.post('/tracking/exercise/save', { weekId: selectedWeek.id, exercises })
       const response = await api.post(`/tracking/week/${selectedWeek.id}/complete`)
-      const message = response.data.awardedPoints === 100 ? 'Treino concluído. Você ganhou 100 pontos pelas 6 semanas!' : response.data.message
+      const message = response.data.awardedPoints ? `Treino concluído. Você ganhou ${response.data.awardedPoints} pontos pelas 6 semanas!` : response.data.message
       await fetchWeeks(selectedWeek.id)
       setFeedback(message)
     } catch (err) {
@@ -108,6 +108,7 @@ export default function StudentWeeks({ studentId }) {
   }, [weeks])
 
   const filledExercises = exercises.filter((exercise) => [exercise.exerciseName, exercise.trainingType, exercise.weight, exercise.reps, exercise.notes].some((value) => value?.trim()))
+  const milestonePoints = weeks[0]?.packageType === 'SEMIANNUAL' ? 50 : 100
   const canComplete = filledExercises.length > 0 && filledExercises.every((exercise) =>
     exercise.exerciseName?.trim() && exercise.trainingType?.trim() && exercise.weight?.trim() && exercise.reps?.trim()
   )
@@ -121,7 +122,7 @@ export default function StudentWeeks({ studentId }) {
         <div className="weeks-header-copy">
           <span className="weeks-kicker">Ciclos de 6 semanas</span>
           <h2>Meus treinos</h2>
-          <p>Preencha seus exercícios por semana. Cada treino completo de 6 semanas vale 100 pontos.</p>
+          <p>Preencha seus exercícios por semana. Cada treino completo de 6 semanas vale {milestonePoints} pontos no seu plano.</p>
         </div>
         <div className="weeks-summary"><span>Progresso geral</span><strong>{progress.percentage}%</strong><small>{progress.completed} de {weeks.length} semanas concluídas</small></div>
       </div>

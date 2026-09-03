@@ -45,7 +45,7 @@ export default function StudentRanking() {
   return (
     <div className="student-ranking">
       <div className="ranking-heading">
-        <div><span className="ranking-kicker">Ranking oficial</span><h2>Desempenho dos alunos</h2><p>Cada semana concluída vale 100 pontos. A pontuação é calculada pelo sistema.</p></div>
+        <div><span className="ranking-kicker">Ranking oficial</span><h2>Desempenho dos alunos</h2><p>Cada ciclo completo vale 400 pontos, independentemente do plano trimestral ou semestral.</p></div>
         {own && <div className="own-rank-card"><span>Sua posição</span><strong>#{own.position}</strong><small>{own.points} pontos · {own.weeks} semanas</small></div>}
       </div>
 

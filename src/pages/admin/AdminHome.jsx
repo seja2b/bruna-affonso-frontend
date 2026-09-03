@@ -52,7 +52,7 @@ export default function AdminHome() {
         {(data?.recentCompletions || []).length === 0 ? <div className="admin-dashboard-empty">Nenhuma conclusão registrada ainda.</div> : (
           <div className="admin-activity-list">{data.recentCompletions.map((item)=><Link key={item.id} to={`acompanhamentos?student=${item.studentId}`} className="admin-activity-item">
             <div className="admin-activity-avatar">{item.profilePhoto?<img src={item.profilePhoto} alt=""/>:(item.studentName?.[0]||'A')}</div>
-            <div><strong>{item.studentName}</strong><span>Concluiu a Semana {item.weekNumber} · +100 pontos</span></div>
+            <div><strong>{item.studentName}</strong><span>Concluiu a Semana {item.weekNumber}</span></div>
             <time>{item.completedAt?dateTimeFormatter.format(new Date(item.completedAt)):'—'}</time>
           </Link>)}</div>
         )}

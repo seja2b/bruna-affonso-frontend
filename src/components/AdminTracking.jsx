@@ -173,7 +173,7 @@ export default function AdminTracking() {
                   <h3>Semana {selectedWeekSummary?.weekNumber} · {student?.name}</h3>
                   <p>{dateFormatter.format(new Date(selectedWeekSummary.startDate))} a {dateFormatter.format(new Date(selectedWeekSummary.endDate))} · segunda a sexta</p>
                 </div>
-                <span className={`admin-week-status ${selectedWeekSummary?.isReleased ? 'released' : 'locked'}`}>{selectedWeekSummary?.isCompleted ? 'Concluída · 100 pts' : selectedWeekSummary?.isReleased ? 'Liberada' : 'Bloqueada'}</span>
+                <span className={`admin-week-status ${selectedWeekSummary?.isReleased ? 'released' : 'locked'}`}>{selectedWeekSummary?.isCompleted ? 'Semana concluída' : selectedWeekSummary?.isReleased ? 'Liberada' : 'Bloqueada'}</span>
               </div>
               <form className="week-date-editor" onSubmit={saveDates}><label>Início<input name="startDate" type="date" defaultValue={selectedWeekSummary?.startDate?.slice(0,10)}/></label><label>Fim<input name="endDate" type="date" defaultValue={selectedWeekSummary?.endDate?.slice(0,10)}/></label><button>Salvar datas</button></form>
 
