@@ -84,7 +84,7 @@ export default function StudentWeeks({ studentId }) {
       setFeedback('')
       await api.post('/tracking/exercise/save', { weekId: selectedWeek.id, exercises })
       const response = await api.post(`/tracking/week/${selectedWeek.id}/complete`)
-      const message = response.data.awardedPoints === 100 ? 'Semana concluída. Você ganhou 100 pontos!' : response.data.message
+      const message = response.data.awardedPoints === 100 ? 'Treino concluído. Você ganhou 100 pontos pelas 6 semanas!' : response.data.message
       await fetchWeeks(selectedWeek.id)
       setFeedback(message)
     } catch (err) {
@@ -110,17 +110,17 @@ export default function StudentWeeks({ studentId }) {
     <div className="student-weeks">
       <div className="weeks-header">
         <div>
-          <span className="weeks-kicker">Programa anual</span>
+          <span className="weeks-kicker">Ciclos de 6 semanas</span>
           <h2>Meus treinos</h2>
-          <p>Preencha seus exercícios manualmente. Cada semana concluída vale 100 pontos no ranking.</p>
+          <p>Preencha seus exercícios por semana. Cada treino completo de 6 semanas vale 100 pontos.</p>
         </div>
         <div className="weeks-summary"><strong>{progress.percentage}%</strong><span>{progress.completed} semanas concluídas</span></div>
       </div>
 
       <div className="weeks-progress"><span style={{ width: `${progress.percentage}%` }} /></div>
 
-      <div className="weeks-grid">
-        {weeks.map((week) => {
+      {[...new Set(weeks.map(week=>week.trainingNumber||1))].map(training=><section className="student-training-group" key={training}><h3>Treino {String(training).padStart(2,'0')}</h3><div className="weeks-grid">
+        {weeks.filter(week=>(week.trainingNumber||1)===training).map((week) => {
           const state = week.isCompleted ? 'completed' : week.isReleased ? 'released' : 'locked'
           const start = dateFormatter.format(new Date(week.startDate))
           const end = dateFormatter.format(new Date(week.endDate))
@@ -131,11 +131,11 @@ export default function StudentWeeks({ studentId }) {
               <span className="week-calendar">{start} a {end}</span>
               <span className="week-label">{week.isCompleted ? 'Concluída' : week.isReleased ? 'Disponível' : `Libera em ${start} às 00:00`}</span>
               {week.calendarWeek && <span className="week-calendar-index">Semana {week.calendarWeek} de {week.calendarYear}</span>}
-              {week.isCompleted && <span className="week-badge">100 pts</span>}
+              {week.isCompleted && <span className="week-badge">Concluída</span>}
             </button>
           )
         })}
-      </div>
+      </div></section>)}
 
       {selectedWeek && (
         <div className="week-details week-editor">
@@ -175,7 +175,7 @@ export default function StudentWeeks({ studentId }) {
           {selectedWeek.isReleased && !selectedWeek.isCompleted && (
             <div className="week-editor-actions">
               <button type="button" className="week-save" onClick={saveWeek} disabled={saving || completing}>{saving ? 'Salvando...' : 'Salvar preenchimento'}</button>
-              <button type="button" className="week-complete" onClick={completeSelectedWeek} disabled={!canComplete || saving || completing}>{completing ? 'Concluindo...' : 'Concluir semana +100 pts'}</button>
+              <button type="button" className="week-complete" onClick={completeSelectedWeek} disabled={!canComplete || saving || completing}>{completing ? 'Concluindo...' : 'Concluir semana'}</button>
             </div>
           )}
         </div>

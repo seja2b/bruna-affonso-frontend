@@ -1,0 +1,13 @@
+import React, { useEffect, useState } from 'react'
+import api from '../services/api'
+import './EbookLibrary.css'
+
+export default function EbookLibrary({ admin = false }) {
+  const [ebooks,setEbooks]=useState([]),[title,setTitle]=useState(''),[description,setDescription]=useState(''),[file,setFile]=useState(null),[busy,setBusy]=useState(false),[message,setMessage]=useState('')
+  const load=()=>api.get('/ebooks').then(({data})=>setEbooks(data||[])).catch(()=>setMessage('Não foi possível carregar os e-books.'))
+  useEffect(()=>{load()},[])
+  async function upload(event){event.preventDefault();if(!file)return;const body=new FormData();body.append('title',title);body.append('description',description);body.append('file',file);try{setBusy(true);await api.post('/ebooks',body);setTitle('');setDescription('');setFile(null);setMessage('E-book publicado.');await load()}catch(error){setMessage(error.response?.data?.error||'Não foi possível publicar.')}finally{setBusy(false)}}
+  async function open(ebook){try{const {data}=await api.get(`/ebooks/${ebook.id}/file`,{responseType:'blob'});const url=URL.createObjectURL(data);window.open(url,'_blank','noopener,noreferrer');setTimeout(()=>URL.revokeObjectURL(url),60000)}catch{setMessage('Não foi possível abrir o PDF.')}}
+  async function remove(id){if(!window.confirm('Excluir este e-book?'))return;await api.delete(`/ebooks/${id}`);setMessage('E-book excluído.');await load()}
+  return <section className="ebook-page"><header><div><span>Biblioteca digital</span><h2>E-books</h2><p>Materiais em PDF para complementar os treinos e orientações.</p></div><strong>{ebooks.length} {ebooks.length===1?'arquivo':'arquivos'}</strong></header>{message&&<div className="ebook-message">{message}</div>}{admin&&<form className="ebook-form" onSubmit={upload}><label>Título<input required value={title} onChange={e=>setTitle(e.target.value)}/></label><label>Descrição<textarea value={description} onChange={e=>setDescription(e.target.value)}/></label><label className="ebook-file">Arquivo PDF<input required type="file" accept="application/pdf,.pdf" onChange={e=>setFile(e.target.files[0])}/><span>{file?.name||'Selecionar PDF'}</span></label><button disabled={busy}>{busy?'Publicando...':'Publicar e-book'}</button></form>}<div className="ebook-grid">{ebooks.map(ebook=><article key={ebook.id}><span className="ebook-icon">PDF</span><div><h3>{ebook.title}</h3><p>{ebook.description||'Material complementar'}</p><small>{(ebook.size/1024/1024).toFixed(1)} MB</small></div><button onClick={()=>open(ebook)}>Abrir</button>{admin&&<button className="ebook-delete" onClick={()=>remove(ebook.id)}>Excluir</button>}</article>)}{!ebooks.length&&<div className="ebook-empty">Nenhum e-book publicado ainda.</div>}</div></section>
+}

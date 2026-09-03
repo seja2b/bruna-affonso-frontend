@@ -9,6 +9,7 @@ const items = [
   ['treinos','Meus treinos','calendar'],
   ['acompanhamento','Acompanhamento','chart'],
   ['videos','VideoAulas','play'],
+  ['ebooks','E-books','book'],
   ['perguntas','Perguntas','message'],
   ['ranking','Ranking','trophy'],
   ['perfil','Perfil','user']
@@ -22,6 +23,7 @@ function Icon({ name }) {
     activity: <><path d="M3 12h4l2-5 4 10 2-5h6"/></>,
     refresh: <><path d="M20 6v5h-5M4 18v-5h5"/><path d="M6.1 9a7 7 0 0 1 11.7-2.6L20 11M4 13l2.2 4.6A7 7 0 0 0 18 15"/></>,
     play: <><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m10 9 5 3-5 3Z"/></>,
+    book:<><path d="M4 5a3 3 0 0 1 3-3h5v18H7a3 3 0 0 0-3 2Z"/><path d="M20 5a3 3 0 0 0-3-3h-5v18h5a3 3 0 0 1 3 2Z"/></>,
     message: <><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z"/></>,
     trophy: <><path d="M8 4h8v5a4 4 0 0 1-8 0Z"/><path d="M6 6H3a3 3 0 0 0 3 4M18 6h3a3 3 0 0 1-3 4M12 13v4M8 21h8M9 17h6"/></>,
     user: <><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></>,

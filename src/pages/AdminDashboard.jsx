@@ -13,6 +13,7 @@ import AdminTracking from '../components/AdminTracking'
 import AdminRanking from '../components/AdminRanking'
 import AdminAssessments from './admin/AdminAssessments'
 import AdminAdministrators from './admin/AdminAdministrators'
+import EbookLibrary from '../components/EbookLibrary'
 
 export default function AdminDashboard({ user, token, onLogout }) {
   return (
@@ -27,6 +28,7 @@ export default function AdminDashboard({ user, token, onLogout }) {
         <Route path="avaliacoes" element={<AdminAssessments />} />
         <Route path="perguntas" element={<AdminQuestions user={user} token={token} />} />
         <Route path="videos" element={<AdminVideoClasses />} />
+        <Route path="ebooks" element={<EbookLibrary admin />} />
         <Route path="ranking" element={<AdminRanking token={token} />} />
         <Route path="notificacoes" element={<Navigate to="../" replace />} />
         <Route path="configuracoes" element={<AdminSettings user={user} token={token} />} />

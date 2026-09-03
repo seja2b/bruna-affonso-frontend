@@ -42,7 +42,7 @@ export default function AdminRanking() {
       <div className="ranking-header">
         <span className="admin-eyebrow">Ranking oficial</span>
         <h2>Desempenho dos alunos</h2>
-        <p>Cada semana concluída vale 100 pontos. A pontuação é gerada automaticamente pelo backend.</p>
+        <p>Cada treino de 6 semanas e cada reavaliação concluída valem 100 pontos.</p>
       </div>
 
       <div className="admin-ranking-summary">
@@ -61,7 +61,7 @@ export default function AdminRanking() {
               <tr key={row.id} className={row.position <= 3 ? `rank-top rank-${row.position}` : ''}>
                 <td><span className="admin-rank-position">#{row.position}</span></td>
                 <td><div className="admin-rank-person"><span className="admin-rank-avatar">{row.photo ? <img src={row.photo} alt="" /> : row.name[0]}</span><span><strong>{row.name}</strong><small>{row.email}</small></span></div></td>
-                <td><strong>{row.weeks}</strong> / 52</td>
+                <td><strong>{row.weeks}</strong> semanas</td>
                 <td><strong>{row.points}</strong> pts</td>
               </tr>
             ))}

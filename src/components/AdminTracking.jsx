@@ -109,6 +109,11 @@ export default function AdminTracking() {
     }
   }
 
+  async function createTraining() { try { setSaving(true); const {data}=await api.post(`/tracking/admin/student/${selectedStudent}/workouts`); setFeedback(data.message); await handleStudentSelect(selectedStudent,false) } catch(error){setFeedback(error.response?.data?.error||'Não foi possível criar o treino.')} finally{setSaving(false)} }
+  async function resetProgram() { if(!window.confirm('Excluir todas as semanas e reiniciar o ciclo desta aluna?'))return; try{setSaving(true);const {data}=await api.delete(`/tracking/admin/student/${selectedStudent}/program`);setFeedback(data.message);await handleStudentSelect(selectedStudent,false)}catch(error){setFeedback(error.response?.data?.error||'Não foi possível reiniciar.')}finally{setSaving(false)} }
+  async function changePackage(packageType){try{await api.put(`/tracking/admin/student/${selectedStudent}/package`,{packageType});setStudents(current=>current.map(item=>item.id===selectedStudent?{...item,packageType}:item));setFeedback('Plano atualizado.')}catch(error){setFeedback(error.response?.data?.error||'Não foi possível atualizar o plano.')}}
+  async function saveDates(event){event.preventDefault();const body=new FormData(event.currentTarget);try{const {data}=await api.put(`/tracking/admin/week/${selectedWeek}/dates`,{startDate:body.get('startDate'),endDate:body.get('endDate')});setWeekData(data.week);setWeeks(current=>current.map(item=>item.id===selectedWeek?data.week:item));setFeedback('Datas atualizadas.')}catch(error){setFeedback(error.response?.data?.error||'Não foi possível atualizar as datas.')}}
+
   const student = students.find((item) => item.id === selectedStudent)
   const selectedWeekSummary = useMemo(() => weeks.find((week) => week.id === selectedWeek), [weeks, selectedWeek])
 
@@ -141,18 +146,20 @@ export default function AdminTracking() {
             <div className="empty-placeholder"><p>Selecione um aluno para visualizar as semanas e o preenchimento.</p></div>
           ) : !selectedWeek ? (
             <div className="weeks-section">
-              <h3>{student?.name} · semanas do programa</h3>
+              <div className="program-admin-toolbar"><div><h3>{student?.name} · treinos do programa</h3><select value={student?.packageType||'QUARTERLY'} onChange={e=>changePackage(e.target.value)}><option value="QUARTERLY">Trimestral · 2 treinos</option><option value="SEMIANNUAL">Semestral · 4 treinos</option></select></div><div><button onClick={createTraining} disabled={saving}>+ Criar Treino</button><button className="danger" onClick={resetProgram} disabled={saving}>Zerar semanas</button></div></div>
+              {[...new Set(weeks.map(week=>week.trainingNumber||1))].map(training=><section className="training-group" key={training}><h4>Treino {String(training).padStart(2,'0')} · 6 semanas</h4>
               <div className="weeks-grid">
-                {weeks.map((week) => (
+                {weeks.filter(week=>(week.trainingNumber||1)===training).map((week) => (
                   <button key={week.id} className={`week-card ${week.isCompleted ? 'completed' : ''} ${week.isReleased ? 'released' : 'locked'}`} onClick={() => handleWeekSelect(week.id)}>
                     <div className="week-icon">{week.isCompleted ? '✓' : week.isReleased ? '●' : '—'}</div>
                     <div className="week-label">Semana {week.weekNumber}</div>
                     <small>{dateFormatter.format(new Date(week.startDate))} a {dateFormatter.format(new Date(week.endDate))}</small>
                     <small>Semana {week.calendarWeek} de {week.calendarYear}</small>
-                    <div className="week-badge">{week.isCompleted ? 'Concluída · 100 pts' : week.isReleased ? 'Liberada' : 'Bloqueada'}</div>
+                    <div className="week-badge">{week.isCompleted ? 'Concluída' : week.isReleased ? 'Liberada' : 'Bloqueada'}</div>
                   </button>
                 ))}
               </div>
+              </section>)}
             </div>
           ) : (
             <div className="week-details-section">
@@ -165,6 +172,7 @@ export default function AdminTracking() {
                 </div>
                 <span className={`admin-week-status ${selectedWeekSummary?.isReleased ? 'released' : 'locked'}`}>{selectedWeekSummary?.isCompleted ? 'Concluída · 100 pts' : selectedWeekSummary?.isReleased ? 'Liberada' : 'Bloqueada'}</span>
               </div>
+              <form className="week-date-editor" onSubmit={saveDates}><label>Início<input name="startDate" type="date" defaultValue={selectedWeekSummary?.startDate?.slice(0,10)}/></label><label>Fim<input name="endDate" type="date" defaultValue={selectedWeekSummary?.endDate?.slice(0,10)}/></label><button>Salvar datas</button></form>
 
               {!selectedWeekSummary?.isReleased && (
                 <div className="manual-release-card">

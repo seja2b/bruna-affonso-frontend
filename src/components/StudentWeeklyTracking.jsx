@@ -45,10 +45,11 @@ export default function StudentWeeklyTracking({ studentId }) {
   const summary = useMemo(() => {
     const completed = weeks.filter((week) => week.isCompleted)
     const released = weeks.filter((week) => week.isReleased && !week.isCompleted)
+    const completedTrainings = [...new Set(weeks.map((week) => week.trainingNumber || 1))].filter((training) => weeks.filter((week) => (week.trainingNumber || 1) === training && week.isCompleted).length === 6).length
     return {
       completed: completed.length,
       released: released.length,
-      points: completed.length * 100,
+      points: completedTrainings * 100,
       exercises: completed.reduce((total, week) => total + (week.exercises?.length || 0), 0),
       progress: weeks.length ? Math.round((completed.length / weeks.length) * 100) : 0
     }
@@ -73,7 +74,7 @@ export default function StudentWeeklyTracking({ studentId }) {
 
       <div className="tracking-metrics">
         <article><span>Semanas concluídas</span><strong>{summary.completed}</strong><small>de {weeks.length} semanas</small></article>
-        <article><span>Pontos conquistados</span><strong>{summary.points}</strong><small>100 por conclusão válida</small></article>
+        <article><span>Pontos em treinos</span><strong>{summary.points}</strong><small>100 por treino de 6 semanas</small></article>
         <article><span>Exercícios registrados</span><strong>{summary.exercises}</strong><small>nas semanas concluídas</small></article>
         <article><span>Disponíveis agora</span><strong>{summary.released}</strong><small>para preencher ou concluir</small></article>
       </div>
