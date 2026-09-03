@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import api from '../../services/api'
 import { useAuth } from '../../context/AuthContext'
-import { generateAssessmentPdf } from '../../utils/assessmentPdf'
 import './StudentAssessments.css'
 
 const stages = [
@@ -21,8 +20,8 @@ function Video({ url }) {
 
 export default function StudentAssessments({ mode = 'assessment' }) {
   const { user } = useAuth()
-  const [payload, setPayload] = useState({ cycles: [], videos: [] }); const [settings, setSettings] = useState({}); const [programWeeks,setProgramWeeks]=useState([]); const [selected, setSelected] = useState(0); const [open, setOpen] = useState('ANAMNESIS'); const [form, setForm] = useState({}); const [message, setMessage] = useState(''); const [busy, setBusy] = useState(false)
-  const load = async () => { const [{ data }, settingsResponse,weeksResponse] = await Promise.all([api.get('/assessments'), api.get('/admin/settings'),mode==='reassessment'?api.get(`/tracking/student/${user.studentId}/weeks`):Promise.resolve({data:[]})]); setPayload(data); setSettings(settingsResponse.data || {});setProgramWeeks(weeksResponse.data||[]); const available = mode === 'reassessment' ? data.cycles.map((item, index) => item.sequence ? index : -1).filter((index) => index >= 0) : [0]; setSelected(available.at(-1) ?? 0) }
+  const [payload, setPayload] = useState({ cycles: [], videos: [] }); const [programWeeks,setProgramWeeks]=useState([]); const [selected, setSelected] = useState(0); const [open, setOpen] = useState('ANAMNESIS'); const [form, setForm] = useState({}); const [message, setMessage] = useState(''); const [busy, setBusy] = useState(false)
+  const load = async () => { const [{ data },weeksResponse] = await Promise.all([api.get('/assessments'),mode==='reassessment'?api.get(`/tracking/student/${user.studentId}/weeks`):Promise.resolve({data:[]})]); setPayload(data);setProgramWeeks(weeksResponse.data||[]); const available = mode === 'reassessment' ? data.cycles.map((item, index) => item.sequence ? index : -1).filter((index) => index >= 0) : [0]; setSelected(available.at(-1) ?? 0) }
   useEffect(() => { load().catch(() => setMessage('Não foi possível carregar sua avaliação.')) }, [])
   const cycle = payload.cycles[selected]
   const videos = useMemo(() => Object.fromEntries(payload.videos.map((item) => [item.stage, item.youtubeUrl])), [payload.videos])
@@ -33,7 +32,7 @@ export default function StudentAssessments({ mode = 'assessment' }) {
   if (!cycle) return <div className="assessment-state">Carregando avaliação...</div>
   if (mode === 'reassessment' && !cycle.sequence) return <div className="assessment-state"><h2>Reavaliação</h2><p>Nenhuma reavaliação foi liberada para você ainda.</p></div>
   return <section className="assessments-page">
-    <header className="assessment-hero"><div><span>Minha evolução</span><h2>{cycle.sequence ? `Reavaliação ${cycle.sequence}` : 'Avaliação inicial'}</h2><p>Faça as etapas na ordem que preferir. O prazo único é de 7 dias corridos.</p></div><div className="assessment-deadline"><strong>{cycle.progress}%</strong><span>{cycle.status === 'COMPLETED' ? 'Concluída' : `${cycle.daysRemaining} dias restantes`}</span><button className="assessment-pdf-button" onClick={() => generateAssessmentPdf({ cycle, previous: payload.cycles[selected - 1], student: user, settings })}>Gerar PDF</button></div></header>
+    <header className="assessment-hero"><div><span>Minha evolução</span><h2>{cycle.sequence ? `Reavaliação ${cycle.sequence}` : 'Avaliação inicial'}</h2><p>Faça as etapas na ordem que preferir. O prazo único é de 7 dias corridos.</p></div><div className="assessment-deadline"><strong>{cycle.progress}%</strong><span>{cycle.status === 'COMPLETED' ? 'Concluída' : `${cycle.daysRemaining} dias restantes`}</span></div></header>
     {mode === 'reassessment' && payload.cycles.filter((item) => item.sequence).length > 1 && <div className="cycle-tabs">{payload.cycles.map((item, index) => item.sequence ? <button className={index === selected ? 'active' : ''} onClick={() => setSelected(index)} key={item.id}>{`Reavaliação ${item.sequence}`}</button> : null)}</div>}
     {mode === 'reassessment' && <aside className="reassessment-workout"><strong>Treino 01 da evolução</strong><span>{programWeeks.filter(item=>(item.trainingNumber||1)===1&&item.isCompleted).length} de 6 semanas concluídas</span><p>O primeiro treino permanece visível como referência durante esta reavaliação.</p></aside>}
     {message && <div className="assessment-message">{message}</div>}
