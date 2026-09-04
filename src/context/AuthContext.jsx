@@ -49,13 +49,14 @@ export function AuthProvider({ children }) {
 
     setUser(loginUser || null)
 
-    if (!loginUser) {
+    try {
       const { data } = await api.get('/auth/me')
       setUser(data)
       return data
+    } catch (error) {
+      if (!loginUser) throw error
+      return loginUser
     }
-
-    return loginUser
   }, [])
 
   const logout = useCallback(async () => {
