@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import api from '../../services/api'
 import { generateAssessmentPdf } from '../../utils/assessmentPdf'
+import { Data, stageNames } from './AdminAssessments'
 import './AdminStudentDetail.css'
 
 export default function AdminStudentDetail() {
@@ -73,14 +74,14 @@ export default function AdminStudentDetail() {
         {assessmentData.cycles.length === 0 ? <p className="detail-empty">Nenhuma avaliação iniciada.</p> : assessmentData.cycles.map((cycle, index) => (
           <article className="detail-assessment-cycle" key={cycle.id}>
             <div><strong>{cycle.sequence ? `Reavaliação ${cycle.sequence}` : 'Avaliação inicial'}</strong><small>{cycle.progress}% concluído · {cycle.status === 'COMPLETED' ? 'Finalizada' : `${cycle.daysRemaining} dias restantes`}</small></div>
-            <div className="detail-assessment-stages">{Object.entries(cycle.stageStatuses).map(([stage, status]) => <span key={stage}>{stage}: {status === 'COMPLETED' ? 'Concluída' : status === 'IN_PROGRESS' ? 'Em andamento' : 'Pendente'}</span>)}</div>
+            <div className="detail-assessment-stages">{Object.entries(cycle.stageStatuses).map(([stage, status]) => <span key={stage}>{stageNames[stage] || stage}: {status === 'COMPLETED' ? 'Concluída' : status === 'IN_PROGRESS' ? 'Em andamento' : 'Pendente'}</span>)}</div>
             <button onClick={() => generateAssessmentPdf({ cycle, previous: assessmentData.cycles[index - 1], student, settings, professional: true })}>Gerar PDF profissional</button>
             <details className="detail-assessment-data">
               <summary>Ver todos os dados deste ciclo</summary>
-              <div><strong>Anamnese</strong><pre>{JSON.stringify(cycle.anamnesis || {}, null, 2)}</pre></div>
-              <div><strong>Medidas corporais</strong><pre>{JSON.stringify(cycle.bodyAssessment || {}, null, 2)}</pre></div>
-              <div><strong>Teste de força</strong><pre>{JSON.stringify(cycle.strengthTest || {}, null, 2)}</pre></div>
-              <div><strong>Resistência</strong><pre>{JSON.stringify(cycle.enduranceTest || {}, null, 2)}</pre></div>
+              <Data title="Anamnese" data={cycle.anamnesis} />
+              <Data title="Medidas corporais" data={cycle.bodyAssessment} />
+              <Data title="Teste de força" data={cycle.strengthTest} />
+              <Data title="Resistência" data={cycle.enduranceTest} />
               <div><strong>Fotos posturais privadas</strong><p>{cycle.photos?.length || 0} de 4 fotos recebidas. As imagens completas ficam disponíveis na área administrativa de Avaliações.</p></div>
             </details>
           </article>
