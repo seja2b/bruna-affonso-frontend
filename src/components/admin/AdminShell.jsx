@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import api from '../../services/api'
+import NotificationBell from '../student/NotificationBell'
 
 const items = [
   ['','Dashboard','grid'],
@@ -62,6 +63,6 @@ export default function AdminShell({ user, onLogout }) {
       <button className="admin-logout" onClick={onLogout}><Icon name="logout"/><span>Sair</span></button>
     </aside>
     {open&&<button className="admin-backdrop" aria-label="Fechar menu" onClick={()=>setOpen(false)}/>} 
-    <div className="admin-main"><header className="admin-topbar"><button className="admin-menu-btn" onClick={()=>setOpen(true)} aria-label="Abrir menu"><Icon name="menu"/></button><div><span className="admin-eyebrow">Painel administrativo</span><h1>{title}</h1></div><div className="admin-user-chip"><div className="admin-avatar">{teacherImage?<img src={teacherImage} alt="Foto da professora"/>:(user?.name?.[0]||'A')}</div><div><strong>{user?.name}</strong><span>{user?.email}</span></div></div></header><main className="admin-page"><Outlet/></main></div>
+    <div className="admin-main"><header className="admin-topbar"><button className="admin-menu-btn" onClick={()=>setOpen(true)} aria-label="Abrir menu"><Icon name="menu"/></button><div><span className="admin-eyebrow">Painel administrativo</span><h1>{title}</h1></div><NotificationBell/><div className="admin-user-chip"><div className="admin-avatar">{teacherImage?<img src={teacherImage} alt="Foto da professora"/>:(user?.name?.[0]||'A')}</div><div><strong>{user?.name}</strong><span>{user?.email}</span></div></div></header><main className="admin-page"><Outlet/></main></div>
   </div>
 }
