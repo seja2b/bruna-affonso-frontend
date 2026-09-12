@@ -10,6 +10,6 @@ try {
  for(const label of ['Agachamento no Smith','Carga (kg)','Repetições','93,33','Não informado','>0<'])assert.ok(html.includes(label),label)
  assert.ok(!html.includes('smithSquat'));assert.ok(!html.includes('<pre>'));assert.equal(stageNames.STRENGTH,'Teste físico')
  assert.ok(renderToStaticMarkup(React.createElement(Data,{title:'Anamnese',data:{}})).includes('Nenhuma informação registrada.'))
- const profile=await readFile('src/pages/admin/AdminStudentDetail.jsx','utf8');assert.ok(!profile.includes('JSON.stringify'));assert.ok(profile.includes('data={cycle.strengthTest}'))
+ const profile=await readFile('src/pages/admin/AdminStudentDetail.jsx','utf8');assert.ok(!profile.includes('JSON.stringify'));assert.ok(profile.includes('<StrengthResults cycle={cycle}'));assert.ok(profile.includes('data={resistanceResults(cycle)}'));assert.ok(profile.includes('assessmentPhotoViews.length'))
  console.log('PASS: dados de força, valores vazios, zero, rótulos e perfil sem JSON')
 } finally {await rm('tests/assessment-render.tmp.mjs',{force:true})}

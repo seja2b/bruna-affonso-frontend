@@ -1,12 +1,13 @@
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib'
 import api from '../services/api'
+import { strengthExercises, strengthRows, classificationExplanation, cycleLabel, resistanceResults } from './strengthResults'
 
 const labels={weightKg:'Peso (kg)',heightCm:'Altura (cm)',waistCm:'Cintura (cm)',hipCm:'Quadril (cm)',rightArmCm:'Braço direito (cm)',leftArmCm:'Braço esquerdo (cm)',rightThighCm:'Coxa direita (cm)',leftThighCm:'Coxa esquerda (cm)',smithSquat:'Agachamento no Smith',closeGripPulldown:'Puxador Fechado',seatedDumbbellPress:'Desenvolvimento sentado',deadlift:'Levantamento Terra'}
 const anamnesisLabels={motivationAndInstagram:'Motivação, origem e Instagram',personalTrainerExperience:'Experiência com personal e consultoria',routine:'Rotina diária',trainingDifficulties:'Dificuldades com a rotina de treinos',fatigueLevel:'Nível de cansaço (0 a 10)',sleepHours:'Horas de sono',sleepQuality:'Qualidade do sono',waterLiters:'Litros de água por dia',nutrition:'Alimentação, nutricionista e suplementos',smokingAndAlcohol:'Tabagismo e bebidas alcoólicas',healthAndMedication:'Saúde, tratamentos e medicações',currentSymptoms:'Sintomas atuais',injuryHistory:'Histórico de lesões',surgeryHistory:'Histórico de cirurgias',allergies:'Alergias',currentPain:'Dores atuais',effortDiscomfort:'Desconforto ao realizar esforço',goals:'Objetivos',bodyPerception:'Percepção corporal',currentExercises:'Treino atual',cardio:'Exercícios aeróbios',weeklyFrequency:'Frequência semanal pretendida',trainingLocation:'Local de treino e aparelhos',trainingMinutes:'Tempo disponível para treino (minutos)',muscleEmphasis:'Grupos musculares prioritários',effortPreference:'Preferência de esforço',exercisePreferences:'Preferências de exercícios',methodPreferences:'Preferências de metodologia',relevantNotes:'Observações',routineChanges:'Mudanças na rotina desde a última avaliação',wellbeingChanges:'Mudanças na disposição, sono ou humor',workoutFeedback:'Avaliação do formato e seleção dos treinos',currentBodyPerception:'Percepção corporal atual e mudanças percebidas',trainingDedicationScore:'Dedicação aos treinos (0 a 10)',nutritionHydrationScore:'Alimentação e hidratação (0 a 10)'}
-const stageLabels={ANAMNESIS:'Anamnese',BODY:'Avaliação antropométrica',POSTURAL:'Avaliação postural',STRENGTH:'Teste de força',ENDURANCE:'Teste físico'}
+const stageLabels={ANAMNESIS:'Anamnese',BODY:'Avaliação antropométrica',POSTURAL:'Avaliação postural',STRENGTH:'Teste de força',ENDURANCE:'Teste cardiorrespiratório'}
 const statusLabels={PENDING:'Pendente',IN_PROGRESS:'Em andamento',COMPLETED:'Concluída'}
-const valueLabels={YES:'Sim',NO:'Não',BIKE:'Bicicleta',TREADMILL:'Esteira'}
-const safe=(value)=>value===null||value===undefined||value===''?'-':String(valueLabels[value]||value).replace(/[^\x20-\x7E\xA0-\xFF]/g,'')
+const valueLabels={YES:'Sim',NO:'Não',BIKE:'Bicicleta',TREADMILL:'Esteira',TREADMILL_5MIN:'Corrida na esteira - 5 minutos',WALKING_6MIN:'Caminhada - 6 minutos'}
+const safe=(value)=>value===null||value===undefined||value===''?'-':String(valueLabels[value]||value).replace(/→/g,' -> ').replace(/[^\x20-\x7E\xA0-\xFF]/g,'')
 const wrap=(text,max=88)=>{const lines=[];let line='';for(const word of safe(text).split(/\s+/)){if(`${line} ${word}`.trim().length>max){lines.push(line);line=word}else line=`${line} ${word}`.trim()}if(line)lines.push(line);return lines}
 const embedPhoto=async(pdf,response,mime)=>{let bytes=new Uint8Array(response.data);if(mime==='image/png')return pdf.embedPng(bytes);if(mime==='image/jpeg')return pdf.embedJpg(bytes);const bitmap=await createImageBitmap(new Blob([bytes],{type:mime})),canvas=document.createElement('canvas');canvas.width=bitmap.width;canvas.height=bitmap.height;canvas.getContext('2d').drawImage(bitmap,0,0);const converted=await new Promise((resolve)=>canvas.toBlob(resolve,'image/png'));bytes=new Uint8Array(await converted.arrayBuffer());return pdf.embedPng(bytes)}
 
@@ -19,9 +20,40 @@ export async function generateAssessmentPdf({cycle,previous,student,settings,pro
   const photosSection=async(photos,heading)=>{if(!photos?.length)return;title(heading);for(const photo of photos){ensure(190);try{const response=await api.get(photo.url,{responseType:'arraybuffer'}),image=await embedPhoto(pdf,response,photo.mimeType),dimensions=image.scaleToFit(170,170);page.drawImage(image,{x:50,y:y-dimensions.height,width:dimensions.width,height:dimensions.height});page.drawText(safe(photo.view),{x:50,y:y-dimensions.height-12,size:8,font:regular,color:rgb(.44,.48,.55)});y-=dimensions.height+25}catch(error){row(`Foto ${photo.view}`,'Imagem privada indisponivel')}}}
   page.drawText(cycle.sequence?`Reavaliação ${cycle.sequence}`:'Avaliação inicial',{x:44,y,size:19,font:bold,color:rgb(.09,.13,.23)});y-=24;row('Aluna',student?.name||'Aluna');row('Início',new Date(cycle.startedAt||cycle.createdAt).toLocaleDateString('pt-BR'));row('Prazo',new Date(cycle.deadlineAt).toLocaleDateString('pt-BR'));row('Conclusão',cycle.completedAt?new Date(cycle.completedAt).toLocaleDateString('pt-BR'):'Em andamento');row('Progresso',`${cycle.progress}%`);Object.entries(cycle.stageStatuses||{}).forEach(([stage,status])=>row(stageLabels[stage]||stage,statusLabels[status]||status))
   title('Medidas corporais');Object.entries(labels).filter(([key])=>cycle.bodyAssessment&&key in cycle.bodyAssessment).forEach(([key,label])=>row(label,cycle.bodyAssessment[key]))
-  title('Teste de força - fórmula de Epley');Object.entries(cycle.strengthTest||{}).forEach(([key,item])=>row(labels[key]||key,`${safe(item.loadKg)} kg x ${safe(item.repetitions)} repetições | 1RM ${safe(item.estimatedOneRm)} kg`))
-  title('Teste físico');row('Modalidade VAM (5 min)',cycle.enduranceTest?.modality);row('Distância em 5 minutos',`${safe(cycle.enduranceTest?.distanceMeters)} m`);row('VAM calculada',`${safe(cycle.enduranceTest?.vamKmh)} km/h`);row('Flexões até a falha',cycle.enduranceTest?.pushUps);row('Prancha até a falha',`${safe(cycle.enduranceTest?.plankSeconds)} segundos`);row('Abdominal em 1 minuto',cycle.enduranceTest?.abdominalReps)
-  if(previous){title('Comparativo com o ciclo anterior');Object.entries(labels).filter(([key])=>cycle.bodyAssessment&&key in cycle.bodyAssessment).forEach(([key,label])=>row(label,`${safe(previous.bodyAssessment?.[key])} -> ${safe(cycle.bodyAssessment?.[key])}`));Object.entries(cycle.strengthTest||{}).forEach(([key,item])=>row(`1RM ${labels[key]||key}`,`${safe(previous.strengthTest?.[key]?.estimatedOneRm)} -> ${safe(item.estimatedOneRm)} kg`));[['vamKmh','VAM (km/h)'],['pushUps','Flexões'],['plankSeconds','Prancha (s)'],['abdominalReps','Abdominal']].forEach(([key,label])=>row(label,`${safe(previous.enduranceTest?.[key])} -> ${safe(cycle.enduranceTest?.[key])}`))}
+  title('Teste de força - fórmula de Epley')
+  row('Entenda sua classificação', classificationExplanation)
+  row('Referência', 'Peso corporal da avaliação correspondente. Faixas não definidas permanecem sem classificação.')
+  for (const [key, label] of strengthExercises) {
+    title(label)
+    row('Carga (kg)', cycle.strengthTest?.[key]?.loadKg)
+    row('Repetições', cycle.strengthTest?.[key]?.repetitions)
+    strengthRows(cycle, key).forEach(([name, value]) => row(name, value))
+  }
+  const resistance = resistanceResults(cycle)
+  title('Resistência de força')
+  row('Flexões até a falha', resistance.pushUps)
+  row('Prancha até a falha (segundos)', resistance.plankSeconds)
+  row('Abdominal em 1 minuto', resistance.abdominalReps)
+  title('Teste cardiorrespiratório')
+  row('Modalidade', cycle.enduranceTest?.modality)
+  row('Distância percorrida (metros)', cycle.enduranceTest?.distanceMeters)
+  row('VAM (km/h)', cycle.enduranceTest?.vamKmh)
+  row('VO2 máximo (mL/kg/min)', cycle.enduranceTest?.vo2Max)
+  if(previous){
+    title('Avaliação anterior x atual')
+    row('Ciclos', `${cycleLabel(previous)} -> ${cycleLabel(cycle)}`)
+    row('Evolução', 'Diferença e percentual calculados sobre o 1RM anterior.')
+    for (const [key, label] of strengthExercises) {
+      title(label)
+      strengthRows(cycle, key, previous).forEach(([name, value]) => row(name, value))
+    }
+    title('Medidas corporais - comparação')
+    Object.entries(labels).filter(([key])=>cycle.bodyAssessment&&key in cycle.bodyAssessment).forEach(([key,label])=>row(label,`${safe(previous.bodyAssessment?.[key])} -> ${safe(cycle.bodyAssessment?.[key])}`))
+    const previousResistance = resistanceResults(previous)
+    title('Resistência de força - comparação')
+    ;[['pushUps','Flexões'],['plankSeconds','Prancha (s)'],['abdominalReps','Abdominal']].forEach(([key,label])=>row(label,`${safe(previousResistance[key])} -> ${safe(resistance[key])}`))
+    row('VAM (km/h)', `${safe(previous.enduranceTest?.vamKmh)} -> ${safe(cycle.enduranceTest?.vamKmh)}`)
+  }
   if(cycle.anamnesis){title(professional?'Anamnese - acesso profissional':'Minha anamnese');Object.entries(cycle.anamnesis).forEach(([key,value])=>{if(value!==''&&value!==null)row(anamnesisLabels[key]||key,value)})}
   if(previous)await photosSection(previous.photos,'Fotos anteriores - comparação')
   await photosSection(cycle.photos,cycle.sequence?'Fotos atuais - reavaliação':'Fotos da avaliação postural')
