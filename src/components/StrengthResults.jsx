@@ -10,14 +10,15 @@ export function StrengthExplanation() {
 }
 
 export function ExerciseResult({ cycle, exercise }) {
-  return <dl className="strength-metrics">{strengthRows(cycle, exercise).map(([label, value]) =>
+  return <><p className="strength-source">{cycle?.strengthPreview ? 'Prévia — salve as etapas alteradas para confirmar os resultados.' : 'Resultado salvo da avaliação'}</p><dl className="strength-metrics">{strengthRows(cycle, exercise).map(([label, value]) =>
     <div key={label}><dt>{label}{label === 'Resultado' ? ':' : ''}</dt><dd>{value}</dd></div>
-  )}</dl>
+  )}</dl></>
 }
 
 export default function StrengthResults({ cycle, previous, comparison = false }) {
   return <section className="strength-results">
     <h4>{comparison ? 'Avaliação anterior × atual — teste de força' : 'Resultados do teste de força'}</h4>
+    {cycle?.strengthPreview && <p className="strength-source">Prévia com alterações não salvas. Salve as etapas alteradas para confirmar os resultados.</p>}
     {comparison && (previous ? <p>{cycleLabel(previous)} → {cycleLabel(cycle)}. Evolução calculada sobre o 1RM anterior, com o peso de cada avaliação.</p>
       : <p>Avaliação anterior indisponível para comparação.</p>)}
     <div className="strength-result-grid">{strengthExercises.map(([key, label]) =>

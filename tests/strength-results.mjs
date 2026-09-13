@@ -9,7 +9,7 @@ for (const [ratio, expected] of [[0.99,null],[1,'Fraco'],[1.24999,'Fraco'],[1.25
   assert.equal(classifyStrength('deadlift', ratio), expected, `Terra ${ratio}`)
 }
 for (const key of ['closeGripPulldown','seatedDumbbellPress']) assert.equal(classifyStrength(key, 2), null)
-const cycle = (load, weight = 60) => ({bodyAssessment:{weightKg:weight},strengthTest:{smithSquat:{loadKg:load,repetitions:10,estimatedOneRm:999}}})
+const cycle = (load, weight = 60) => ({strengthPreview:true,bodyAssessment:{weightKg:weight},strengthTest:{smithSquat:{loadKg:load,repetitions:10,estimatedOneRm:999}}})
 const before = cycle(45), current = cycle(54,72)
 assert.equal(strengthResult(before,'smithSquat').oneRm,60)
 assert.equal(strengthResult(before,'smithSquat').result,'Bom')

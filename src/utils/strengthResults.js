@@ -36,17 +36,39 @@ export function classifyStrength(key, relative) {
   )?.label || null
 }
 
-export function strengthResult(cycle, key) {
+export function previewStrengthResult(cycle, key) {
   const item = cycle?.strengthTest?.[key]
-  const load = positive(item?.loadKg)
-  const repetitions = positive(item?.repetitions)
+  const rawLoad = positive(item?.loadKg)
+  const rawRepetitions = positive(item?.repetitions)
+  const load = !item?.notPerformed && rawLoad <= 1000 ? rawLoad : null
+  const repetitions = Number.isInteger(rawRepetitions) && rawRepetitions <= 100 ? rawRepetitions : null
   // Recompute from source inputs, never from a rounded/stale stored estimate.
   const estimate = load !== null && repetitions !== null ? load * (1 + repetitions / 30) : null
   const oneRm = Number.isFinite(estimate) ? estimate : null
-  const weight = positive(cycle?.bodyAssessment?.weightKg)
-  const relative = oneRm !== null && weight !== null ? oneRm / weight : null
+  const rawWeight = positive(cycle?.bodyAssessment?.weightKg)
+  const weight = rawWeight <= 500 ? rawWeight : null
+  const relative = strengthRanges[key] && oneRm !== null && weight !== null ? oneRm / weight : null
   return { oneRm, weight, relative: Number.isFinite(relative) ? relative : null,
-    classified: Boolean(strengthRanges[key]), result: classifyStrength(key, relative) }
+    classified: Boolean(strengthRanges[key]), result: classifyStrength(key, relative),
+    notPerformed: item?.notPerformed === true, notPerformedReason: item?.notPerformedReason || null }
+}
+
+const finite = value => typeof value === 'number' && Number.isFinite(value) ? value : null
+function serverResult(item, key) {
+  const classified = Boolean(strengthRanges[key])
+  return {
+    oneRm: finite(item?.estimatedOneRm), weight: finite(item?.bodyWeightKg),
+    relative: classified ? finite(item?.relativeStrength) : null, classified,
+    result: classified ? item?.classification || null : null,
+    reason: item?.classificationReason || item?.resultReason || (item ? null : 'RESULT_UNAVAILABLE'),
+    notPerformed: item?.notPerformed === true, notPerformedReason: item?.notPerformedReason || null
+  }
+}
+
+// Saved results (including PDFs) always come from the API. Local calculation is preview-only.
+export function strengthResult(cycle, key) {
+  return cycle?.strengthPreview === true ? previewStrengthResult(cycle, key)
+    : serverResult(cycle?.strengthResults?.exercises?.[key], key)
 }
 
 export function strengthEvolution(previous, current) {
@@ -62,6 +84,11 @@ export function formatStrength(value, unit = '', signed = false) {
 }
 
 export function resultLabel(result) {
+  if (result.notPerformed) return 'Não realizado'
+  if (result.reason === 'MISSING_OR_INVALID_BODY_WEIGHT') return 'Peso corporal não informado ou inválido'
+  if (result.reason === 'MISSING_OR_INVALID_INPUT') return 'Carga ou repetições não informadas ou inválidas'
+  if (result.reason === 'RESULT_UNAVAILABLE') return 'Resultado indisponível'
+  if (['UNDEFINED_RANGE', 'BELOW_DEFINED_RANGE'].includes(result.reason)) return 'Faixa ainda não definida'
   return result.result || (result.relative === null ? 'Dados insuficientes' : 'Faixa ainda não definida')
 }
 
@@ -82,23 +109,30 @@ export function resistanceResults(cycle) {
 
 export function strengthInputs(cycle) {
   return Object.fromEntries(strengthExercises.filter(([key]) => cycle?.strengthTest?.[key])
-    .map(([key]) => [key, { loadKg: cycle.strengthTest[key].loadKg, repetitions: cycle.strengthTest[key].repetitions }]))
+    .map(([key]) => [key, cycle.strengthTest[key].notPerformed === true
+      ? { realizado: 'Não', motivo: cycle.strengthTest[key].notPerformedReason || 'Não informado' }
+      : { loadKg: cycle.strengthTest[key].loadKg, repetitions: cycle.strengthTest[key].repetitions }]))
 }
 
 // Shared presentation data keeps the student, admin and PDF results identical.
 export function strengthRows(cycle, key, previous) {
-  const current = strengthResult(cycle, key)
-  const before = previous ? strengthResult(previous, key) : null
+  const comparison = cycle?.strengthComparison
+  const savedPair = !cycle?.strengthPreview && previous && comparison?.referenceCycleId === previous.id && comparison?.currentCycleId === cycle.id
+    ? comparison.exercises?.[key] : null
+  const current = savedPair ? serverResult(savedPair.current, key) : strengthResult(cycle, key)
+  const before = previous ? savedPair ? serverResult(savedPair.previous, key) : strengthResult(previous, key) : null
   const metric = (label, field, unit) => [label, before
     ? `${formatStrength(before[field], unit)} → ${formatStrength(current[field], unit)}`
     : formatStrength(current[field], unit)]
   const rows = [metric('1RM estimado', 'oneRm', ' kg')]
+  if (current.notPerformed) rows.push(['Realização', 'Não realizado'], ['Motivo', current.notPerformedReason || 'Não informado'])
   if (current.classified) {
     rows.push(metric('Peso corporal', 'weight', ' kg'), metric('Força relativa', 'relative', 'x'))
     rows.push(['Resultado', before ? `${resultLabel(before)} → ${resultLabel(current)}` : resultLabel(current)])
   }
   if (before) {
-    const evolution = strengthEvolution(before, current)
+    const evolution = cycle?.strengthPreview ? strengthEvolution(before, current)
+      : { kg: finite(savedPair?.differenceKg), percent: finite(savedPair?.evolutionPercent) }
     rows.push(['Diferença de 1RM', formatStrength(evolution.kg, ' kg', true)],
       ['Evolução do 1RM', formatStrength(evolution.percent, '%', true)])
   }
