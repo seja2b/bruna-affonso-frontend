@@ -4,6 +4,9 @@ import api from '../../services/api'
 import { generateAssessmentPdf } from '../../utils/assessmentPdf'
 import { Data, stageNames } from './AdminAssessments'
 import './AdminStudentDetail.css'
+import StrengthResults from '../../components/StrengthResults'
+import { previousCycle, resistanceResults, strengthInputs } from '../../utils/strengthResults'
+import { assessmentPhotoViews } from '../../utils/assessmentPhotos'
 
 export default function AdminStudentDetail() {
   const { id } = useParams()
@@ -71,18 +74,20 @@ export default function AdminStudentDetail() {
 
       <section className="detail-card detail-assessments-overview">
         <div className="detail-card-heading"><h2>Avaliação e reavaliações</h2><span>{assessmentData.cycles.length} ciclos</span></div>
-        {assessmentData.cycles.length === 0 ? <p className="detail-empty">Nenhuma avaliação iniciada.</p> : assessmentData.cycles.map((cycle, index) => (
+        {assessmentData.cycles.length === 0 ? <p className="detail-empty">Nenhuma avaliação iniciada.</p> : assessmentData.cycles.map((cycle) => (
           <article className="detail-assessment-cycle" key={cycle.id}>
             <div><strong>{cycle.sequence ? `Reavaliação ${cycle.sequence}` : 'Avaliação inicial'}</strong><small>{cycle.progress}% concluído · {cycle.status === 'COMPLETED' ? 'Finalizada' : `${cycle.daysRemaining} dias restantes`}</small></div>
             <div className="detail-assessment-stages">{Object.entries(cycle.stageStatuses).map(([stage, status]) => <span key={stage}>{stageNames[stage] || stage}: {status === 'COMPLETED' ? 'Concluída' : status === 'IN_PROGRESS' ? 'Em andamento' : 'Pendente'}</span>)}</div>
-            <button onClick={() => generateAssessmentPdf({ cycle, previous: assessmentData.cycles[index - 1], student, settings, professional: true })}>Gerar PDF profissional</button>
+            <button onClick={() => generateAssessmentPdf({ cycle, previous: previousCycle(assessmentData.cycles, cycle), student, settings, professional: true })}>Gerar PDF profissional</button>
             <details className="detail-assessment-data">
               <summary>Ver todos os dados deste ciclo</summary>
               <Data title="Anamnese" data={cycle.anamnesis} />
               <Data title="Medidas corporais" data={cycle.bodyAssessment} />
-              <Data title="Teste de força" data={cycle.strengthTest} />
-              <Data title="Resistência" data={cycle.enduranceTest} />
-              <div><strong>Fotos posturais privadas</strong><p>{cycle.photos?.length || 0} de 4 fotos recebidas. As imagens completas ficam disponíveis na área administrativa de Avaliações.</p></div>
+              <StrengthResults cycle={cycle} previous={previousCycle(assessmentData.cycles, cycle)} comparison={Boolean(cycle.sequence)} />
+              <Data title="Cargas e repetições" data={strengthInputs(cycle)} />
+              <Data title="Resistência de força" data={resistanceResults(cycle)} />
+              <Data title="Teste cardiorrespiratório" data={cycle.enduranceTest && { modality: cycle.enduranceTest.modality, distanceMeters: cycle.enduranceTest.distanceMeters, vamKmh: cycle.enduranceTest.vamKmh, vo2Max: cycle.enduranceTest.vo2Max }} />
+              <div><strong>Fotos posturais privadas</strong><p>{cycle.photos?.length || 0} de {assessmentPhotoViews.length} fotos recebidas. As imagens completas ficam disponíveis na área administrativa de Avaliações.</p></div>
             </details>
           </article>
         ))}
