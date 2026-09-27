@@ -4,11 +4,11 @@ import { useAuth } from '../../context/AuthContext'
 import './StudentAssessments.css'
 import StrengthResults, { ExerciseResult, StrengthExplanation } from '../../components/StrengthResults'
 import { strengthExercises as exercises, previousCycle, resistanceResults } from '../../utils/strengthResults'
-import { assessmentPhotoViews as views } from '../../utils/assessmentPhotos'
+import { assessmentPhotoGuides as photoGuides } from '../../utils/assessmentPhotos'
 
 const stages = [
   ['ANAMNESIS', 'Anamnese', 'Histórico de saúde, rotina e objetivos'], ['BODY', 'Avaliação Antropométrica', 'Medidas para acompanhar sua evolução'],
-  ['POSTURAL', 'Avaliação Postural', `${views.length} fotos privadas para análise completa`], ['STRENGTH', 'Teste Físico', 'Força e resistência de força'],
+  ['POSTURAL', 'Avaliação Postural', `${photoGuides.length} fotos privadas para análise completa`], ['STRENGTH', 'Teste Físico', 'Força e resistência de força'],
   ['ENDURANCE', 'Teste Cardiorrespiratório', 'Corrida de 5 min ou caminhada de 6 min']
 ]
 
@@ -24,6 +24,7 @@ export default function StudentAssessments({ mode = 'assessment' }) {
   const { user } = useAuth()
   const [payload, setPayload] = useState({ cycles: [], videos: [] }); const [programWeeks,setProgramWeeks]=useState([]); const [selected, setSelected] = useState(0); const [open, setOpen] = useState('ANAMNESIS'); const [form, setForm] = useState({}); const [message, setMessage] = useState(''); const [busy, setBusy] = useState(false)
   const [dirtyStages, setDirtyStages] = useState({})
+  const [photoGuide, setPhotoGuide] = useState(null)
   const load = async () => { const [{ data },weeksResponse] = await Promise.all([api.get('/assessments'),mode==='reassessment'?api.get(`/tracking/student/${user.studentId}/weeks`):Promise.resolve({data:[]})]); setPayload(data);setProgramWeeks(weeksResponse.data||[]); const available = mode === 'reassessment' ? data.cycles.map((item, index) => item.sequence ? index : -1).filter((index) => index >= 0) : [0]; setSelected(available.at(-1) ?? 0) }
   useEffect(() => { load().catch(() => setMessage('Não foi possível carregar sua avaliação.')) }, [mode, user.studentId])
   const cycle = payload.cycles[selected]
@@ -46,11 +47,23 @@ export default function StudentAssessments({ mode = 'assessment' }) {
         {open === 'BODY' && <Body data={form.BODY || {}} set={(k, v) => setField('BODY', k, v)} />}
         {open === 'STRENGTH' && <Strength cycle={displayedCycle} disabled={busy || cycle.status === 'COMPLETED' || cycle.expired} data={form.STRENGTH || {}} set={(key, field, value) => setField('STRENGTH', key, field ? { ...(form.STRENGTH?.[key] || {}), [field]: value, ...(field === 'notPerformed' ? { loadKg: null, repetitions: null, notPerformedReason: null } : {}) } : value)} />}
         {open === 'ENDURANCE' && <Endurance data={form.ENDURANCE || {}} set={(k, v) => setField('ENDURANCE', k, v)} />}
-        {open === 'POSTURAL' && <div><div className="privacy-note"><strong>Suas fotos são privadas.</strong><p>O envio permite somente a avaliação profissional. Não autoriza publicação, divulgação ou compartilhamento.</p></div><div className="photo-grid">{views.map(([key, label]) => { const existing = cycle.photos.find((item) => item.view === key); return <label key={key}><strong>{label}</strong><span>{existing ? 'Foto recebida · trocar' : 'Selecionar foto'}</span><input type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => photo(key, e.target.files[0])} /></label> })}</div></div>}
+        {open === 'POSTURAL' && <PosturalPhotos cycle={cycle} busy={busy} photo={photo} onPreview={setPhotoGuide} />}
         {open !== 'POSTURAL' && cycle.status !== 'COMPLETED' && !cycle.expired && <div className="stage-actions"><button disabled={busy} onClick={() => save(open, false)}>Salvar rascunho</button><button className="primary" disabled={busy} onClick={() => save(open, true)}>Concluir etapa</button></div>}
       </article></div>
     {mode === 'reassessment' && <StrengthResults cycle={displayedCycle} previous={previousCycle(payload.cycles, cycle)} comparison />}
+    {photoGuide && <div className="guide-lightbox" role="dialog" aria-modal="true" aria-label={`Demonstração: ${photoGuide.label}`} onClick={() => setPhotoGuide(null)}><div className="guide-lightbox-card" onClick={(event) => event.stopPropagation()}><button type="button" className="guide-lightbox-close" onClick={() => setPhotoGuide(null)} aria-label="Fechar demonstração">×</button><img src={photoGuide.image} alt={`Demonstração de ${photoGuide.label}`} /><div><h3>{photoGuide.label}</h3><p>{photoGuide.instructions}</p><strong>{photoGuide.purpose}</strong></div></div></div>}
   </section>
+}
+
+function PosturalPhotos({ cycle, busy, photo, onPreview }) {
+  const canUpload = !busy && cycle.status !== 'COMPLETED' && !cycle.expired
+  return <div><div className="privacy-note"><strong>Suas fotos são privadas.</strong><p>Use as demonstrações ao lado para repetir cada posição. Clique na imagem para ampliá-la. O envio permite somente a avaliação profissional.</p></div><div className="photo-grid">{photoGuides.map((guide) => {
+    const existing = cycle.photos.find((item) => item.view === guide.key)
+    return <article className="photo-guide-card" key={guide.key}>
+      <button type="button" className="photo-guide-preview" onClick={() => onPreview(guide)} aria-label={`Ampliar demonstração de ${guide.label}`}><img src={guide.image} alt={`Demonstração de ${guide.label}`} loading="lazy" /><span>Ampliar</span></button>
+      <div className="photo-guide-content"><strong>{guide.label}</strong><p>{guide.instructions}</p><small>{guide.purpose}</small><label className={`photo-upload ${!canUpload ? 'disabled' : ''}`}><span>{existing ? 'Foto recebida · trocar' : 'Selecionar sua foto'}</span><input type="file" accept="image/jpeg,image/png,image/webp" disabled={!canUpload} onChange={(event) => photo(guide.key, event.target.files[0])} /></label></div>
+    </article>
+  })}</div></div>
 }
 
 function Field({ label, children }) { return <label className="form-field"><span>{label}</span>{children}</label> }
@@ -87,11 +100,12 @@ const anamnesisQuestions=[
 ]
 function Anamnesis({ data, set, consent, setConsent }) { return <div className="assessment-form"><p className="form-intro">Responda com detalhes. Essas informações serão usadas exclusivamente para personalizar seu acompanhamento.</p>{anamnesisQuestions.map(([key,label,type,min,max],index)=><Field key={key} label={`${index+1}. ${label}`}>{type==='number'?<input type="number" min={min} max={max} step={key==='waterLiters'?'0.1':'1'} value={data[key]??''} onChange={e=>set(key,e.target.value)}/>:<textarea rows="4" value={data[key]||''} onChange={e=>set(key,e.target.value)}/>}</Field>)}<label className="consent"><input type="checkbox" checked={Boolean(consent)} onChange={(e) => setConsent(e.target.checked)} /><span>Concordo com o tratamento destes dados sensíveis exclusivamente para avaliação e prescrição do meu treinamento, conforme a Política de Privacidade.</span></label></div> }
 function ReassessmentAnamnesis({data,set,consent,setConsent}){return <div className="assessment-form"><p className="form-intro">Conte o que mudou desde a última avaliação para ajustarmos a próxima etapa.</p><Field label="1. Desde a sua última avaliação, sua rotina mudou? Se sim, conte como."><textarea rows="4" value={data.routineChanges||''} onChange={e=>set('routineChanges',e.target.value)}/></Field><Field label="2. Você percebeu alguma mudança na disposição, qualidade do sono ou humor?"><textarea rows="4" value={data.wellbeingChanges||''} onChange={e=>set('wellbeingChanges',e.target.value)}/></Field><Field label="3. O formato dos treinos, a divisão e a seleção de exercícios agradam? Gostaria de algum ajuste?"><textarea rows="4" value={data.workoutFeedback||''} onChange={e=>set('workoutFeedback',e.target.value)}/></Field><Field label="4. Qual sua percepção corporal atual? Está satisfeita ou insatisfeita? Percebeu mudanças desde a última avaliação? Quais?"><textarea rows="4" value={data.currentBodyPerception||''} onChange={e=>set('currentBodyPerception',e.target.value)}/></Field><div className="form-grid"><Field label="5. Nota de dedicação aos treinos (0 a 10)"><input type="number" min="0" max="10" value={data.trainingDedicationScore??''} onChange={e=>set('trainingDedicationScore',e.target.value)}/></Field><Field label="Nota para alimentação e hidratação (0 a 10)"><input type="number" min="0" max="10" value={data.nutritionHydrationScore??''} onChange={e=>set('nutritionHydrationScore',e.target.value)}/></Field></div><label className="consent"><input type="checkbox" checked={Boolean(consent)} onChange={e=>setConsent(e.target.checked)}/><span>Concordo com o tratamento destes dados sensíveis exclusivamente para reavaliação e prescrição do meu treinamento, conforme a Política de Privacidade.</span></label></div>}
-function Body({ data, set }) { const fields=[['weightKg','Peso (kg)'],['heightCm','Altura (cm)'],['waistCm','Cintura (cm)'],['hipCm','Quadril (cm)'],['rightArmCm','Braço direito (cm)'],['leftArmCm','Braço esquerdo (cm)'],['rightThighCm','Coxa direita (cm)'],['leftThighCm','Coxa esquerda (cm)']]; return <div className="assessment-form form-grid">{fields.map(([key,label]) => <Field key={key} label={label}><input type="number" step="0.1" value={data[key] ?? ''} onChange={(e) => set(key,e.target.value)} /></Field>)}</div> }
+function Body({ data, set }) { const fields=[['weightKg','Peso (kg)'],['heightCm','Altura (cm)'],['waistCm','Cintura (cm)'],['hipCm','Quadril (cm)'],['rightArmRelaxedCm','Braço direito relaxado (cm)'],['rightArmContractedCm','Braço direito contraído (cm)'],['rightThighCm','Coxa direita (cm)']]; return <div className="assessment-form form-grid">{fields.map(([key,label]) => <Field key={key} label={label}><input type="number" step="0.1" value={data[key] ?? (key === 'rightArmRelaxedCm' ? data.rightArmCm : '') ?? ''} onChange={(e) => set(key,e.target.value)} /></Field>)}</div> }
 export function Strength({ cycle, data, set, disabled = false }) {
   return <fieldset className="assessment-form strength-form" disabled={disabled}>
     <legend>Teste de Força</legend>
-    <p>Preencha os quatro exercícios. Se algum não foi realizado, marque a opção e informe o motivo.</p>
+    <div className="privacy-note"><strong>Como realizar o teste de força</strong><p>Faça 3 séries de cada exercício. Nas duas primeiras, realize de 10 a 12 repetições, aquecendo e aumentando a carga aos poucos. Na última série, use uma carga desafiadora e faça o máximo de repetições possível. Filme a execução e anote a carga total e o número máximo de repetições.</p></div>
+    <p>Preencha os quatro exercícios de força. Se algum não foi realizado, marque a opção e informe o motivo.</p>
     <div className="exercise-grid">{exercises.map(([key, label]) => {
       const item = data[key] || {}
       return <div className="exercise-card" key={key}>
@@ -103,7 +117,7 @@ export function Strength({ cycle, data, set, disabled = false }) {
       </div>
     })}</div>
     <StrengthExplanation />
-    <h4>Resistência de Força</h4>
+    <h4>Testes de resistência</h4>
     <div className="form-grid"><Field label="Flexões até a falha"><input type="number" min="0" max="10000" step="1" value={data.pushUps ?? ''} onChange={e => set('pushUps', null, e.target.value)} /></Field><Field label="Prancha até a falha (segundos)"><input type="number" min="0" max="86400" value={data.plankSeconds ?? ''} onChange={e => set('plankSeconds', null, e.target.value)} /></Field><Field label="Abdominal em 1 minuto"><input type="number" min="0" max="10000" step="1" value={data.abdominalReps ?? ''} onChange={e => set('abdominalReps', null, e.target.value)} /></Field></div>
   </fieldset>
 }
