@@ -4,11 +4,11 @@ import { useAuth } from '../../context/AuthContext'
 import './StudentAssessments.css'
 import StrengthResults, { ExerciseResult, StrengthExplanation } from '../../components/StrengthResults'
 import { strengthExercises as exercises, previousCycle, resistanceResults } from '../../utils/strengthResults'
-import { assessmentPhotoViews as views } from '../../utils/assessmentPhotos'
+import { assessmentPhotoGuides as photoGuides } from '../../utils/assessmentPhotos'
 
 const stages = [
   ['ANAMNESIS', 'Anamnese', 'Histórico de saúde, rotina e objetivos'], ['BODY', 'Avaliação Antropométrica', 'Medidas para acompanhar sua evolução'],
-  ['POSTURAL', 'Avaliação Postural', `${views.length} fotos privadas para análise completa`], ['STRENGTH', 'Teste Físico', 'Força e resistência de força'],
+  ['POSTURAL', 'Avaliação Postural', `${photoGuides.length} fotos privadas para análise completa`], ['STRENGTH', 'Teste Físico', 'Força e resistência de força'],
   ['ENDURANCE', 'Teste Cardiorrespiratório', 'Corrida de 5 min ou caminhada de 6 min']
 ]
 
@@ -24,6 +24,7 @@ export default function StudentAssessments({ mode = 'assessment' }) {
   const { user } = useAuth()
   const [payload, setPayload] = useState({ cycles: [], videos: [] }); const [programWeeks,setProgramWeeks]=useState([]); const [selected, setSelected] = useState(0); const [open, setOpen] = useState('ANAMNESIS'); const [form, setForm] = useState({}); const [message, setMessage] = useState(''); const [busy, setBusy] = useState(false)
   const [dirtyStages, setDirtyStages] = useState({})
+  const [photoGuide, setPhotoGuide] = useState(null)
   const load = async () => { const [{ data },weeksResponse] = await Promise.all([api.get('/assessments'),mode==='reassessment'?api.get(`/tracking/student/${user.studentId}/weeks`):Promise.resolve({data:[]})]); setPayload(data);setProgramWeeks(weeksResponse.data||[]); const available = mode === 'reassessment' ? data.cycles.map((item, index) => item.sequence ? index : -1).filter((index) => index >= 0) : [0]; setSelected(available.at(-1) ?? 0) }
   useEffect(() => { load().catch(() => setMessage('Não foi possível carregar sua avaliação.')) }, [mode, user.studentId])
   const cycle = payload.cycles[selected]
@@ -46,11 +47,23 @@ export default function StudentAssessments({ mode = 'assessment' }) {
         {open === 'BODY' && <Body data={form.BODY || {}} set={(k, v) => setField('BODY', k, v)} />}
         {open === 'STRENGTH' && <Strength cycle={displayedCycle} disabled={busy || cycle.status === 'COMPLETED' || cycle.expired} data={form.STRENGTH || {}} set={(key, field, value) => setField('STRENGTH', key, field ? { ...(form.STRENGTH?.[key] || {}), [field]: value, ...(field === 'notPerformed' ? { loadKg: null, repetitions: null, notPerformedReason: null } : {}) } : value)} />}
         {open === 'ENDURANCE' && <Endurance data={form.ENDURANCE || {}} set={(k, v) => setField('ENDURANCE', k, v)} />}
-        {open === 'POSTURAL' && <div><div className="privacy-note"><strong>Suas fotos são privadas.</strong><p>O envio permite somente a avaliação profissional. Não autoriza publicação, divulgação ou compartilhamento.</p></div><div className="photo-grid">{views.map(([key, label]) => { const existing = cycle.photos.find((item) => item.view === key); return <label key={key}><strong>{label}</strong><span>{existing ? 'Foto recebida · trocar' : 'Selecionar foto'}</span><input type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => photo(key, e.target.files[0])} /></label> })}</div></div>}
+        {open === 'POSTURAL' && <PosturalPhotos cycle={cycle} busy={busy} photo={photo} onPreview={setPhotoGuide} />}
         {open !== 'POSTURAL' && cycle.status !== 'COMPLETED' && !cycle.expired && <div className="stage-actions"><button disabled={busy} onClick={() => save(open, false)}>Salvar rascunho</button><button className="primary" disabled={busy} onClick={() => save(open, true)}>Concluir etapa</button></div>}
       </article></div>
     {mode === 'reassessment' && <StrengthResults cycle={displayedCycle} previous={previousCycle(payload.cycles, cycle)} comparison />}
+    {photoGuide && <div className="guide-lightbox" role="dialog" aria-modal="true" aria-label={`Demonstração: ${photoGuide.label}`} onClick={() => setPhotoGuide(null)}><div className="guide-lightbox-card" onClick={(event) => event.stopPropagation()}><button type="button" className="guide-lightbox-close" onClick={() => setPhotoGuide(null)} aria-label="Fechar demonstração">×</button><img src={photoGuide.image} alt={`Demonstração de ${photoGuide.label}`} /><div><h3>{photoGuide.label}</h3><p>{photoGuide.instructions}</p><strong>{photoGuide.purpose}</strong></div></div></div>}
   </section>
+}
+
+function PosturalPhotos({ cycle, busy, photo, onPreview }) {
+  const canUpload = !busy && cycle.status !== 'COMPLETED' && !cycle.expired
+  return <div><div className="privacy-note"><strong>Suas fotos são privadas.</strong><p>Use as demonstrações ao lado para repetir cada posição. Clique na imagem para ampliá-la. O envio permite somente a avaliação profissional.</p></div><div className="photo-grid">{photoGuides.map((guide) => {
+    const existing = cycle.photos.find((item) => item.view === guide.key)
+    return <article className="photo-guide-card" key={guide.key}>
+      <button type="button" className="photo-guide-preview" onClick={() => onPreview(guide)} aria-label={`Ampliar demonstração de ${guide.label}`}><img src={guide.image} alt={`Demonstração de ${guide.label}`} loading="lazy" /><span>Ampliar</span></button>
+      <div className="photo-guide-content"><strong>{guide.label}</strong><p>{guide.instructions}</p><small>{guide.purpose}</small><label className={`photo-upload ${!canUpload ? 'disabled' : ''}`}><span>{existing ? 'Foto recebida · trocar' : 'Selecionar sua foto'}</span><input type="file" accept="image/jpeg,image/png,image/webp" disabled={!canUpload} onChange={(event) => photo(guide.key, event.target.files[0])} /></label></div>
+    </article>
+  })}</div></div>
 }
 
 function Field({ label, children }) { return <label className="form-field"><span>{label}</span>{children}</label> }
