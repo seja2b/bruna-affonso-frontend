@@ -170,7 +170,6 @@ function WeekEditor({selectedWeek,exercises,updateExercise,addExercise,removeExe
               <div className="day-exercises">{daily.length===0?<p className="day-empty">Nenhum exercício adicionado neste dia.</p>:daily.map(({exercise,index},dailyIndex)=><div className="manual-exercise-row" key={exercise.id||`${day}-${index}`}>
                 <span className="manual-exercise-index">{dailyIndex+1}</span>
                 <input disabled={selectedWeek.isCompleted} value={exercise.exerciseName||''} onChange={e=>updateExercise(index,'exerciseName',e.target.value)} placeholder="Exercício" />
-                <input disabled={selectedWeek.isCompleted} value={exercise.trainingType||''} onChange={e=>updateExercise(index,'trainingType',e.target.value)} placeholder="Tipo de treino" />
                 <input disabled={selectedWeek.isCompleted} value={exercise.weight||''} onChange={e=>updateExercise(index,'weight',e.target.value)} placeholder="Carga (kg)" />
                 <input disabled={selectedWeek.isCompleted} value={exercise.reps||''} onChange={e=>updateExercise(index,'reps',e.target.value)} placeholder="Repetições" />
                 <input disabled={selectedWeek.isCompleted} value={exercise.notes||''} onChange={e=>updateExercise(index,'notes',e.target.value)} placeholder="Observação (opcional)" />
