@@ -34,7 +34,7 @@ function EbookCover({ ebook }) {
 
   return src
     ? <img className="ebook-cover" src={src} alt={`Capa de ${ebook.title}`} />
-    : <span className="ebook-cover ebook-cover-placeholder">PDF</span>
+    : <span className="ebook-cover ebook-cover-placeholder"><small>BRUNA AFFONSO</small><strong>{ebook.title}</strong><em>E-BOOK</em></span>
 }
 
 function PdfReader({ blob, title }) {
@@ -43,6 +43,7 @@ function PdfReader({ blob, title }) {
   const renderTaskRef = useRef(null)
   const [pageNumber, setPageNumber] = useState(1)
   const [pageCount, setPageCount] = useState(0)
+  const [zoom, setZoom] = useState(1)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -70,24 +71,27 @@ function PdfReader({ blob, title }) {
     document.getPage(pageNumber).then(page => {
       if (!active) return undefined
       const base = page.getViewport({ scale: 1 })
-      const availableWidth = Math.min(900, Math.max(280, canvas.parentElement.clientWidth - 32))
-      const viewport = page.getViewport({ scale: availableWidth / base.width })
-      canvas.width = Math.ceil(viewport.width)
-      canvas.height = Math.ceil(viewport.height)
+      const availableWidth = Math.min(980, Math.max(280, canvas.parentElement.clientWidth - 48))
+      const viewport = page.getViewport({ scale: (availableWidth / base.width) * zoom })
+      const pixelRatio = Math.min(window.devicePixelRatio || 1, 2.5)
+      canvas.width = Math.ceil(viewport.width * pixelRatio)
+      canvas.height = Math.ceil(viewport.height * pixelRatio)
+      canvas.style.width = `${Math.ceil(viewport.width)}px`
+      canvas.style.height = `${Math.ceil(viewport.height)}px`
       renderTaskRef.current?.cancel()
-      renderTaskRef.current = page.render({ canvasContext: canvas.getContext('2d'), viewport })
+      renderTaskRef.current = page.render({ canvasContext: canvas.getContext('2d'), viewport, transform: pixelRatio === 1 ? null : [pixelRatio, 0, 0, pixelRatio, 0, 0] })
       return renderTaskRef.current.promise
     }).catch(renderError => {
       if (active && renderError?.name !== 'RenderingCancelledException') setError('Não foi possível mostrar esta página.')
     })
     return () => { active = false; renderTaskRef.current?.cancel() }
-  }, [pageNumber, pageCount])
+  }, [pageNumber, pageCount, zoom])
 
   if (error) return <div className="ebook-reader-state">{error}</div>
   return <div className="ebook-reader" aria-label={`Conteúdo de ${title}`}>
     {loading && <div className="ebook-reader-state">Carregando material...</div>}
     <div className="ebook-reader-page"><canvas ref={canvasRef} /></div>
-    {pageCount > 0 && <nav aria-label="Navegação do PDF"><button disabled={pageNumber === 1} onClick={() => setPageNumber(number => number - 1)}>Anterior</button><span>Página {pageNumber} de {pageCount}</span><button disabled={pageNumber === pageCount} onClick={() => setPageNumber(number => number + 1)}>Próxima</button></nav>}
+    {pageCount > 0 && <nav aria-label="Controles do PDF"><div className="ebook-page-controls"><button disabled={pageNumber === 1} onClick={() => setPageNumber(number => number - 1)}>‹</button><span>Página <strong>{pageNumber}</strong> de {pageCount}</span><button disabled={pageNumber === pageCount} onClick={() => setPageNumber(number => number + 1)}>›</button></div><div className="ebook-zoom-controls"><button disabled={zoom <= .75} onClick={() => setZoom(value => Math.max(.75, value - .25))}>−</button><span>{Math.round(zoom * 100)}%</span><button disabled={zoom >= 2} onClick={() => setZoom(value => Math.min(2, value + .25))}>+</button></div></nav>}
   </div>
 }
 
