@@ -115,6 +115,8 @@ export default function EbookLibrary({ admin = false }) {
   const [message, setMessage] = useState('')
   const [viewer, setViewer] = useState(null)
   const [openingId, setOpeningId] = useState(null)
+  const [draggedId, setDraggedId] = useState(null)
+  const [savingOrder, setSavingOrder] = useState(false)
   const backfillAttempted = useRef(new Set())
 
   async function backfillCovers(items) {
@@ -222,6 +224,40 @@ export default function EbookLibrary({ admin = false }) {
     await load()
   }
 
+  async function saveOrder(next, previous) {
+    if (next.every((ebook, index) => ebook.id === previous[index]?.id)) return
+    setEbooks(next)
+    try {
+      setSavingOrder(true)
+      const { data } = await api.put('/ebooks/order', { ids: next.map(ebook => ebook.id), previousIds: previous.map(ebook => ebook.id) })
+      setEbooks(data || next)
+      setMessage('Ordem dos e-books salva.')
+    } catch (error) {
+      setEbooks(previous)
+      setMessage(error.response?.data?.error || 'Não foi possível salvar a ordem dos e-books.')
+    } finally {
+      setSavingOrder(false)
+    }
+  }
+
+  function moveEbook(fromId, toId) {
+    if (!admin || savingOrder || fromId === toId) return
+    const previous = [...ebooks]
+    const fromIndex = previous.findIndex(ebook => ebook.id === fromId)
+    const toIndex = previous.findIndex(ebook => ebook.id === toId)
+    if (fromIndex < 0 || toIndex < 0) return
+    const next = [...previous]
+    const [moved] = next.splice(fromIndex, 1)
+    next.splice(toIndex, 0, moved)
+    saveOrder(next, previous)
+  }
+
+  function moveByStep(index, direction) {
+    const target = index + direction
+    if (target < 0 || target >= ebooks.length) return
+    moveEbook(ebooks[index].id, ebooks[target].id)
+  }
+
   return <section className="ebook-page">
     <header><div><span>Biblioteca digital</span><h2>E-books</h2><p>Materiais em PDF para complementar os treinos e orientações.</p></div><strong>{ebooks.length} {ebooks.length === 1 ? 'arquivo' : 'arquivos'}</strong></header>
     {message && <div className="ebook-message">{message}</div>}
@@ -232,7 +268,8 @@ export default function EbookLibrary({ admin = false }) {
       <button disabled={busy}>{busy ? 'Gerando capa e publicando...' : 'Publicar e-book'}</button>
     </form>}
     <div className="ebook-grid">
-      {ebooks.map(ebook => <article key={ebook.id}>
+      {ebooks.map((ebook, index) => <article key={ebook.id} className={`ebook-card ${admin ? 'ebook-card-admin' : ''} ${draggedId === ebook.id ? 'ebook-dragging' : ''}`} draggable={admin && !savingOrder} onDragStart={() => setDraggedId(ebook.id)} onDragEnd={() => setDraggedId(null)} onDragOver={event => admin && event.preventDefault()} onDrop={event => { event.preventDefault(); moveEbook(draggedId, ebook.id); setDraggedId(null) }}>
+        {admin && <div className="ebook-order" title="Arraste para alterar a ordem"><span aria-hidden="true">⠿</span><button type="button" aria-label={`Mover ${ebook.title} para cima`} disabled={savingOrder || index === 0} onClick={() => moveByStep(index, -1)}>↑</button><button type="button" aria-label={`Mover ${ebook.title} para baixo`} disabled={savingOrder || index === ebooks.length - 1} onClick={() => moveByStep(index, 1)}>↓</button></div>}
         <EbookCover ebook={ebook} />
         <div><h3>{ebook.title}</h3><p>{ebook.description || 'Material complementar'}</p><small>{(ebook.size / 1024 / 1024).toFixed(1)} MB</small></div>
         <div className="ebook-actions"><button className="ebook-read" disabled={openingId === ebook.id} onClick={() => open(ebook)}>{openingId === ebook.id ? 'Abrindo...' : 'Ler agora'}</button><button className="ebook-download" onClick={() => download(ebook)}>Baixar PDF</button></div>

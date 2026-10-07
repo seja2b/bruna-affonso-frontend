@@ -9,7 +9,7 @@ export async function createPdfCover(pdfSource) {
   try {
     const page = await document.getPage(1)
     const initialViewport = page.getViewport({ scale: 1 })
-    const scale = 480 / initialViewport.width
+    const scale = 720 / initialViewport.width
     const viewport = page.getViewport({ scale })
     const canvas = window.document.createElement('canvas')
     canvas.width = Math.ceil(viewport.width)
@@ -18,7 +18,7 @@ export async function createPdfCover(pdfSource) {
     context.fillStyle = '#ffffff'
     context.fillRect(0, 0, canvas.width, canvas.height)
     await page.render({ canvasContext: context, viewport }).promise
-    return await new Promise((resolve, reject) => canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Não foi possível gerar a capa')), 'image/webp', 0.82))
+    return await new Promise((resolve, reject) => canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Não foi possível gerar a capa')), 'image/webp', 0.92))
   } finally {
     await document.destroy()
   }
