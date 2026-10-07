@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
+import { getDocument } from 'pdfjs-dist'
 import api from '../services/api'
 import { createPdfCover } from '../utils/pdfCover'
 import './EbookLibrary.css'
@@ -11,21 +12,83 @@ function EbookCover({ ebook }) {
   useEffect(() => {
     let active = true
     let objectUrl = ''
-    if (!ebook.coverUrl) return undefined
-    api.get(ebook.coverUrl, { responseType: 'blob' }).then(({ data }) => {
+    const loadCover = async () => {
+      let data = null
+      if (ebook.coverUrl) {
+        try { data = (await api.get(ebook.coverUrl, { responseType: 'blob' })).data } catch { data = null }
+      }
+      if (!data) {
+        const pdf = (await api.get(ebook.url, { responseType: 'blob' })).data
+        data = await createPdfCover(pdf)
+      }
       if (!active) return
       objectUrl = URL.createObjectURL(data)
       setSrc(objectUrl)
-    }).catch(() => {})
+    }
+    loadCover().catch(() => {})
     return () => {
       active = false
       if (objectUrl) URL.revokeObjectURL(objectUrl)
     }
-  }, [ebook.coverUrl])
+  }, [ebook.coverUrl, ebook.url])
 
   return src
     ? <img className="ebook-cover" src={src} alt={`Capa de ${ebook.title}`} />
     : <span className="ebook-cover ebook-cover-placeholder">PDF</span>
+}
+
+function PdfReader({ blob, title }) {
+  const canvasRef = useRef(null)
+  const documentRef = useRef(null)
+  const renderTaskRef = useRef(null)
+  const [pageNumber, setPageNumber] = useState(1)
+  const [pageCount, setPageCount] = useState(0)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    let active = true
+    blob.arrayBuffer().then(bytes => getDocument({ data: bytes }).promise).then(document => {
+      if (!active) return document.destroy()
+      documentRef.current = document
+      setPageCount(document.numPages)
+      setPageNumber(1)
+    }).catch(() => active && setError('Não foi possível carregar este material.')).finally(() => active && setLoading(false))
+    return () => {
+      active = false
+      renderTaskRef.current?.cancel()
+      documentRef.current?.destroy()
+      documentRef.current = null
+    }
+  }, [blob])
+
+  useEffect(() => {
+    const document = documentRef.current
+    const canvas = canvasRef.current
+    if (!document || !canvas) return undefined
+    let active = true
+    document.getPage(pageNumber).then(page => {
+      if (!active) return undefined
+      const base = page.getViewport({ scale: 1 })
+      const availableWidth = Math.min(900, Math.max(280, canvas.parentElement.clientWidth - 32))
+      const viewport = page.getViewport({ scale: availableWidth / base.width })
+      canvas.width = Math.ceil(viewport.width)
+      canvas.height = Math.ceil(viewport.height)
+      renderTaskRef.current?.cancel()
+      renderTaskRef.current = page.render({ canvasContext: canvas.getContext('2d'), viewport })
+      return renderTaskRef.current.promise
+    }).catch(renderError => {
+      if (active && renderError?.name !== 'RenderingCancelledException') setError('Não foi possível mostrar esta página.')
+    })
+    return () => { active = false; renderTaskRef.current?.cancel() }
+  }, [pageNumber, pageCount])
+
+  if (error) return <div className="ebook-reader-state">{error}</div>
+  return <div className="ebook-reader" aria-label={`Conteúdo de ${title}`}>
+    {loading && <div className="ebook-reader-state">Carregando material...</div>}
+    <div className="ebook-reader-page"><canvas ref={canvasRef} /></div>
+    {pageCount > 0 && <nav aria-label="Navegação do PDF"><button disabled={pageNumber === 1} onClick={() => setPageNumber(number => number - 1)}>Anterior</button><span>Página {pageNumber} de {pageCount}</span><button disabled={pageNumber === pageCount} onClick={() => setPageNumber(number => number + 1)}>Próxima</button></nav>}
+  </div>
 }
 
 export default function EbookLibrary({ admin = false }) {
@@ -107,26 +170,26 @@ export default function EbookLibrary({ admin = false }) {
 
   async function fetchPdf(ebook) {
     const { data } = await api.get(ebook.url, { responseType: 'blob' })
-    return URL.createObjectURL(data)
+    return data
   }
 
   async function open(ebook) {
     try {
-      const url = await fetchPdf(ebook)
-      setViewer({ ebook, url })
+      const blob = await fetchPdf(ebook)
+      setViewer({ ebook, blob })
     } catch {
       setMessage('Não foi possível abrir o PDF.')
     }
   }
 
   function closeViewer() {
-    if (viewer?.url) URL.revokeObjectURL(viewer.url)
     setViewer(null)
   }
 
   async function download(ebook) {
     try {
-      const url = await fetchPdf(ebook)
+      const blob = await fetchPdf(ebook)
+      const url = URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
       link.download = ebook.originalName || `${ebook.title}.pdf`
@@ -165,7 +228,7 @@ export default function EbookLibrary({ admin = false }) {
       {!ebooks.length && <div className="ebook-empty">Nenhum e-book publicado ainda.</div>}
     </div>
     {viewer && <div className="ebook-viewer-backdrop" role="dialog" aria-modal="true" aria-label={`Leitor de ${viewer.ebook.title}`} onMouseDown={event => event.target === event.currentTarget && closeViewer()}>
-      <div className="ebook-viewer"><header><div><strong>{viewer.ebook.title}</strong><small>Leitura do e-book</small></div><div><button onClick={() => download(viewer.ebook)}>Baixar PDF</button><button className="ebook-viewer-close" aria-label="Fechar leitor" onClick={closeViewer}>×</button></div></header><iframe src={viewer.url} title={viewer.ebook.title} /></div>
+      <div className="ebook-viewer"><header><div><strong>{viewer.ebook.title}</strong><small>Leitura do e-book</small></div><div><button onClick={() => download(viewer.ebook)}>Baixar PDF</button><button className="ebook-viewer-close" aria-label="Fechar leitor" onClick={closeViewer}>×</button></div></header><PdfReader blob={viewer.blob} title={viewer.ebook.title} /></div>
     </div>}
   </section>
 }
