@@ -84,7 +84,9 @@ function PdfReader({ ebook }) {
       const base = page.getViewport({ scale: 1 })
       const availableWidth = Math.min(980, Math.max(280, canvas.parentElement.clientWidth - 48))
       const viewport = page.getViewport({ scale: (availableWidth / base.width) * zoom })
-      const pixelRatio = Math.min(window.devicePixelRatio || 1, 2.5)
+      const screenRatio = window.devicePixelRatio || 1
+      const minimumSharpWidth = 2400
+      const pixelRatio = Math.min(3, Math.max(screenRatio, minimumSharpWidth / viewport.width))
       canvas.width = Math.ceil(viewport.width * pixelRatio)
       canvas.height = Math.ceil(viewport.height * pixelRatio)
       canvas.style.width = `${Math.ceil(viewport.width)}px`
