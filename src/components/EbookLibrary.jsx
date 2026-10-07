@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { getDocument } from 'pdfjs-dist'
-import api from '../services/api'
+import api, { getAccessToken } from '../services/api'
 import { createPdfCover } from '../utils/pdfCover'
 import './EbookLibrary.css'
 
@@ -15,7 +15,12 @@ function EbookCover({ ebook }) {
     const loadCover = async () => {
       let data = null
       if (ebook.coverUrl) {
-        try { data = (await api.get(ebook.coverUrl, { responseType: 'blob' })).data } catch { data = null }
+        try {
+          const candidate = (await api.get(ebook.coverUrl, { responseType: 'blob' })).data
+          const bitmap = await createImageBitmap(candidate)
+          bitmap.close()
+          data = candidate
+        } catch { data = null }
       }
       if (!data) {
         const pdf = (await api.get(ebook.url, { responseType: 'blob' })).data
@@ -37,7 +42,7 @@ function EbookCover({ ebook }) {
     : <span className="ebook-cover ebook-cover-placeholder"><small>BRUNA AFFONSO</small><strong>{ebook.title}</strong><em>E-BOOK</em></span>
 }
 
-function PdfReader({ blob, title }) {
+function PdfReader({ ebook }) {
   const canvasRef = useRef(null)
   const documentRef = useRef(null)
   const renderTaskRef = useRef(null)
@@ -45,11 +50,16 @@ function PdfReader({ blob, title }) {
   const [pageCount, setPageCount] = useState(0)
   const [zoom, setZoom] = useState(1)
   const [loading, setLoading] = useState(true)
+  const [progress, setProgress] = useState(0)
   const [error, setError] = useState('')
 
   useEffect(() => {
     let active = true
-    blob.arrayBuffer().then(bytes => getDocument({ data: bytes }).promise).then(document => {
+    const token = getAccessToken()
+    const url = `${api.defaults.baseURL}${ebook.url}`
+    const loadingTask = getDocument({ url, withCredentials: true, httpHeaders: token ? { Authorization: `Bearer ${token}` } : undefined, rangeChunkSize: 256 * 1024, disableStream: true, disableAutoFetch: true })
+    loadingTask.onProgress = ({ loaded, total }) => { if (active && total) setProgress(Math.min(100, Math.round((loaded / total) * 100))) }
+    loadingTask.promise.then(document => {
       if (!active) return document.destroy()
       documentRef.current = document
       setPageCount(document.numPages)
@@ -59,9 +69,10 @@ function PdfReader({ blob, title }) {
       active = false
       renderTaskRef.current?.cancel()
       documentRef.current?.destroy()
+      loadingTask.destroy()
       documentRef.current = null
     }
-  }, [blob])
+  }, [ebook.url])
 
   useEffect(() => {
     const document = documentRef.current
@@ -88,8 +99,8 @@ function PdfReader({ blob, title }) {
   }, [pageNumber, pageCount, zoom])
 
   if (error) return <div className="ebook-reader-state">{error}</div>
-  return <div className="ebook-reader" aria-label={`Conteúdo de ${title}`}>
-    {loading && <div className="ebook-reader-state">Carregando material...</div>}
+  return <div className="ebook-reader" aria-label={`Conteúdo de ${ebook.title}`}>
+    {loading && <div className="ebook-reader-state"><span className="ebook-loader" /><strong>Preparando seu material</strong><small>{progress ? `${progress}% carregado` : 'Abrindo o documento...'}</small></div>}
     <div className="ebook-reader-page"><canvas ref={canvasRef} /></div>
     {pageCount > 0 && <nav aria-label="Controles do PDF"><div className="ebook-page-controls"><button disabled={pageNumber === 1} onClick={() => setPageNumber(number => number - 1)}>‹</button><span>Página <strong>{pageNumber}</strong> de {pageCount}</span><button disabled={pageNumber === pageCount} onClick={() => setPageNumber(number => number + 1)}>›</button></div><div className="ebook-zoom-controls"><button disabled={zoom <= .75} onClick={() => setZoom(value => Math.max(.75, value - .25))}>−</button><span>{Math.round(zoom * 100)}%</span><button disabled={zoom >= 2} onClick={() => setZoom(value => Math.min(2, value + .25))}>+</button></div></nav>}
   </div>
@@ -103,6 +114,7 @@ export default function EbookLibrary({ admin = false }) {
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
   const [viewer, setViewer] = useState(null)
+  const [openingId, setOpeningId] = useState(null)
   const backfillAttempted = useRef(new Set())
 
   async function backfillCovers(items) {
@@ -178,12 +190,9 @@ export default function EbookLibrary({ admin = false }) {
   }
 
   async function open(ebook) {
-    try {
-      const blob = await fetchPdf(ebook)
-      setViewer({ ebook, blob })
-    } catch {
-      setMessage('Não foi possível abrir o PDF.')
-    }
+    setOpeningId(ebook.id)
+    setViewer({ ebook })
+    window.setTimeout(() => setOpeningId(null), 350)
   }
 
   function closeViewer() {
@@ -226,13 +235,13 @@ export default function EbookLibrary({ admin = false }) {
       {ebooks.map(ebook => <article key={ebook.id}>
         <EbookCover ebook={ebook} />
         <div><h3>{ebook.title}</h3><p>{ebook.description || 'Material complementar'}</p><small>{(ebook.size / 1024 / 1024).toFixed(1)} MB</small></div>
-        <div className="ebook-actions"><button onClick={() => open(ebook)}>Ler</button><button className="ebook-download" onClick={() => download(ebook)}>Baixar PDF</button></div>
+        <div className="ebook-actions"><button className="ebook-read" disabled={openingId === ebook.id} onClick={() => open(ebook)}>{openingId === ebook.id ? 'Abrindo...' : 'Ler agora'}</button><button className="ebook-download" onClick={() => download(ebook)}>Baixar PDF</button></div>
         {admin && <button className="ebook-delete" onClick={() => remove(ebook.id)}>Excluir</button>}
       </article>)}
       {!ebooks.length && <div className="ebook-empty">Nenhum e-book publicado ainda.</div>}
     </div>
     {viewer && <div className="ebook-viewer-backdrop" role="dialog" aria-modal="true" aria-label={`Leitor de ${viewer.ebook.title}`} onMouseDown={event => event.target === event.currentTarget && closeViewer()}>
-      <div className="ebook-viewer"><header><div><strong>{viewer.ebook.title}</strong><small>Leitura do e-book</small></div><div><button onClick={() => download(viewer.ebook)}>Baixar PDF</button><button className="ebook-viewer-close" aria-label="Fechar leitor" onClick={closeViewer}>×</button></div></header><PdfReader blob={viewer.blob} title={viewer.ebook.title} /></div>
+      <div className="ebook-viewer"><header><div><strong>{viewer.ebook.title}</strong><small>Leitura do e-book</small></div><div><button onClick={() => download(viewer.ebook)}>Baixar PDF</button><button className="ebook-viewer-close" aria-label="Fechar leitor" onClick={closeViewer}>×</button></div></header><PdfReader ebook={viewer.ebook} /></div>
     </div>}
   </section>
 }
