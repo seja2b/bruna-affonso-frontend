@@ -42,13 +42,14 @@ function EbookCover({ ebook }) {
     : <span className="ebook-cover ebook-cover-placeholder"><small>BRUNA AFFONSO</small><strong>{ebook.title}</strong><em>E-BOOK</em></span>
 }
 
-function PdfReader({ ebook }) {
+function PdfReader({ ebook, onDownload, onFullscreen, fullscreen }) {
   const canvasRef = useRef(null)
   const documentRef = useRef(null)
   const renderTaskRef = useRef(null)
   const [pageNumber, setPageNumber] = useState(1)
   const [pageCount, setPageCount] = useState(0)
   const [zoom, setZoom] = useState(1)
+  const [rotation, setRotation] = useState(0)
   const [loading, setLoading] = useState(true)
   const [progress, setProgress] = useState(0)
   const [error, setError] = useState('')
@@ -81,9 +82,9 @@ function PdfReader({ ebook }) {
     let active = true
     document.getPage(pageNumber).then(page => {
       if (!active) return undefined
-      const base = page.getViewport({ scale: 1 })
+      const base = page.getViewport({ scale: 1, rotation })
       const availableWidth = Math.min(980, Math.max(280, canvas.parentElement.clientWidth - 48))
-      const viewport = page.getViewport({ scale: (availableWidth / base.width) * zoom })
+      const viewport = page.getViewport({ scale: (availableWidth / base.width) * zoom, rotation })
       const screenRatio = window.devicePixelRatio || 1
       const minimumSharpWidth = 2400
       const pixelRatio = Math.min(3, Math.max(screenRatio, minimumSharpWidth / viewport.width))
@@ -98,13 +99,17 @@ function PdfReader({ ebook }) {
       if (active && renderError?.name !== 'RenderingCancelledException') setError('Não foi possível mostrar esta página.')
     })
     return () => { active = false; renderTaskRef.current?.cancel() }
-  }, [pageNumber, pageCount, zoom])
+  }, [pageNumber, pageCount, zoom, rotation])
 
   if (error) return <div className="ebook-reader-state">{error}</div>
   return <div className="ebook-reader" aria-label={`Conteúdo de ${ebook.title}`}>
     {loading && <div className="ebook-reader-state"><span className="ebook-loader" /><strong>Preparando seu material</strong><small>{progress ? `${progress}% carregado` : 'Abrindo o documento...'}</small></div>}
+    {pageCount > 0 && <nav aria-label="Controles do PDF">
+      <div className="ebook-page-controls"><button title="Página anterior" disabled={pageNumber === 1} onClick={() => setPageNumber(number => number - 1)}>‹</button><label><input aria-label="Página atual" type="number" min="1" max={pageCount} value={pageNumber} onChange={event => setPageNumber(Math.min(pageCount, Math.max(1, Number(event.target.value) || 1)))} /><span>de {pageCount}</span></label><button title="Próxima página" disabled={pageNumber === pageCount} onClick={() => setPageNumber(number => number + 1)}>›</button></div>
+      <div className="ebook-zoom-controls"><button title="Diminuir zoom" disabled={zoom <= .75} onClick={() => setZoom(value => Math.max(.75, value - .25))}>−</button><span>{Math.round(zoom * 100)}%</span><button title="Aumentar zoom" disabled={zoom >= 2} onClick={() => setZoom(value => Math.min(2, value + .25))}>+</button><button title="Ajustar à largura" onClick={() => setZoom(1)}>↔</button></div>
+      <div className="ebook-document-controls"><button title="Girar página" onClick={() => setRotation(value => (value + 90) % 360)}>↻</button><button title="Baixar PDF" onClick={onDownload}>⇩</button><button title={fullscreen ? 'Sair da tela cheia' : 'Tela cheia'} onClick={onFullscreen}>{fullscreen ? '⊡' : '⛶'}</button></div>
+    </nav>}
     <div className="ebook-reader-page"><canvas ref={canvasRef} /></div>
-    {pageCount > 0 && <nav aria-label="Controles do PDF"><div className="ebook-page-controls"><button disabled={pageNumber === 1} onClick={() => setPageNumber(number => number - 1)}>‹</button><span>Página <strong>{pageNumber}</strong> de {pageCount}</span><button disabled={pageNumber === pageCount} onClick={() => setPageNumber(number => number + 1)}>›</button></div><div className="ebook-zoom-controls"><button disabled={zoom <= .75} onClick={() => setZoom(value => Math.max(.75, value - .25))}>−</button><span>{Math.round(zoom * 100)}%</span><button disabled={zoom >= 2} onClick={() => setZoom(value => Math.min(2, value + .25))}>+</button></div></nav>}
   </div>
 }
 
@@ -119,6 +124,8 @@ export default function EbookLibrary({ admin = false }) {
   const [openingId, setOpeningId] = useState(null)
   const [draggedId, setDraggedId] = useState(null)
   const [savingOrder, setSavingOrder] = useState(false)
+  const [fullscreen, setFullscreen] = useState(false)
+  const viewerRef = useRef(null)
   const backfillAttempted = useRef(new Set())
 
   async function backfillCovers(items) {
@@ -200,8 +207,24 @@ export default function EbookLibrary({ admin = false }) {
   }
 
   function closeViewer() {
+    if (document.fullscreenElement) document.exitFullscreen().catch(() => {})
     setViewer(null)
   }
+
+  async function toggleFullscreen() {
+    try {
+      if (document.fullscreenElement) await document.exitFullscreen()
+      else await viewerRef.current?.requestFullscreen()
+    } catch {
+      setMessage('Não foi possível alterar o modo de tela cheia.')
+    }
+  }
+
+  useEffect(() => {
+    const update = () => setFullscreen(Boolean(document.fullscreenElement))
+    document.addEventListener('fullscreenchange', update)
+    return () => document.removeEventListener('fullscreenchange', update)
+  }, [])
 
   async function download(ebook) {
     try {
@@ -280,7 +303,7 @@ export default function EbookLibrary({ admin = false }) {
       {!ebooks.length && <div className="ebook-empty">Nenhum e-book publicado ainda.</div>}
     </div>
     {viewer && <div className="ebook-viewer-backdrop" role="dialog" aria-modal="true" aria-label={`Leitor de ${viewer.ebook.title}`} onMouseDown={event => event.target === event.currentTarget && closeViewer()}>
-      <div className="ebook-viewer"><header><div><strong>{viewer.ebook.title}</strong><small>Leitura do e-book</small></div><div><button onClick={() => download(viewer.ebook)}>Baixar PDF</button><button className="ebook-viewer-close" aria-label="Fechar leitor" onClick={closeViewer}>×</button></div></header><PdfReader ebook={viewer.ebook} /></div>
+      <div className="ebook-viewer" ref={viewerRef}><header><div><strong>{viewer.ebook.title}</strong><small>Leitura do e-book</small></div><div><button onClick={() => download(viewer.ebook)}>Baixar PDF</button><button className="ebook-viewer-close" aria-label="Fechar leitor" onClick={closeViewer}>×</button></div></header><PdfReader ebook={viewer.ebook} onDownload={() => download(viewer.ebook)} onFullscreen={toggleFullscreen} fullscreen={fullscreen} /></div>
     </div>}
   </section>
 }
