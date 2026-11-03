@@ -27,11 +27,11 @@ try {
   }
   const drawn = []
   const original = PDFPage.prototype.drawText
-  let blob, clicked = false
-  PDFPage.prototype.drawText = function(text, options) { drawn.push(text); return original.call(this,text,options) }
+  let blob, clicked = false, downloadLink
+  PDFPage.prototype.drawText = function(text, options) { drawn.push({text,options}); return original.call(this,text,options) }
   globalThis.URL.createObjectURL = value => { blob=value; return 'blob:test' }
   globalThis.URL.revokeObjectURL = () => {}
-  globalThis.document = {createElement:()=>({click(){clicked=true}})}
+  globalThis.document = {createElement:()=>downloadLink={click(){clicked=true}}}
   try {
     await generateAssessmentPdf({cycle,previous,student:{name:'Aluna Teste'},settings:{},professional:true,weeks:[
       {trainingNumber:1,weekNumber:1,exercises:[{exerciseName:'Agachamento',weight:'50',reps:'10'}]},
@@ -40,10 +40,15 @@ try {
     ]})
   } finally { PDFPage.prototype.drawText = original }
   assert.ok(clicked)
+  assert.equal(downloadLink.download,'reavaliacao-1-aluna-teste.pdf')
   assert.ok((await PDFDocument.load(await blob.arrayBuffer())).getPageCount()>0)
-  const text = drawn.join('\n')
+  const text = drawn.map(item=>item.text).join('\n')
+  const studentName = drawn.find(item=>item.text==='Aluna Teste')
+  assert.ok(studentName)
+  assert.equal(studentName.options.font.name,'Helvetica-Bold')
   for (const expected of ['1RM estimado: 72,00 kg','Força relativa: 1,00x','Resultado: Bom','+12,00 kg','+20,00%','Flexões até a falha: 0','Prancha até a falha (segundos): 30','Abdominal em 1 minuto: 15','Flexões: 8 -> 0']) assert.ok(text.includes(expected),expected)
   for (const expected of ['EVOLUCAO DE CARGAS','Treino 01 - ciclo de 6 semanas','Agachamento','50 kg','55 kg','60 kg']) assert.ok(text.includes(expected),expected)
   assert.ok(!text.includes('99'))
+  assert.ok(!text.includes('Invalid Date'))
   console.log('PASS: componentes compartilhados e PDF real com comparação e resistência atual/legada')
 } finally { await Promise.all(files.map(path=>rm(path,{force:true}))) }

@@ -9,15 +9,17 @@ const stageLabels={ANAMNESIS:'Anamnese',BODY:'Avaliação antropométrica',POSTU
 const statusLabels={PENDING:'Pendente',IN_PROGRESS:'Em andamento',COMPLETED:'Concluída'}
 const valueLabels={YES:'Sim',NO:'Não',BIKE:'Bicicleta',TREADMILL:'Esteira',TREADMILL_5MIN:'Corrida na esteira - 5 minutos',WALKING_6MIN:'Caminhada - 6 minutos'}
 const safe=(value)=>value===null||value===undefined||value===''?'-':String(valueLabels[value]||value).replace(/→/g,' -> ').replace(/[^\x20-\x7E\xA0-\xFF]/g,'')
+const hasValue=(value)=>value!==null&&value!==undefined&&value!==''
+const formatDate=(value)=>{if(!value)return 'Não informado';const date=new Date(value);return Number.isNaN(date.getTime())?'Não informado':date.toLocaleDateString('pt-BR')}
 const wrap=(text,max=88)=>{const lines=[];let line='';for(const word of safe(text).split(/\s+/)){if(`${line} ${word}`.trim().length>max){lines.push(line);line=word}else line=`${line} ${word}`.trim()}if(line)lines.push(line);return lines}
 const embedPhoto=async(pdf,response,mime)=>{let bytes=new Uint8Array(response.data);if(mime==='image/png')return pdf.embedPng(bytes);if(mime==='image/jpeg')return pdf.embedJpg(bytes);const bitmap=await createImageBitmap(new Blob([bytes],{type:mime})),canvas=document.createElement('canvas');canvas.width=bitmap.width;canvas.height=bitmap.height;canvas.getContext('2d').drawImage(bitmap,0,0);const converted=await new Promise((resolve)=>canvas.toBlob(resolve,'image/png'));bytes=new Uint8Array(await converted.arrayBuffer());return pdf.embedPng(bytes)}
 
 export async function generateAssessmentPdf({cycle,previous,student,settings,professional=false,weeks=[]}){
   const pdf=await PDFDocument.create(),regular=await pdf.embedFont(StandardFonts.Helvetica),bold=await pdf.embedFont(StandardFonts.HelveticaBold);let page,y
-  const addPage=()=>{page=pdf.addPage([595.28,841.89]);page.drawRectangle({x:0,y:765,width:595.28,height:77,color:rgb(.09,.15,.28)});page.drawText('BRUNA AFFONSO',{x:44,y:807,size:17,font:bold,color:rgb(1,1,1)});page.drawText(professional?'Relatório profissional de avaliação':'Meu relatório de evolução',{x:44,y:789,size:9,font:regular,color:rgb(.86,.89,1)});y=740};addPage()
+  const addPage=()=>{page=pdf.addPage([595.28,841.89]);y=740};addPage()
   const ensure=(height=18)=>{if(y-height<45)addPage()}
-  const title=(text)=>{ensure(28);page.drawText(safe(text),{x:44,y,size:13,font:bold,color:rgb(.15,.23,.42)});y-=22}
-  const row=(label,value)=>{const lines=wrap(`${label}: ${safe(value)}`);ensure(lines.length*13+4);lines.forEach((line,index)=>page.drawText(line,{x:50,y:y-index*13,size:9,font:regular,color:rgb(.12,.16,.25)}));y-=lines.length*13+3}
+  const title=(text,minContent=16)=>{const topGap=y<735?10:0;ensure(topGap+25+minContent);y-=topGap;page.drawText(safe(text),{x:44,y,size:13,font:bold,color:rgb(.15,.23,.42)});y-=25}
+  const row=(label,value)=>{const lines=wrap(`${label}: ${safe(value)}`);ensure(lines.length*14+5);lines.forEach((line,index)=>page.drawText(line,{x:50,y:y-index*14,size:9,font:regular,color:rgb(.12,.16,.25)}));y-=lines.length*14+5}
   const photosSection=async(photos,heading)=>{if(!photos?.length)return;title(heading);for(const photo of photos){ensure(190);try{const response=await api.get(photo.url,{responseType:'arraybuffer'}),image=await embedPhoto(pdf,response,photo.mimeType),dimensions=image.scaleToFit(170,170);page.drawImage(image,{x:50,y:y-dimensions.height,width:dimensions.width,height:dimensions.height});page.drawText(safe(photo.view),{x:50,y:y-dimensions.height-12,size:8,font:regular,color:rgb(.44,.48,.55)});y-=dimensions.height+25}catch(error){row(`Foto ${photo.view}`,'Imagem privada indisponivel')}}}
   const kg=(value)=>Number(value).toLocaleString('pt-BR',{maximumFractionDigits:2})
   const drawEvolutionCard=(exercise)=>{
@@ -37,33 +39,34 @@ export async function generateAssessmentPdf({cycle,previous,student,settings,pro
   const evolutionSection=()=>{
     const trainingNumbers=[...new Set((weeks||[]).map(week=>week.trainingNumber||1))].sort((a,b)=>a-b)
     const trainings=trainingNumbers.map(trainingNumber=>({trainingNumber,exercises:buildExerciseEvolution(weeks.filter(week=>(week.trainingNumber||1)===trainingNumber))})).filter(training=>training.exercises.length)
-    if(!trainings.length)return
     addPage()
     page.drawText('EVOLUCAO DE CARGAS',{x:44,y,size:18,font:bold,color:rgb(.09,.13,.23)});y-=22
     page.drawText('Maior carga registrada por exercicio em cada semana do programa.',{x:44,y,size:9,font:regular,color:rgb(.44,.48,.55)});y-=27
+    if(!trainings.length){page.drawRectangle({x:44,y:y-92,width:507,height:92,color:rgb(.97,.97,.99),borderColor:rgb(.88,.89,.93),borderWidth:1});page.drawText('Nenhuma carga semanal registrada para esta aluna.',{x:64,y:y-38,size:11,font:bold,color:rgb(.22,.25,.34)});page.drawText('Os graficos aparecerao automaticamente quando houver cargas no acompanhamento.',{x:64,y:y-57,size:8.5,font:regular,color:rgb(.44,.48,.55)});y-=112;return}
     trainings.forEach(training=>{ensure(32);page.drawRectangle({x:44,y:y-3,width:4,height:18,color:rgb(.49,.23,.93)});page.drawText(`Treino ${String(training.trainingNumber).padStart(2,'0')} - ciclo de 6 semanas`,{x:56,y,size:12,font:bold,color:rgb(.15,.23,.42)});y-=25;training.exercises.forEach(drawEvolutionCard)})
   }
-  page.drawText(cycle.sequence?`Reavaliação ${cycle.sequence}`:'Avaliação inicial',{x:44,y,size:19,font:bold,color:rgb(.09,.13,.23)});y-=24;row('Aluna',student?.name||'Aluna');row('Início',new Date(cycle.startedAt||cycle.createdAt).toLocaleDateString('pt-BR'));row('Prazo',new Date(cycle.deadlineAt).toLocaleDateString('pt-BR'));row('Conclusão',cycle.completedAt?new Date(cycle.completedAt).toLocaleDateString('pt-BR'):'Em andamento');row('Progresso',`${cycle.progress}%`);Object.entries(cycle.stageStatuses||{}).forEach(([stage,status])=>row(stageLabels[stage]||stage,statusLabels[status]||status))
-  title('Medidas corporais');Object.entries(labels).filter(([key])=>cycle.bodyAssessment&&key in cycle.bodyAssessment).forEach(([key,label])=>row(label,cycle.bodyAssessment[key]))
-  title('Teste de força - fórmula de Epley')
+  page.drawText(cycle.sequence?`Reavaliação ${cycle.sequence}`:'Avaliação inicial',{x:44,y,size:19,font:bold,color:rgb(.09,.13,.23)});y-=31
+  page.drawRectangle({x:44,y:y-55,width:507,height:55,color:rgb(.96,.95,1),borderColor:rgb(.87,.84,.98),borderWidth:1})
+  page.drawText('ALUNA',{x:58,y:y-18,size:7,font:bold,color:rgb(.43,.16,.85)})
+  page.drawText(safe(student?.name||'Aluna'),{x:58,y:y-39,size:15,font:bold,color:rgb(.09,.13,.23)})
+  y-=74
+  row('Início',formatDate(cycle.startedAt||cycle.createdAt));row('Prazo',formatDate(cycle.deadlineAt));row('Conclusão',cycle.completedAt?formatDate(cycle.completedAt):'Em andamento');row('Progresso',`${cycle.progress??0}%`);Object.entries(cycle.stageStatuses||{}).forEach(([stage,status])=>row(stageLabels[stage]||stage,statusLabels[status]||status))
+  const bodyRows=Object.entries(labels).filter(([key])=>cycle.bodyAssessment&&hasValue(cycle.bodyAssessment[key]))
+  if(bodyRows.length){title('Medidas corporais',bodyRows.length*19);bodyRows.forEach(([key,label])=>row(label,cycle.bodyAssessment[key]))}
+  const completedStrength=strengthExercises.filter(([key])=>hasValue(cycle.strengthTest?.[key]?.loadKg)||hasValue(cycle.strengthTest?.[key]?.repetitions)||cycle.strengthResults?.exercises?.[key])
+  if(completedStrength.length){title('Teste de força - fórmula de Epley',48)
   row('Entenda sua classificação', classificationExplanation)
   row('Referência', 'Peso corporal da avaliação correspondente. Faixas não definidas permanecem sem classificação.')
-  for (const [key, label] of strengthExercises) {
-    title(label)
+  for (const [key, label] of completedStrength) {
+    title(label,62)
     row('Carga (kg)', cycle.strengthTest?.[key]?.loadKg)
     row('Repetições', cycle.strengthTest?.[key]?.repetitions)
     strengthRows(cycle, key).forEach(([name, value]) => row(name, value))
-  }
+  }}
   const resistance = resistanceResults(cycle)
-  title('Resistência de força')
-  row('Flexões até a falha', resistance.pushUps)
-  row('Prancha até a falha (segundos)', resistance.plankSeconds)
-  row('Abdominal em 1 minuto', resistance.abdominalReps)
-  title('Teste cardiorrespiratório')
-  row('Modalidade', cycle.enduranceTest?.modality)
-  row('Distância percorrida (metros)', cycle.enduranceTest?.distanceMeters)
-  row('VAM (km/h)', cycle.enduranceTest?.vamKmh)
-  row('VO2 máximo (mL/kg/min)', cycle.enduranceTest?.vo2Max)
+  if([resistance.pushUps,resistance.plankSeconds,resistance.abdominalReps].some(hasValue)){title('Resistência de força',62);row('Flexões até a falha', resistance.pushUps);row('Prancha até a falha (segundos)', resistance.plankSeconds);row('Abdominal em 1 minuto', resistance.abdominalReps)}
+  const cardio=cycle.enduranceTest||{}
+  if([cardio.modality,cardio.distanceMeters,cardio.vamKmh,cardio.vo2Max].some(hasValue)){title('Teste cardiorrespiratório',78);row('Modalidade', cardio.modality);row('Distância percorrida (metros)', cardio.distanceMeters);row('VAM (km/h)', cardio.vamKmh);row('VO2 máximo (mL/kg/min)', cardio.vo2Max)}
   if(previous){
     title('Avaliação anterior x atual')
     row('Ciclos', `${cycleLabel(previous)} -> ${cycleLabel(cycle)}`)
@@ -79,11 +82,12 @@ export async function generateAssessmentPdf({cycle,previous,student,settings,pro
     ;[['pushUps','Flexões'],['plankSeconds','Prancha (s)'],['abdominalReps','Abdominal']].forEach(([key,label])=>row(label,`${safe(previousResistance[key])} -> ${safe(resistance[key])}`))
     row('VAM (km/h)', `${safe(previous.enduranceTest?.vamKmh)} -> ${safe(cycle.enduranceTest?.vamKmh)}`)
   }
-  if(cycle.anamnesis){title(professional?'Anamnese - acesso profissional':'Minha anamnese');Object.entries(cycle.anamnesis).forEach(([key,value])=>{if(value!==''&&value!==null)row(anamnesisLabels[key]||key,value)})}
+  if(Object.values(cycle.anamnesis||{}).some(hasValue)){title(professional?'Anamnese - acesso profissional':'Minha anamnese');Object.entries(cycle.anamnesis).forEach(([key,value])=>{if(hasValue(value))row(anamnesisLabels[key]||key,value)})}
   if(professional)evolutionSection()
   if(previous)await photosSection(previous.photos,'Fotos anteriores - comparação')
   await photosSection(cycle.photos,cycle.sequence?'Fotos atuais - reavaliação':'Fotos da avaliação postural')
-  if(settings?.logo?.startsWith?.('data:image/')){try{const bytes=Uint8Array.from(atob(settings.logo.split(',')[1]),character=>character.charCodeAt(0)),logo=settings.logo.includes('png')?await pdf.embedPng(bytes):await pdf.embedJpg(bytes),dimensions=logo.scaleToFit(112,42);for(const item of pdf.getPages()){const frameX=431,frameY=782;item.drawRectangle({x:frameX,y:frameY,width:120,height:48,color:rgb(1,1,1)});item.drawImage(logo,{x:frameX+(120-dimensions.width)/2,y:frameY+(48-dimensions.height)/2,width:dimensions.width,height:dimensions.height})}}catch(error){}}
-  const pages=pdf.getPages();pages.forEach((item,index)=>item.drawText(`Documento privado - página ${index+1} de ${pages.length}`,{x:44,y:24,size:8,font:regular,color:rgb(.44,.48,.55)}))
+  let logoData=null
+  if(settings?.logo?.startsWith?.('data:image/')){try{const bytes=Uint8Array.from(atob(settings.logo.split(',')[1]),character=>character.charCodeAt(0)),logo=settings.logo.includes('png')?await pdf.embedPng(bytes):await pdf.embedJpg(bytes);logoData={logo,dimensions:logo.scaleToFit(112,42)}}catch(error){}}
+  const pages=pdf.getPages();pages.forEach((item,index)=>{item.drawRectangle({x:0,y:765,width:595.28,height:77,color:rgb(.09,.15,.28)});item.drawText('BRUNA AFFONSO',{x:44,y:807,size:17,font:bold,color:rgb(1,1,1)});item.drawText(professional?'Relatório profissional de avaliação':'Meu relatório de evolução',{x:44,y:789,size:9,font:regular,color:rgb(.86,.89,1)});if(logoData){const frameX=431,frameY=782;item.drawRectangle({x:frameX,y:frameY,width:120,height:48,color:rgb(1,1,1)});item.drawImage(logoData.logo,{x:frameX+(120-logoData.dimensions.width)/2,y:frameY+(48-logoData.dimensions.height)/2,width:logoData.dimensions.width,height:logoData.dimensions.height})}item.drawText(`Documento privado - página ${index+1} de ${pages.length}`,{x:44,y:24,size:8,font:regular,color:rgb(.44,.48,.55)})})
   const bytes=await pdf.save(),blob=new Blob([bytes],{type:'application/pdf'}),url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download=`${cycle.sequence?`reavaliacao-${cycle.sequence}`:'avaliacao-inicial'}-${safe(student?.name||'aluna').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-')}.pdf`;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000)
 }
