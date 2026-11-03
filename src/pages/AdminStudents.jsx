@@ -10,6 +10,13 @@ const statusLabels = {
   INACTIVE: 'Inativo'
 }
 
+function formatRegistrationDate(student) {
+  const value = student.createdAt || student.registrationDate || student.registeredAt
+  if (!value) return 'Data não disponível'
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? 'Data não disponível' : date.toLocaleDateString('pt-BR')
+}
+
 export default function AdminStudents() {
   const navigate = useNavigate()
   const [students, setStudents] = useState([])
@@ -109,7 +116,7 @@ export default function AdminStudents() {
                   </td>
                   <td><span className={`status-pill ${student.status.toLowerCase()}`}>{statusLabels[student.status] || student.status}</span></td>
                   <td>{student.phone || 'Não informado'}</td>
-                  <td>{new Date(student.createdAt).toLocaleDateString('pt-BR')}</td>
+                  <td>{formatRegistrationDate(student)}</td>
                   <td>
                     <div className="student-row-actions">
                       {student.status === 'APPROVED' && <button onClick={() => openStudentWeeks(student)}>Ver semanas</button>}

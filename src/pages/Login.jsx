@@ -27,6 +27,14 @@ function getAuthError(error) {
   return error.response.data?.error || 'Não foi possível concluir sua solicitação. Tente novamente.'
 }
 
+function formatPhone(value) {
+  const digits = value.replace(/\D/g, '').slice(0, 11)
+  if (digits.length <= 2) return digits
+  if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`
+  if (digits.length <= 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`
+}
+
 export default function Login() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -34,6 +42,7 @@ export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
+  const [phone, setPhone] = useState('')
   const [isRegister, setIsRegister] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -49,8 +58,13 @@ export default function Login() {
     setError('')
     setSuccess('')
 
-    if (!email.trim() || !password || (isRegister && !name.trim())) {
+    if (!email.trim() || !password || (isRegister && (!name.trim() || !phone.trim()))) {
       setError('Preencha todos os campos para continuar.')
+      return
+    }
+
+    if (isRegister && phone.replace(/\D/g, '').length < 10) {
+      setError('Informe um telefone/WhatsApp válido com DDD.')
       return
     }
 
@@ -64,7 +78,7 @@ export default function Login() {
     try {
       const endpoint = isRegister ? '/auth/register' : '/auth/login'
       const payload = isRegister
-        ? { email: email.trim(), password, name: name.trim() }
+        ? { email: email.trim(), password, name: name.trim(), phone: phone.trim() }
         : { email: email.trim(), password }
 
       const { data } = await api.post(endpoint, payload)
@@ -73,6 +87,7 @@ export default function Login() {
         setSuccess(data.message || 'Cadastro recebido. Aguarde a aprovação antes de entrar na plataforma.')
         setIsRegister(false)
         setName('')
+        setPhone('')
         setPassword('')
         return
       }
@@ -93,6 +108,7 @@ export default function Login() {
     setError('')
     setSuccess('')
     setPassword('')
+    setPhone('')
   }
 
   return (
@@ -129,10 +145,16 @@ export default function Login() {
 
           <form onSubmit={handleSubmit} className="login-form" noValidate>
             {isRegister && (
-              <label className="auth-field">
-                <span>Nome completo</span>
-                <input type="text" autoComplete="name" placeholder="Seu nome completo" value={name} onChange={(e) => setName(e.target.value)} disabled={loading} aria-invalid={Boolean(error)} required />
-              </label>
+              <>
+                <label className="auth-field">
+                  <span>Nome completo</span>
+                  <input type="text" autoComplete="name" placeholder="Seu nome completo" value={name} onChange={(e) => setName(e.target.value)} disabled={loading} aria-invalid={Boolean(error)} required />
+                </label>
+                <label className="auth-field">
+                  <span>Telefone / WhatsApp</span>
+                  <input type="tel" autoComplete="tel" inputMode="numeric" placeholder="(00) 00000-0000" value={phone} onChange={(e) => setPhone(formatPhone(e.target.value))} disabled={loading} aria-invalid={Boolean(error)} required />
+                </label>
+              </>
             )}
 
             <label className="auth-field">
