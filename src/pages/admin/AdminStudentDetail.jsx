@@ -78,7 +78,7 @@ export default function AdminStudentDetail() {
           <article className="detail-assessment-cycle" key={cycle.id}>
             <div><strong>{cycle.sequence ? `Reavaliação ${cycle.sequence}` : 'Avaliação inicial'}</strong><small>{cycle.progress}% concluído · {cycle.status === 'COMPLETED' ? 'Finalizada' : `${cycle.daysRemaining} dias restantes`}</small></div>
             <div className="detail-assessment-stages">{Object.entries(cycle.stageStatuses).map(([stage, status]) => <span key={stage}>{stageNames[stage] || stage}: {status === 'COMPLETED' ? 'Concluída' : status === 'IN_PROGRESS' ? 'Em andamento' : 'Pendente'}</span>)}</div>
-            <button onClick={() => generateAssessmentPdf({ cycle, previous: previousCycle(assessmentData.cycles, cycle), student, settings, professional: true })}>Gerar PDF profissional</button>
+            <button onClick={() => generateAssessmentPdf({ cycle, previous: previousCycle(assessmentData.cycles, cycle), student, settings, professional: true, weeks: student.weeks || [] })}>Gerar PDF profissional</button>
             <details className="detail-assessment-data">
               <summary>Ver todos os dados deste ciclo</summary>
               <Data title="Anamnese" data={cycle.anamnesis} />
