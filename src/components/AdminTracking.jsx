@@ -38,17 +38,25 @@ function LoadEvolutionCard({ weeks, trainingNumber }) {
   const range = Math.max(1, max - min)
   const x = index => 58 + index * 124
   const y = weight => 190 - ((weight - min) / range) * 145
-  const polyline = selected.points.map((point, index) => point.weight === null ? null : `${x(index)},${y(point.weight)}`).filter(Boolean).join(' ')
+  const chartPoints = selected.points.map((point, index) => point.weight === null ? null : { x: x(index), y: y(point.weight), point }).filter(Boolean)
+  const linePath = chartPoints.reduce((path, current, index) => {
+    if (index === 0) return `M ${current.x} ${current.y}`
+    const previous = chartPoints[index - 1]
+    const middle = (previous.x + current.x) / 2
+    return `${path} C ${middle} ${previous.y}, ${middle} ${current.y}, ${current.x} ${current.y}`
+  }, '')
+  const areaPath = chartPoints.length > 1 ? `${linePath} L ${chartPoints.at(-1).x} 198 L ${chartPoints[0].x} 198 Z` : ''
   const grid = Array.from({ length: 4 }, (_, index) => ({ y: 45 + index * 48, value: max - (index / 3) * range }))
 
   return <section className="load-evolution-card">
-    <header><div><span>Evolução de cargas · 6 semanas</span><h5>Treino {String(trainingNumber).padStart(2, '0')}</h5><p>Maior carga informada para o exercício em cada semana.</p></div><label>Exercício<select value={selected?.key || ''} onChange={event => setSelectedKey(event.target.value)}>{exercises.map(exercise => <option key={exercise.key} value={exercise.key}>{exercise.label}</option>)}</select></label></header>
+    <header><div><span>Performance de carga</span><h5>Evolução no Treino {String(trainingNumber).padStart(2, '0')}</h5><p>Acompanhe a maior carga registrada em cada semana do ciclo.</p></div><div className="load-evolution-header-actions"><b>{recorded.length}/6 semanas com dados</b><label>Exercício<select value={selected?.key || ''} onChange={event => setSelectedKey(event.target.value)}>{exercises.map(exercise => <option key={exercise.key} value={exercise.key}>{exercise.label}</option>)}</select></label></div></header>
     <div className="load-evolution-metrics"><article><span>Inicial</span><strong>{kg(summary.initial)} kg</strong></article><article><span>Atual</span><strong>{kg(summary.current)} kg</strong></article><article><span>Maior carga</span><strong>{kg(summary.peak)} kg</strong></article><article className={summary.change > 0 ? 'positive' : summary.change < 0 ? 'negative' : ''}><span>Evolução</span><strong>{summary.change > 0 ? '+' : ''}{kg(summary.change)} kg</strong><small>{summary.percentage === null ? '—' : `${summary.percentage > 0 ? '+' : ''}${summary.percentage.toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%`}</small></article></div>
-    <div className="load-chart-wrap"><svg className="load-chart" viewBox="0 0 720 245" role="img" aria-label={`Evolução da carga de ${selected.label}`}>
+    {recorded.length === 1 ? <div className="load-chart-single"><div className="single-load-hero"><span>Ponto de partida</span><strong>{kg(recorded[0].weight)}<small>kg</small></strong><p>Primeira carga registrada. O traçado da evolução aparecerá a partir do próximo registro.</p></div><div className="load-week-timeline">{selected.points.map(point => <div className={point.weight !== null ? 'has-data' : ''} key={point.weekNumber}><span>{point.weight !== null ? '✓' : ''}</span><strong>Semana {point.weekNumber}</strong><small>{point.weight !== null ? `${kg(point.weight)} kg` : 'Aguardando'}</small></div>)}</div></div> : <div className="load-chart-wrap"><svg className="load-chart" viewBox="0 0 720 245" role="img" aria-label={`Evolução da carga de ${selected.label}`}>
+      <defs><linearGradient id={`loadArea-${trainingNumber}`} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#7c3aed" stopOpacity=".3"/><stop offset="100%" stopColor="#7c3aed" stopOpacity=".02"/></linearGradient><linearGradient id={`loadLine-${trainingNumber}`} x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="#6d28d9"/><stop offset="55%" stopColor="#8b5cf6"/><stop offset="100%" stopColor="#ec4899"/></linearGradient></defs>
       {grid.map(line => <g key={line.y}><line x1="58" x2="678" y1={line.y} y2={line.y} /><text x="50" y={line.y + 4} textAnchor="end">{kg(line.value)}</text></g>)}
-      {recorded.length > 1 && <polyline points={polyline} />}
-      {selected.points.map((point, index) => <g className={point.weight === null ? 'missing' : 'recorded'} key={point.weekNumber}><line className="week-guide" x1={x(index)} x2={x(index)} y1="38" y2="198" />{point.weight !== null && <><circle cx={x(index)} cy={y(point.weight)} r="6"><title>Semana {point.weekNumber}: {kg(point.weight)} kg{point.reps ? ` · ${point.reps} repetições` : ''}</title></circle><text className="point-value" x={x(index)} y={y(point.weight) - 13} textAnchor="middle">{kg(point.weight)} kg</text></>}<text className="week-label" x={x(index)} y="222" textAnchor="middle">S{point.weekNumber}</text></g>)}
-    </svg></div>
+      <path className="load-area" d={areaPath} fill={`url(#loadArea-${trainingNumber})`} /><path className="load-line" d={linePath} stroke={`url(#loadLine-${trainingNumber})`} />
+      {selected.points.map((point, index) => <g className={point.weight === null ? 'missing' : 'recorded'} key={point.weekNumber}><line className="week-guide" x1={x(index)} x2={x(index)} y1="38" y2="198" />{point.weight !== null ? <><circle cx={x(index)} cy={y(point.weight)} r="6"><title>Semana {point.weekNumber}: {kg(point.weight)} kg{point.reps ? ` · ${point.reps} repetições` : ''}</title></circle><text className="point-value" x={x(index)} y={y(point.weight) - 13} textAnchor="middle">{kg(point.weight)} kg</text></> : <circle className="ghost-point" cx={x(index)} cy="198" r="4"/>}<text className="week-label" x={x(index)} y="222" textAnchor="middle">S{point.weekNumber}</text></g>)}
+    </svg></div>}
     <footer><span><i className="legend-dot" /> Carga registrada</span><small>Semanas sem preenchimento ficam sem ponto no gráfico.</small></footer>
   </section>
 }
