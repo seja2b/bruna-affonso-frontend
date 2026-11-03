@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import api from '../services/api'
+import { buildExerciseEvolution, evolutionSummary } from '../utils/trackingEvolution'
 import './AdminTracking.css'
 import './AdminTrackingCalendar.css'
 
@@ -12,6 +13,45 @@ const dateFormatter = new Intl.DateTimeFormat('pt-BR', {
   month: '2-digit',
   year: 'numeric'
 })
+
+const kg = value => Number(value).toLocaleString('pt-BR', { maximumFractionDigits: 2 })
+
+function LoadEvolutionCard({ weeks, trainingNumber }) {
+  const exercises = useMemo(() => buildExerciseEvolution(weeks), [weeks])
+  const [selectedKey, setSelectedKey] = useState('')
+  const selected = exercises.find(exercise => exercise.key === selectedKey) || exercises[0]
+
+  useEffect(() => {
+    if (exercises.length && !exercises.some(exercise => exercise.key === selectedKey)) setSelectedKey(exercises[0].key)
+  }, [exercises, selectedKey])
+
+  if (!exercises.length) return <section className="load-evolution-card empty"><div><span>Evolução de cargas</span><h5>Treino {String(trainingNumber).padStart(2, '0')}</h5></div><p>O gráfico aparecerá assim que a aluna registrar cargas nas semanas deste treino.</p></section>
+
+  const summary = evolutionSummary(selected.points)
+  const recorded = selected.points.filter(point => point.weight !== null)
+  const weights = recorded.map(point => point.weight)
+  const rawMin = Math.min(...weights)
+  const rawMax = Math.max(...weights)
+  const padding = Math.max((rawMax - rawMin) * .18, rawMax * .08, 1)
+  const min = Math.max(0, rawMin - padding)
+  const max = rawMax + padding
+  const range = Math.max(1, max - min)
+  const x = index => 58 + index * 124
+  const y = weight => 190 - ((weight - min) / range) * 145
+  const polyline = selected.points.map((point, index) => point.weight === null ? null : `${x(index)},${y(point.weight)}`).filter(Boolean).join(' ')
+  const grid = Array.from({ length: 4 }, (_, index) => ({ y: 45 + index * 48, value: max - (index / 3) * range }))
+
+  return <section className="load-evolution-card">
+    <header><div><span>Evolução de cargas · 6 semanas</span><h5>Treino {String(trainingNumber).padStart(2, '0')}</h5><p>Maior carga informada para o exercício em cada semana.</p></div><label>Exercício<select value={selected?.key || ''} onChange={event => setSelectedKey(event.target.value)}>{exercises.map(exercise => <option key={exercise.key} value={exercise.key}>{exercise.label}</option>)}</select></label></header>
+    <div className="load-evolution-metrics"><article><span>Inicial</span><strong>{kg(summary.initial)} kg</strong></article><article><span>Atual</span><strong>{kg(summary.current)} kg</strong></article><article><span>Maior carga</span><strong>{kg(summary.peak)} kg</strong></article><article className={summary.change > 0 ? 'positive' : summary.change < 0 ? 'negative' : ''}><span>Evolução</span><strong>{summary.change > 0 ? '+' : ''}{kg(summary.change)} kg</strong><small>{summary.percentage === null ? '—' : `${summary.percentage > 0 ? '+' : ''}${summary.percentage.toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%`}</small></article></div>
+    <div className="load-chart-wrap"><svg className="load-chart" viewBox="0 0 720 245" role="img" aria-label={`Evolução da carga de ${selected.label}`}>
+      {grid.map(line => <g key={line.y}><line x1="58" x2="678" y1={line.y} y2={line.y} /><text x="50" y={line.y + 4} textAnchor="end">{kg(line.value)}</text></g>)}
+      {recorded.length > 1 && <polyline points={polyline} />}
+      {selected.points.map((point, index) => <g className={point.weight === null ? 'missing' : 'recorded'} key={point.weekNumber}><line className="week-guide" x1={x(index)} x2={x(index)} y1="38" y2="198" />{point.weight !== null && <><circle cx={x(index)} cy={y(point.weight)} r="6"><title>Semana {point.weekNumber}: {kg(point.weight)} kg{point.reps ? ` · ${point.reps} repetições` : ''}</title></circle><text className="point-value" x={x(index)} y={y(point.weight) - 13} textAnchor="middle">{kg(point.weight)} kg</text></>}<text className="week-label" x={x(index)} y="222" textAnchor="middle">S{point.weekNumber}</text></g>)}
+    </svg></div>
+    <footer><span><i className="legend-dot" /> Carga registrada</span><small>Semanas sem preenchimento ficam sem ponto no gráfico.</small></footer>
+  </section>
+}
 
 export default function AdminTracking() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -150,9 +190,10 @@ export default function AdminTracking() {
           ) : !selectedWeek ? (
             <div className="weeks-section">
               <div className="program-admin-toolbar"><div><h3>{student?.name} · treinos do programa</h3><select value={student?.packageType||'QUARTERLY'} onChange={e=>changePackage(e.target.value)}><option value="QUARTERLY">Trimestral · 2 treinos</option><option value="SEMIANNUAL">Semestral · 4 treinos</option></select></div><div><button onClick={createTraining} disabled={saving}>+ Criar Treino</button><button className="warning" onClick={clearWeeks} disabled={saving||!weeks.length}>Zerar conteúdo</button><button className="danger" onClick={deleteProgram} disabled={saving||!weeks.length}>Excluir semanas</button></div></div>
-              {[...new Set(weeks.map(week=>week.trainingNumber||1))].map(training=><section className="training-group" key={training}><h4>Treino {String(training).padStart(2,'0')} · 6 semanas</h4>
+              {[...new Set(weeks.map(week=>week.trainingNumber||1))].map(training=>{const trainingWeeks=weeks.filter(week=>(week.trainingNumber||1)===training);return <section className="training-group" key={training}><h4>Treino {String(training).padStart(2,'0')} · 6 semanas</h4>
+              <LoadEvolutionCard weeks={trainingWeeks} trainingNumber={training} />
               <div className="weeks-grid">
-                {weeks.filter(week=>(week.trainingNumber||1)===training).map((week) => (
+                {trainingWeeks.map((week) => (
                   <button key={week.id} className={`week-card ${week.isCompleted ? 'completed' : ''} ${week.isReleased ? 'released' : 'locked'}`} onClick={() => handleWeekSelect(week.id)}>
                     <div className="week-icon">{week.isCompleted ? '✓' : week.isReleased ? '●' : '—'}</div>
                     <div className="week-label">Semana {week.weekNumber}</div>
@@ -162,7 +203,7 @@ export default function AdminTracking() {
                   </button>
                 ))}
               </div>
-              </section>)}
+              </section>})}
             </div>
           ) : (
             <div className="week-details-section">
