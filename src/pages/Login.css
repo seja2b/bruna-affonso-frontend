@@ -93,7 +93,8 @@
   justify-content: center;
   min-height: 100vh;
   padding: 48px clamp(28px, 5vw, 72px);
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   background:
     radial-gradient(circle at 78% 18%, rgba(124,58,237,.08), transparent 28%),
     radial-gradient(circle at 18% 82%, rgba(14,165,233,.07), transparent 32%),
