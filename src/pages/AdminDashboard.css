@@ -9,7 +9,7 @@
 
 /* HEADER */
 .admin-dashboard-header {
-  background: linear-gradient(135deg, #8b4f9d 0%, #a76db5 50%, #c98bb8 100%);
+  background: linear-gradient(135deg, #01155C 0%, #0132C8 50%, #0132C8 100%);
   color: white;
   padding: 30px 40px;
   display: flex;
@@ -139,7 +139,7 @@
 }
 
 .tab-btn.active {
-  background: linear-gradient(135deg, #a76db5 0%, #c98bb8 100%);
+  background: linear-gradient(135deg, #0132C8 0%, #0132C8 100%);
   color: white;
 }
 
@@ -160,7 +160,7 @@
 }
 
 .banner {
-  background: linear-gradient(135deg, #a76db5 0%, #c98bb8 50%, #d4a5d4 100%);
+  background: linear-gradient(135deg, #0132C8 0%, #0132C8 50%, #d4a5d4 100%);
   border-radius: 16px;
   padding: 60px 40px;
   color: white;
@@ -191,7 +191,7 @@
   border-radius: 12px;
   padding: 30px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-  border-top: 4px solid #a76db5;
+  border-top: 4px solid #0132C8;
   transition: all 0.3s;
   cursor: pointer;
 }
@@ -209,7 +209,7 @@
 .card-number {
   font-size: 42px;
   font-weight: 700;
-  color: #8b4f9d;
+  color: #01155C;
   margin-bottom: 8px;
 }
 
@@ -274,7 +274,7 @@
 
 .ranking-pontos {
   font-weight: 700;
-  color: #8b4f9d;
+  color: #01155C;
   font-size: 14px;
 }
 
@@ -302,7 +302,7 @@
 .btn-approve,
 .btn-responder,
 .btn-edit {
-  background: linear-gradient(135deg, #a76db5 0%, #c98bb8 100%);
+  background: linear-gradient(135deg, #0132C8 0%, #0132C8 100%);
   color: white;
 }
 
@@ -334,7 +334,7 @@
 }
 
 .btn-admin.active {
-  background: linear-gradient(135deg, #a76db5 0%, #c98bb8 100%);
+  background: linear-gradient(135deg, #0132C8 0%, #0132C8 100%);
   color: white;
 }
 
@@ -407,7 +407,7 @@
 
 .responder-box textarea:focus {
   outline: none;
-  border-color: #a76db5;
+  border-color: #0132C8;
   box-shadow: 0 0 0 3px rgba(167, 109, 181, 0.1);
 }
 
@@ -445,7 +445,7 @@
   height: 120px;
   border-radius: 50%;
   overflow: hidden;
-  border: 3px solid #a76db5;
+  border: 3px solid #0132C8;
 }
 
 .student-photo img {
@@ -457,7 +457,7 @@
 .photo-placeholder {
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, #a76db5 0%, #c98bb8 100%);
+  background: linear-gradient(135deg, #0132C8 0%, #0132C8 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -567,7 +567,7 @@
 .form-group textarea:focus,
 .form-group select:focus {
   outline: none;
-  border-color: #a76db5;
+  border-color: #0132C8;
   box-shadow: 0 0 0 3px rgba(167, 109, 181, 0.1);
 }
 

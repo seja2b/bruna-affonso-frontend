@@ -30,7 +30,7 @@ body {
   width: 50px;
   height: 50px;
   border: 4px solid #e5e7eb;
-  border-top: 4px solid #1e40af;
+  border-top: 4px solid #01155C;
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 16px;
@@ -70,7 +70,7 @@ body {
   margin: 0 0 16px 0;
   font-size: 24px;
   font-weight: 700;
-  color: #1e40af;
+  color: #01155C;
 }
 
 .approval-card p {
@@ -81,7 +81,7 @@ body {
 }
 
 .logout-btn {
-  background: linear-gradient(135deg, #1e40af 0%, #7c3aed 100%);
+  background: linear-gradient(135deg, #01155C 0%, #0132C8 100%);
   color: white;
   border: none;
   padding: 12px 24px;
@@ -129,7 +129,7 @@ button {
 
 /* LINKS */
 a {
-  color: #1e40af;
+  color: #01155C;
   text-decoration: none;
   transition: color 0.3s ease;
 }
@@ -161,11 +161,11 @@ a:hover {
 
 /* SELECTION */
 ::selection {
-  background: #1e40af;
+  background: #01155C;
   color: white;
 }
 
 ::-moz-selection {
-  background: #1e40af;
+  background: #01155C;
   color: white;
 }

@@ -16,7 +16,7 @@
   padding: 12px;
   background: linear-gradient(135deg, rgba(167, 109, 181, 0.1), rgba(201, 139, 184, 0.1));
   border-radius: 6px;
-  border-left: 3px solid #a76db5;
+  border-left: 3px solid #0132C8;
 }
 
 .observation-textarea {
@@ -32,7 +32,7 @@
 
 .observation-textarea:focus {
   outline: none;
-  border-color: #a76db5;
+  border-color: #0132C8;
   box-shadow: 0 0 0 3px rgba(167, 109, 181, 0.1);
 }
 
