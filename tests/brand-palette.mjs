@@ -17,6 +17,8 @@ function collect(directory) {
 
 collect(root);
 const source = files.map((file) => readFileSync(file, 'utf8')).join('\n').toLowerCase();
+const loginSource = readFileSync(fileURLToPath(new URL('../src/pages/Login.jsx', import.meta.url)), 'utf8');
+const loginStyles = readFileSync(fileURLToPath(new URL('../src/pages/Login.css', import.meta.url)), 'utf8');
 
 for (const color of ['#01041a', '#01155c', '#011663', '#0132c8']) {
   assert.ok(source.includes(color), `cor oficial ausente: ${color}`);
@@ -25,5 +27,8 @@ for (const color of ['#01041a', '#01155c', '#011663', '#0132c8']) {
 for (const legacy of ['#7c3aed', '#8b5cf6', '#4f46e5', '#6366f1', '#6d28d9', '#ec4899', '#e91e63']) {
   assert.ok(!source.includes(legacy), `cor antiga ainda presente: ${legacy}`);
 }
+
+assert.ok(loginStyles.includes("url('/brand-mark-official.png')"));
+assert.ok(!loginSource.includes('i.imgur.com'));
 
 console.log('PASS: paleta oficial aplicada sem cores roxas e rosas antigas');
