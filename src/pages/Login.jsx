@@ -130,7 +130,7 @@ export default function Login() {
       <section className="login-form-panel">
         <div className="login-container">
           <div className="login-logo-row">
-            <div className="login-logo" style={{ backgroundImage: 'url(https://i.imgur.com/RU6wtlH.jpg)' }} role="img" aria-label="Logo Bruna Affonso" />
+            <div className="login-logo" role="img" aria-label="Símbolo Bruna Affonso" />
             <div>
               <strong>Bruna Affonso</strong>
               <span>Personal Training</span>
