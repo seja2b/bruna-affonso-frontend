@@ -1,5 +1,6 @@
 import { build } from 'esbuild'
 import { rm } from 'node:fs/promises'
+import { existsSync, readFileSync } from 'node:fs'
 import assert from 'node:assert/strict'
 import React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
@@ -8,6 +9,10 @@ import { PDFDocument, PDFPage } from 'pdf-lib'
 const files = ['tests/strength-component.tmp.mjs', 'tests/strength-pdf.tmp.mjs']
 const config = { bundle:true, platform:'node', format:'esm', packages:'external', loader:{'.css':'empty'}, define:{'import.meta.env':'{}'} }
 try {
+  const pdfSource = readFileSync('src/utils/assessmentPdf.js','utf8')
+  assert.ok(existsSync('public/brand-mark-official.png'))
+  assert.ok(pdfSource.includes("fetch('/brand-mark-official.png')"))
+  assert.ok(!pdfSource.includes('item.drawRectangle({x:frameX'))
   await build({...config,entryPoints:['src/components/StrengthResults.jsx'],outfile:files[0]})
   await build({...config,entryPoints:['src/utils/assessmentPdf.js'],outfile:files[1]})
   globalThis.localStorage = { getItem:()=>null, removeItem:()=>{} }
