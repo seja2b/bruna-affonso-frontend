@@ -69,10 +69,10 @@
 .privacy-note {
   margin-top: 36px;
   padding: 18px;
-  border: 1px solid rgba(167,139,250,.22);
+  border: 1px solid rgba(1,50,200,.22);
   border-radius: 16px;
   color: #c7cfe0;
-  background: rgba(124,58,237,.08);
+  background: rgba(1,50,200,.08);
   font-size: .9rem;
   line-height: 1.6;
 }

@@ -121,12 +121,12 @@
 }
 
 .spreadsheet-scroll::-webkit-scrollbar-thumb {
-  background: #a76db5;
+  background: #0132C8;
   border-radius: 4px;
 }
 
 .spreadsheet-scroll::-webkit-scrollbar-thumb:hover {
-  background: #8b4f9d;
+  background: #01155C;
 }
 
 /* WEEK COLUMN */
@@ -145,13 +145,13 @@
 /* WEEK HEADER */
 .week-header {
   padding: 16px;
-  background: linear-gradient(135deg, #a76db5 0%, #c98bb8 100%);
+  background: linear-gradient(135deg, #0132C8 0%, #0132C8 100%);
   color: white;
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-shrink: 0;
-  border-bottom: 2px solid #8b4f9d;
+  border-bottom: 2px solid #01155C;
 }
 
 .week-title {
@@ -244,7 +244,7 @@
 
 .input-group input:focus {
   outline: none;
-  border-color: #a76db5;
+  border-color: #0132C8;
   box-shadow: 0 0 0 2px rgba(167, 109, 181, 0.1);
 }
 
@@ -290,7 +290,7 @@
 }
 
 .btn-salvar {
-  background: linear-gradient(135deg, #a76db5 0%, #c98bb8 100%);
+  background: linear-gradient(135deg, #0132C8 0%, #0132C8 100%);
   color: white;
 }
 

@@ -2,15 +2,16 @@
   color-scheme: light;
   font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 
-  --color-brand-950: #090f1f;
-  --color-brand-900: #101a33;
-  --color-brand-800: #172548;
-  --color-brand-700: #273b6b;
-  --color-brand-600: #4f46e5;
-  --color-brand-500: #6366f1;
-  --color-brand-100: #eef0ff;
-  --color-accent: #8b5cf6;
-  --color-accent-soft: #f3efff;
+  --color-brand-950: #01041A;
+  --color-brand-900: #01155C;
+  --color-brand-800: #011663;
+  --color-brand-700: #0132C8;
+  --color-brand-600: #0132C8;
+  --color-brand-500: #0132C8;
+  --color-brand-100: #eef3ff;
+  --color-accent: #0132C8;
+  --color-accent-soft: #f3f6ff;
+  --brand-gradient: linear-gradient(135deg, #01041A 0%, #01155C 34%, #011663 62%, #0132C8 100%);
 
   --color-text: #182033;
   --color-text-muted: #70798b;

@@ -137,12 +137,12 @@
 }
 
 .week-selector select:hover {
-  border-color: #9c27b0;
+  border-color: #01155C;
 }
 
 .week-selector select:focus {
   outline: none;
-  border-color: #9c27b0;
+  border-color: #01155C;
   box-shadow: 0 0 0 3px rgba(156, 39, 176, 0.1);
 }
 
@@ -173,7 +173,7 @@
 }
 
 .exercises-table thead {
-  background: linear-gradient(135deg, #9c27b0, #673ab7);
+  background: linear-gradient(135deg, #01155C, #673ab7);
   color: white;
 }
 
@@ -204,7 +204,7 @@
 
 .exercises-table input:focus {
   outline: none;
-  border-color: #9c27b0;
+  border-color: #01155C;
   box-shadow: 0 0 0 3px rgba(156, 39, 176, 0.1);
 }
 
@@ -241,7 +241,7 @@
 
 .observation-input textarea:focus {
   outline: none;
-  border-color: #9c27b0;
+  border-color: #01155C;
   box-shadow: 0 0 0 3px rgba(156, 39, 176, 0.1);
 }
 
@@ -263,7 +263,7 @@
   width: 200px;
   height: 200px;
   margin: 0 auto;
-  border: 2px dashed #9c27b0;
+  border: 2px dashed #01155C;
   border-radius: 12px;
   display: flex;
   align-items: center;
@@ -295,7 +295,7 @@
 }
 
 .file-label {
-  background: linear-gradient(135deg, #9c27b0, #673ab7);
+  background: linear-gradient(135deg, #01155C, #673ab7);
   color: white;
   padding: 12px 30px;
   border-radius: 8px;
@@ -314,7 +314,7 @@
   background-color: #f5f5f5;
   padding: 15px;
   border-radius: 8px;
-  border-left: 4px solid #9c27b0;
+  border-left: 4px solid #01155C;
 }
 
 .photo-info p {
@@ -366,7 +366,7 @@
 }
 
 .btn-save {
-  background: linear-gradient(135deg, #9c27b0, #673ab7);
+  background: linear-gradient(135deg, #01155C, #673ab7);
   color: white;
 }
 

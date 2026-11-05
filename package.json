@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "node tests/strength-results.mjs && node tests/strength-api-contract.mjs && node tests/assessment-display.mjs && node tests/strength-display-pdf.mjs && node tests/tracking-evolution.mjs"
+    "test": "node tests/strength-results.mjs && node tests/strength-api-contract.mjs && node tests/assessment-display.mjs && node tests/strength-display-pdf.mjs && node tests/tracking-evolution.mjs && node tests/brand-palette.mjs"
   },
   "dependencies": {
     "axios": "^1.6.5",
