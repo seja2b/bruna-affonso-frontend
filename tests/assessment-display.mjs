@@ -11,5 +11,7 @@ try {
  assert.ok(!html.includes('smithSquat'));assert.ok(!html.includes('<pre>'));assert.equal(stageNames.STRENGTH,'Teste físico')
  assert.ok(renderToStaticMarkup(React.createElement(Data,{title:'Anamnese',data:{}})).includes('Nenhuma informação registrada.'))
  const profile=await readFile('src/pages/admin/AdminStudentDetail.jsx','utf8');assert.ok(!profile.includes('JSON.stringify'));assert.ok(profile.includes('<StrengthResults cycle={cycle}'));assert.ok(profile.includes('data={resistanceResults(cycle)}'));assert.ok(profile.includes('assessmentPhotoViews.length'))
+ const adminAssessments=await readFile('src/pages/admin/AdminAssessments.jsx','utf8');assert.ok(adminAssessments.includes('Vídeo de orientação das avaliações'));assert.ok(!adminAssessments.includes('Vídeos por etapa'))
+ const studentAssessments=await readFile('src/pages/student/StudentAssessments.jsx','utf8');assert.ok(studentAssessments.includes('orientationVideo'));assert.ok(studentAssessments.includes('Como realizar sua avaliação'));assert.ok(!studentAssessments.includes('<Video url={videos[open]}'))
  console.log('PASS: dados de força, valores vazios, zero, rótulos e perfil sem JSON')
 } finally {await rm('tests/assessment-render.tmp.mjs',{force:true})}
