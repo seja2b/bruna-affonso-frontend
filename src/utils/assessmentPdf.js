@@ -22,7 +22,7 @@ export async function generateAssessmentPdf({cycle,previous,student,settings,pro
   const ensure=(height=18)=>{if(y-height<45)addPage()}
   const title=(text,minContent=16)=>{const topGap=y<735?10:0;ensure(topGap+25+minContent);y-=topGap;page.drawText(safe(text),{x:44,y,size:13,font:bold,color:rgb(.15,.23,.42)});y-=25}
   const row=(label,value)=>{const lines=wrap(`${label}: ${safe(value)}`);ensure(lines.length*14+5);lines.forEach((line,index)=>page.drawText(line,{x:50,y:y-index*14,size:9,font:regular,color:rgb(.12,.16,.25)}));y-=lines.length*14+5}
-  const photosSection=async(photos,heading)=>{if(!photos?.length)return;title(heading);for(const photo of photos){ensure(190);try{const response=await api.get(photo.url,{responseType:'arraybuffer'}),image=await embedPhoto(pdf,response,photo.mimeType),dimensions=image.scaleToFit(170,170);page.drawImage(image,{x:50,y:y-dimensions.height,width:dimensions.width,height:dimensions.height});page.drawText(safe(photo.view),{x:50,y:y-dimensions.height-12,size:8,font:regular,color:rgb(.44,.48,.55)});y-=dimensions.height+25}catch(error){row(`Foto ${photo.view}`,'Imagem privada indisponivel')}}}
+  const photosSection=async(photos,heading)=>{if(!photos?.length)return;title(heading);for(const photo of photos){ensure(190);try{const response=await api.get(photo.url,{responseType:'arraybuffer'}),image=await embedPhoto(pdf,response,photo.mimeType),dimensions=image.scaleToFit(170,170);page.drawImage(image,{x:50,y:y-dimensions.height,width:dimensions.width,height:dimensions.height});page.drawText(safe(photo.view),{x:50,y:y-dimensions.height-12,size:8,font:regular,color:rgb(.44,.48,.55)});y-=dimensions.height+25}catch(error){row(`Foto ${photo.view}`,'Imagem privada indisponível')}}}
   const kg=(value)=>Number(value).toLocaleString('pt-BR',{maximumFractionDigits:2})
   const drawEvolutionCard=(exercise)=>{
     ensure(139)
@@ -30,8 +30,8 @@ export async function generateAssessmentPdf({cycle,previous,student,settings,pro
     const cardTop=y,cardBottom=y-126,left=44,right=551
     page.drawRectangle({x:left,y:cardBottom,width:right-left,height:126,color:rgb(.985,.987,.996),borderColor:rgb(.89,.90,.95),borderWidth:1})
     page.drawText(safe(exercise.label),{x:58,y:cardTop-21,size:11,font:bold,color:rgb(.09,.13,.23)})
-    const metrics=[['INICIAL',summary.initial],['ATUAL',summary.current],['MAIOR',summary.peak],['EVOLUCAO',summary.change]]
-    metrics.forEach(([label,value],index)=>{const x=286+index*65;page.drawText(label,{x,y:cardTop-17,size:5.7,font:bold,color:rgb(.45,.48,.58)});page.drawText(`${value>0&&label==='EVOLUCAO'?'+':''}${kg(value)} kg`,{x,y:cardTop-29,size:7.7,font:bold,color:value>0&&label==='EVOLUCAO'?rgb(.09,.52,.32):value<0&&label==='EVOLUCAO'?rgb(.72,.14,.12):rgb(.12,.16,.25)})})
+    const metrics=[['INICIAL',summary.initial],['ATUAL',summary.current],['MAIOR',summary.peak],['EVOLUÇÃO',summary.change]]
+    metrics.forEach(([label,value],index)=>{const x=286+index*65;page.drawText(label,{x,y:cardTop-17,size:5.7,font:bold,color:rgb(.45,.48,.58)});page.drawText(`${value>0&&label==='EVOLUÇÃO'?'+':''}${kg(value)} kg`,{x,y:cardTop-29,size:7.7,font:bold,color:value>0&&label==='EVOLUÇÃO'?rgb(.09,.52,.32):value<0&&label==='EVOLUÇÃO'?rgb(.72,.14,.12):rgb(.12,.16,.25)})})
     const weights=recorded.map(point=>point.weight),rawMin=Math.min(...weights),rawMax=Math.max(...weights),padding=Math.max((rawMax-rawMin)*.18,rawMax*.08,1),min=Math.max(0,rawMin-padding),max=rawMax+padding,range=Math.max(1,max-min)
     const plotLeft=67,plotRight=529,plotBottom=cardBottom+25,plotTop=cardTop-47,x=index=>plotLeft+index*((plotRight-plotLeft)/5),pointY=value=>plotBottom+((value-min)/range)*(plotTop-plotBottom)
     ;[0,.5,1].forEach(ratio=>{const lineY=plotBottom+ratio*(plotTop-plotBottom);page.drawLine({start:{x:plotLeft,y:lineY},end:{x:plotRight,y:lineY},thickness:.6,color:rgb(.88,.89,.93)})})
@@ -42,9 +42,9 @@ export async function generateAssessmentPdf({cycle,previous,student,settings,pro
     const trainingNumbers=[...new Set((weeks||[]).map(week=>week.trainingNumber||1))].sort((a,b)=>a-b)
     const trainings=trainingNumbers.map(trainingNumber=>({trainingNumber,exercises:buildExerciseEvolution(weeks.filter(week=>(week.trainingNumber||1)===trainingNumber))})).filter(training=>training.exercises.length)
     addPage()
-    page.drawText('EVOLUCAO DE CARGAS',{x:44,y,size:18,font:bold,color:rgb(.09,.13,.23)});y-=22
-    page.drawText('Maior carga registrada por exercicio em cada semana do programa.',{x:44,y,size:9,font:regular,color:rgb(.44,.48,.55)});y-=27
-    if(!trainings.length){page.drawRectangle({x:44,y:y-92,width:507,height:92,color:rgb(.97,.97,.99),borderColor:rgb(.88,.89,.93),borderWidth:1});page.drawText('Nenhuma carga semanal registrada para esta aluna.',{x:64,y:y-38,size:11,font:bold,color:rgb(.22,.25,.34)});page.drawText('Os graficos aparecerao automaticamente quando houver cargas no acompanhamento.',{x:64,y:y-57,size:8.5,font:regular,color:rgb(.44,.48,.55)});y-=112;return}
+    page.drawText('EVOLUÇÃO DE CARGAS',{x:44,y,size:18,font:bold,color:rgb(.09,.13,.23)});y-=22
+    page.drawText('Maior carga registrada por exercício em cada semana do programa.',{x:44,y,size:9,font:regular,color:rgb(.44,.48,.55)});y-=27
+    if(!trainings.length){page.drawRectangle({x:44,y:y-92,width:507,height:92,color:rgb(.97,.97,.99),borderColor:rgb(.88,.89,.93),borderWidth:1});page.drawText('Nenhuma carga semanal registrada para esta aluna.',{x:64,y:y-38,size:11,font:bold,color:rgb(.22,.25,.34)});page.drawText('Os gráficos aparecerão automaticamente quando houver cargas no acompanhamento.',{x:64,y:y-57,size:8.5,font:regular,color:rgb(.44,.48,.55)});y-=112;return}
     trainings.forEach(training=>{ensure(32);page.drawRectangle({x:44,y:y-3,width:4,height:18,color:officialBlue});page.drawText(`Treino ${String(training.trainingNumber).padStart(2,'0')} - ciclo de 6 semanas`,{x:56,y,size:12,font:bold,color:rgb(.15,.23,.42)});y-=25;training.exercises.forEach(drawEvolutionCard)})
   }
   page.drawText(cycle.sequence?`Reavaliação ${cycle.sequence}`:'Avaliação inicial',{x:44,y,size:19,font:bold,color:rgb(.09,.13,.23)});y-=31

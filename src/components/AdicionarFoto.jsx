@@ -96,7 +96,7 @@ export default function AdicionarFoto({ isOpen, onClose, studentId, token }) {
           </div>
 
           <div className="photo-tips">
-            <h3>💡 Dicas para Melhor Foto:</h3>
+            <h3>💡 Dicas para uma foto melhor:</h3>
             <ul>
               <li>✅ Luz natural ou bem iluminada</li>
               <li>✅ Fundo simples e limpo</li>

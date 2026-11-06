@@ -52,7 +52,7 @@ try {
   assert.ok(studentName)
   assert.equal(studentName.options.font.name,'Helvetica-Bold')
   for (const expected of ['1RM estimado: 72,00 kg','Força relativa: 1,00x','Resultado: Bom','+12,00 kg','+20,00%','Flexões até a falha: 0','Prancha até a falha (segundos): 30','Abdominal em 1 minuto: 15','Flexões: 8 -> 0']) assert.ok(text.includes(expected),expected)
-  for (const expected of ['EVOLUCAO DE CARGAS','Treino 01 - ciclo de 6 semanas','Agachamento','50 kg','55 kg','60 kg']) assert.ok(text.includes(expected),expected)
+  for (const expected of ['EVOLUÇÃO DE CARGAS','Treino 01 - ciclo de 6 semanas','Agachamento','50 kg','55 kg','60 kg']) assert.ok(text.includes(expected),expected)
   assert.ok(!text.includes('99'))
   assert.ok(!text.includes('Invalid Date'))
   console.log('PASS: componentes compartilhados e PDF real com comparação e resistência atual/legada')
