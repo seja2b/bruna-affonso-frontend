@@ -1,6 +1,7 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import NotificationBell from './NotificationBell'
+import api from '../../services/api'
 
 const items = [
   ['','Início','home'],
@@ -35,14 +36,34 @@ function Icon({ name }) {
 
 export default function StudentShell({ user, onLogout }) {
   const [open, setOpen] = useState(false)
+  const [brandSettings, setBrandSettings] = useState({ logo: '' })
   const location = useLocation()
   const title = items.find(([path]) => path ? location.pathname.endsWith(`/${path}`) : location.pathname === '/aluno')?.[1] || 'Área do Aluno'
+
+  useEffect(() => {
+    let active = true
+    function syncSettings(event) {
+      if (event?.detail) {
+        if (active) setBrandSettings(event.detail)
+        return
+      }
+      api.get('/admin/settings').then(({ data }) => {
+        if (active) setBrandSettings(data || {})
+      }).catch(() => {})
+    }
+    syncSettings()
+    window.addEventListener('platform-settings-updated', syncSettings)
+    return () => {
+      active = false
+      window.removeEventListener('platform-settings-updated', syncSettings)
+    }
+  }, [])
 
   return (
     <div className="student-shell">
       <aside className={`student-sidebar ${open ? 'is-open' : ''}`}>
         <div className="student-brand">
-          <div className="student-brand-mark">BA</div>
+          <div className="student-brand-mark" role="img" aria-label="Símbolo Bruna Affonso" />
           <div><strong>Bruna Affonso</strong><span>Treinamento</span></div>
         </div>
         <nav className="student-nav">
@@ -52,6 +73,7 @@ export default function StudentShell({ user, onLogout }) {
             </NavLink>
           ))}
         </nav>
+        {brandSettings.logo && <div className="student-brand-signature"><img src={brandSettings.logo} alt="Logo Bruna Affonso" /></div>}
         <button className="student-logout" onClick={onLogout}><Icon name="logout"/><span>Sair</span></button>
       </aside>
       {open && <button className="student-backdrop" aria-label="Fechar menu" onClick={() => setOpen(false)} />}
