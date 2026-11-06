@@ -94,9 +94,9 @@ export default function StudentHome({ user }) {
       </section>
 
       <section className="student-home-grid">
-        <div className="student-panel">
+        <div className="student-panel student-videos-panel">
           <div className="student-panel-head"><div><span className="student-kicker">Novidades</span><h3>VideoAulas recentes</h3></div><Link to="videos">Ver biblioteca</Link></div>
-          {videos.slice(0, 3).length ? videos.slice(0, 3).map((video) => <Link key={video.id} to="videos" className="student-activity-row"><div><strong>{video.title}</strong><span>{video.category || 'VideoAula'}</span></div><b>Assistir</b></Link>) : <div className="student-empty">Nenhuma VideoAula publicada ainda.</div>}
+          {videos.slice(0, 3).length ? <div className="student-video-list">{videos.slice(0, 3).map((video) => <Link key={video.id} to="videos" className="student-activity-row"><div><strong>{video.title}</strong><span>{video.category || 'VideoAula'}</span></div><b><span aria-hidden="true">▶</span>Assistir</b></Link>)}</div> : <div className="student-empty">Nenhuma VideoAula publicada ainda.</div>}
         </div>
         <div className="student-panel">
           <div className="student-panel-head"><div><span className="student-kicker">Central</span><h3>Notificações</h3></div></div>
