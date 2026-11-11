@@ -15,9 +15,29 @@ const stages = [
 const statusLabel = { PENDING: 'Pendente', IN_PROGRESS: 'Em andamento', COMPLETED: 'Concluída' }
 
 function Video({ url }) {
+  const [expanded, setExpanded] = useState(false)
+  useEffect(() => {
+    if (!expanded) return undefined
+    const closeOnEscape = (event) => { if (event.key === 'Escape') setExpanded(false) }
+    document.addEventListener('keydown', closeOnEscape)
+    return () => document.removeEventListener('keydown', closeOnEscape)
+  }, [expanded])
   if (!url) return <p className="assessment-video-empty">O vídeo de orientação será disponibilizado em breve.</p>
   const id = url.match(/(?:youtu\.be\/|v=|embed\/)([\w-]{11})/)?.[1]
-  return id ? <div className="assessment-video"><iframe src={`https://www.youtube-nocookie.com/embed/${id}`} title="Orientação da Bruna" allowFullScreen /></div> : null
+  if (!id) return null
+  const player = (title, autoplay = false) => <iframe src={`https://www.youtube-nocookie.com/embed/${id}${autoplay ? '?autoplay=1' : ''}`} title={title} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen />
+  return <>
+    <div className="assessment-video-shell">
+      <div className="assessment-video">{player('Orientação da Bruna')}</div>
+      <button type="button" className="assessment-video-expand" onClick={() => setExpanded(true)} aria-label="Ampliar vídeo de orientação"><span aria-hidden="true">⛶</span> Ampliar vídeo</button>
+    </div>
+    {expanded && <div className="assessment-video-lightbox" role="dialog" aria-modal="true" aria-label="Vídeo de orientação ampliado" onMouseDown={(event) => { if (event.target === event.currentTarget) setExpanded(false) }}>
+      <div className="assessment-video-lightbox-card">
+        <button type="button" className="assessment-video-close" onClick={() => setExpanded(false)} aria-label="Fechar vídeo ampliado">×</button>
+        <div className="assessment-video assessment-video-expanded">{player('Orientação da Bruna — visualização ampliada', true)}</div>
+      </div>
+    </div>}
+  </>
 }
 
 export default function StudentAssessments({ mode = 'assessment' }) {
