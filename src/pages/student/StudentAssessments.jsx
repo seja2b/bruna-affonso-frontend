@@ -30,7 +30,8 @@ function Video({ url }) {
     <div className="assessment-video-shell">
       <div className="assessment-video">{player('Orientação da Bruna')}</div>
       <button type="button" className="assessment-video-mobile-cover" onClick={() => setExpanded(true)} aria-label="Assistir vídeo de orientação ampliado">
-        <img src={`https://img.youtube.com/vi/${id}/maxresdefault.jpg`} onError={(event) => { event.currentTarget.src = `https://img.youtube.com/vi/${id}/hqdefault.jpg` }} alt="Capa completa do vídeo de orientação da Bruna" />
+        <img className="assessment-video-cover-backdrop" src={`https://img.youtube.com/vi/${id}/maxresdefault.jpg`} onError={(event) => { event.currentTarget.src = `https://img.youtube.com/vi/${id}/hqdefault.jpg` }} alt="" aria-hidden="true" />
+        <img className="assessment-video-cover-foreground" src={`https://img.youtube.com/vi/${id}/maxresdefault.jpg`} onError={(event) => { event.currentTarget.src = `https://img.youtube.com/vi/${id}/hqdefault.jpg` }} alt="Capa completa do vídeo de orientação da Bruna" />
         <span className="assessment-video-play" aria-hidden="true">▶</span>
       </button>
       <button type="button" className="assessment-video-expand" onClick={() => setExpanded(true)} aria-label="Ampliar vídeo de orientação"><span aria-hidden="true">⛶</span> Ampliar vídeo</button>
