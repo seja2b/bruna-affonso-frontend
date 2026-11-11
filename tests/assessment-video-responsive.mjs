@@ -5,9 +5,12 @@ const component = fs.readFileSync(new URL('../src/pages/student/StudentAssessmen
 const css = fs.readFileSync(new URL('../src/pages/student/StudentAssessments.css', import.meta.url), 'utf8')
 
 assert.match(css, /\.assessment-video\{[^}]*aspect-ratio:16\/9/)
-assert.match(css, /@media\(max-width:540px\)[\s\S]*\.assessment-intro-video \.assessment-video\{aspect-ratio:9\/16/)
+assert.match(css, /@media\(max-width:540px\)[\s\S]*\.assessment-intro-video \.assessment-video-shell\{[^}]*aspect-ratio:9\/16/)
 assert.match(component, /assessment-video-expand/)
 assert.match(component, /assessment-video-lightbox/)
+assert.match(component, /maxresdefault\.jpg/)
+assert.match(component, /Capa completa do vídeo/)
+assert.match(css, /assessment-video-mobile-cover img\{[^}]*object-fit:contain/)
 assert.match(component, /allowFullScreen/)
 assert.match(component, /aria-modal="true"/)
 
